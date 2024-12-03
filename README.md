@@ -114,4 +114,3 @@ Todoist Dashboard is an independent project and is not affiliated with, sponsore
 ## License
 
 This project is licensed under the MIT License. You are free to use, modify, and distribute this software in accordance with the terms of the license. See the [LICENSE](LICENSE) file for details.
-
