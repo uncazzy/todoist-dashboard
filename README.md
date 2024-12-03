@@ -77,9 +77,9 @@ yarn dev
 
 ## Contributing
 
-We welcome contributions to Todoist Dashboard! Whether it's reporting a bug, suggesting an enhancement, or submitting a code change, your help is appreciated.
+Contributions to Todoist Dashboard are welcome! Whether it's reporting a bug, suggesting an enhancement, or submitting a code change, your help is appreciated.
 
-Please check out our [Contributing Guidelines](CONTRIBUTING.md) for detailed instructions on how to get started.
+Please check out [Contributing Guidelines](CONTRIBUTING.md) for detailed instructions on how to get started.
 
 ### Development Guidelines
 
