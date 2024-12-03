@@ -1,0 +1,53 @@
+{
+  "name": "todoist-dashboard",
+  "version": "0.1.0",
+  "private": false,
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/uncazzy/todoist-dashboard.git"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@doist/todoist-api-typescript": "^2.1.2",
+    "@next-auth/prisma-adapter": "^1.0.7",
+    "@types/d3": "^7.4.3",
+    "@types/d3-cloud": "^1.2.9",
+    "@types/d3-scale-chromatic": "^3.1.0",
+    "@types/echarts": "^4.9.22",
+    "d3": "^7.9.0",
+    "d3-cloud": "^1.2.7",
+    "d3-scale-chromatic": "^3.1.0",
+    "date-fns": "^4.1.0",
+    "dotenv": "^16.3.1",
+    "echarts": "^5.5.1",
+    "echarts-for-react": "^3.0.2",
+    "isomorphic-unfetch": "^4.0.2",
+    "next": "13.4.12",
+    "next-auth": "^4.22.3",
+    "prisma": "^5.0.0",
+    "query-string": "^8.1.0",
+    "react": "18.2.0",
+    "react-beautiful-dnd": "^13.1.1",
+    "react-dom": "18.2.0",
+    "react-icons": "^4.10.1",
+    "react-markdown": "^8.0.7",
+    "react-tooltip": "^5.28.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.1",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "autoprefixer": "^10.4.14",
+    "eslint": "8.46.0",
+    "eslint-config-next": "13.4.12",
+    "postcss": "^8.4.27",
+    "tailwindcss": "^3.3.3",
+    "typescript": "^5.7.2"
+  }
+}
