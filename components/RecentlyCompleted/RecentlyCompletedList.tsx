@@ -26,31 +26,42 @@ export default function RecentlyCompletedList({ allData }: RecentlyCompletedList
     currentDate.setHours(0, 0, 0, 0);
 
     // Calculate the date 7 days ago
-    const sevenDaysAgo = new Date(currentDate);
+    const sevenDaysAgo: Date = new Date(currentDate);
     sevenDaysAgo.setDate(currentDate.getDate() - 7);
 
-    allCompletedTasks.forEach((task) => {
-      const completedDate = new Date(task.completed_at);
-      const timeDifference = currentDate.getTime() - completedDate.getTime();
+    // Calculate the last 30 days exactly as GoalProgress does
+    const last30Days = [...Array(30)].map((_, i) => {
+      const date = new Date(currentDate);
+      date.setDate(date.getDate() - i);
+      return date.toISOString().split('T')[0];
+    });
 
-      if (timeDifference <= 0) {
+    allCompletedTasks.forEach((task) => {
+      // Skip tasks without a valid completed_at date
+      if (typeof task.completed_at !== 'string') return;
+      
+      const completedDateStr = task.completed_at.split('T')[0] as string;
+
+      // Today's tasks
+      if (completedDateStr === currentDate.toISOString().split('T')[0]) {
         const projectId = task.project_id;
         tasksCompletedToday.push({
           task,
           projectId,
         });
       }
-      if (completedDate >= sevenDaysAgo) {
+
+      // Last 7 days tasks
+      if (completedDateStr >= (sevenDaysAgo.toISOString().split('T')[0] as string)) {
         const projectId = task.project_id;
         tasksCompletedThisWeek.push({
           task,
           projectId,
         });
       }
-      if (
-        timeDifference <= 30 * 24 * 60 * 60 * 1000 &&
-        timeDifference > 7 * 24 * 60 * 60 * 1000
-      ) {
+
+      // Last 30 days tasks - use exact same logic as GoalProgress
+      if (last30Days.includes(completedDateStr)) {
         const projectId = task.project_id;
         tasksCompletedThisMonth.push({
           task,
@@ -145,7 +156,7 @@ export default function RecentlyCompletedList({ allData }: RecentlyCompletedList
             })}
           </p>
         </div>
-        
+
         {/* Show paginated view for screen */}
         <div className={isPrinting ? 'hidden' : ''}>
           <Tasks getPageItems={getPageItems} projectData={projectData} groupByProject={false} />
@@ -153,8 +164,8 @@ export default function RecentlyCompletedList({ allData }: RecentlyCompletedList
 
         {/* Show all tasks grouped by project for print */}
         <div className={!isPrinting ? 'hidden' : ''}>
-          <Tasks 
-            getPageItems={() => tasksToDisplay} 
+          <Tasks
+            getPageItems={() => tasksToDisplay}
             projectData={projectData}
             groupByProject={true}
           />

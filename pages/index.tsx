@@ -33,8 +33,8 @@ const Home: NextPage = () => {
           />
         </Head>
 
-        <Header user={session?.user} />
-        
+        {session && <Header user={session?.user} />}
+
         <main>
           {!session ? (
             <SignIn />
