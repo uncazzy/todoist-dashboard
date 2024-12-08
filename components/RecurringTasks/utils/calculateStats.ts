@@ -54,6 +54,19 @@ export function calculateStats(
   let validCompletions = 0;
   console.log('Expected completions:', expectedCount);
 
+  // For "every month" tasks, don't count current month if we're still within the grace period
+  if (lower === 'every month' && recentCompletions.length > 0) {
+    const lastCompletion = recentCompletions[0]!; // Assert non-null with !
+    const lastCompletionDay = parseInt(format(lastCompletion, 'd'));
+    const currentDay = parseInt(format(today, 'd'));
+    
+    // If we haven't reached the day of the month when the task was last completed,
+    // don't count this month in the expected count
+    if (currentDay < lastCompletionDay) {
+      expectedCount--;
+    }
+  }
+
   targetDates.forEach(targetDate => {
     const isCompleted = recentCompletions.some(completionDate => 
       isValidCompletion(targetDate, completionDate, task.due!.string)

@@ -43,7 +43,34 @@ function calculateMonthlyStreaks(dueString: string, recentCompletions: Date[]): 
   let currentStreak = 0;
   let longestStreak = 0;
   
-  // Get the target day of month
+  // Sort completions from newest to oldest
+  const sortedCompletions = [...recentCompletions].sort((a, b) => b.getTime() - a.getTime());
+  
+  if (dueString === 'every last day') {
+    // For "every last day" tasks, we just need to count consecutive months
+    let consecutiveMonths = 0;
+    let lastMonth = -1;
+    
+    for (const completion of sortedCompletions) {
+      const completionMonth = parseInt(format(completion, 'M')); // 1-12
+      
+      if (lastMonth === -1 || lastMonth - completionMonth === 1 || (lastMonth === 1 && completionMonth === 12)) {
+        consecutiveMonths++;
+        longestStreak = Math.max(longestStreak, consecutiveMonths);
+        currentStreak = consecutiveMonths;
+      } else {
+        consecutiveMonths = 1;
+        if (sortedCompletions.indexOf(completion) === 0) {
+          currentStreak = 1;
+        }
+      }
+      lastMonth = completionMonth;
+    }
+    
+    return { currentStreak, longestStreak };
+  }
+  
+  // Original logic for other monthly tasks with specific dates
   let targetDay: number;
   if (dueString === 'every last day') {
     const today = new Date();
@@ -54,28 +81,20 @@ function calculateMonthlyStreaks(dueString: string, recentCompletions: Date[]): 
     targetDay = parseInt(match?.[1] ?? '1');
   }
   
-  // Sort completions from newest to oldest
-  const sortedCompletions = [...recentCompletions].sort((a, b) => b.getTime() - a.getTime());
-  
-  // Check each completion
   let currentTempStreak = 0;
   for (const completion of sortedCompletions) {
     const completionDay = parseInt(format(completion, 'd'));
     
-    // Check if this completion was on the correct day
     if (completionDay === targetDay) {
       currentTempStreak++;
       if (currentTempStreak > longestStreak) {
         longestStreak = currentTempStreak;
       }
-      // Only update current streak if we're still in sequence
       if (currentTempStreak === sortedCompletions.indexOf(completion) + 1) {
         currentStreak = currentTempStreak;
       }
     } else {
-      // If we missed the target day, break the current streak
       currentTempStreak = 0;
-      // If this is the most recent completion and it wasn't on target, current streak is 0
       if (sortedCompletions.indexOf(completion) === 0) {
         currentStreak = 0;
       }
