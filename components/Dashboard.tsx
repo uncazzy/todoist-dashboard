@@ -13,7 +13,8 @@ import { IoMdTrendingDown, IoMdTrendingUp } from 'react-icons/io';
 import { SiTodoist } from 'react-icons/si';
 import CompletionStreak from './CompletionStreak';
 import TaskWordCloud from './TaskWordCloud';
-import { BsQuestionCircle } from 'react-icons/bs';
+import RecurringTasksMatrix from './RecurringTasksMatrix';
+import { BsQuestionCircle, BsListTask, BsArrowRepeat } from 'react-icons/bs';
 import { MAX_TASKS, CACHE_DURATION } from '../utils/constants';
 import { DashboardData, LoadingProgress } from '../types';
 
@@ -501,18 +502,48 @@ export default function Dashboard(): JSX.Element {
           </div>
         </div>
 
-        {/* Task Topics Section */}
-        <div className={`lg:col-span-3 bg-gray-800 rounded-xl p-4 sm:p-6 shadow-lg mt-6 ${needsFullData ? 'opacity-50' : ''}`}>
-          <h2 className="text-lg sm:text-xl font-semibold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
-            Task Topics
-          </h2>
-          {!fullyLoaded ? (
-            <div className="flex items-center justify-center h-[240px]">
-              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-400"></div>
+        <div className="space-y-8">
+          {/* Task Topics Section */}
+          <div className="bg-gray-800 rounded-lg p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold flex items-center space-x-2">
+                <BsListTask className="w-5 h-5" />
+                <span>Task Topics</span>
+              </h2>
+              <div className="flex items-center space-x-2">
+                <Tooltip content="Shows the most common topics in your tasks">
+                  <BsQuestionCircle className="w-5 h-5 text-gray-400" />
+                </Tooltip>
+              </div>
             </div>
-          ) : (
             <TaskWordCloud tasks={[...activeTasks, ...allCompletedTasks]} />
-          )}
+          </div>
+
+          {/* Recurring Tasks Section */}
+          <div className="bg-gray-800 rounded-lg p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-semibold flex items-center space-x-2">
+                <BsArrowRepeat className="w-5 h-5" />
+                <span>Recurring Tasks</span>
+              </h2>
+              <div className="flex items-center space-x-2">
+                <Tooltip content="Track your recurring tasks and habits. View completion rates, streaks, and trends.">
+                  <BsQuestionCircle className="w-5 h-5 text-gray-400" />
+                </Tooltip>
+              </div>
+            </div>
+            {needsFullData ? (
+              <div className="flex justify-center items-center h-48">
+                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+              </div>
+            ) : (
+              <RecurringTasksMatrix
+                activeTasks={activeTasks}
+                allCompletedTasks={allCompletedTasks}
+                projectData={projectData}
+              />
+            )}
+          </div>
         </div>
 
       </div>
