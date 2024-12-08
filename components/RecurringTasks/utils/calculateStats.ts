@@ -49,6 +49,22 @@ export function calculateStats(
   console.log('Detected pattern:', pattern, 'with interval:', interval);
   console.log('Target dates:', targetDates.map(d => format(d, 'yyyy-MM-dd')));
 
+  // Check if this is a long-term recurring task (> 6 months)
+  const isLongTermRecurring = pattern === 'months' && interval > 6;
+  if (isLongTermRecurring) {
+    console.log('Long-term recurring task detected - task recurs every', interval, 'months');
+    // For long-term tasks, we'll return info about the recurrence pattern
+    const hasCompletionInWindow = totalCompletions > 0;
+    return {
+      currentStreak: 0,
+      longestStreak: 0,
+      totalCompletions,
+      completionRate: hasCompletionInWindow ? 100 : 0,
+      isLongTerm: true,
+      interval: interval
+    };
+  }
+
   // Calculate completion rate
   let expectedCount = targetDates.length;
   let validCompletions = 0;

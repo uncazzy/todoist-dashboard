@@ -153,33 +153,41 @@ export const TaskCalendar: React.FC<TaskCalendarProps> = ({ taskData, task, proj
             <div
               className="text-sm text-gray-400 flex items-center gap-1 cursor-help"
               data-tooltip-id="task-calendar-tooltip"
-              data-tooltip-content={`6-month completion rate: ${stats.completionRate}% of scheduled tasks completed`}
+              data-tooltip-content={stats.isLongTerm 
+                ? `This task recurs every ${stats.interval} months - too long for 6-month analysis window. ${stats.totalCompletions > 0 ? 'Task was completed at least once in the past 6 months.' : 'Task has not been completed in the past 6 months.'}`
+                : `6-month completion rate: ${stats.completionRate}% of scheduled tasks completed`}
             >
               <IoMdTrendingUp className={`w-4 h-4 ${stats.completionRate > 0 ? 'text-green-500' : 'text-gray-600'}`} />
-              {stats.completionRate}%
+              {stats.isLongTerm ? (stats.totalCompletions > 0 ? 'On Track' : 'Long-term') : `${stats.completionRate}%`}
             </div>
-            <div
-              className="text-sm text-gray-400 flex items-center gap-1 cursor-help"
-              data-tooltip-id="task-calendar-tooltip"
-              data-tooltip-content={`Current streak: ${stats.currentStreak} consecutive ${getRecurrenceDescription()} completions`}
-            >
-              <FaCheckCircle className={`w-4 h-4 ${stats.currentStreak > 0 ? 'text-blue-500' : 'text-gray-600'}`} />
-              {stats.currentStreak}
-            </div>
-            <div
-              className="text-sm text-gray-400 flex items-center gap-1 cursor-help"
-              data-tooltip-id="task-calendar-tooltip"
-              data-tooltip-content={`Longest streak in past 6 months: ${stats.longestStreak} consecutive ${getRecurrenceDescription()} completions`}
-            >
-              <IoMdTrendingUp className={`w-4 h-4 ${stats.longestStreak > 0 ? 'text-yellow-500' : 'text-gray-600'}`} />
-              {stats.longestStreak}
-            </div>
+            {!stats.isLongTerm && (
+              <>
+                <div
+                  className="text-sm text-gray-400 flex items-center gap-1 cursor-help"
+                  data-tooltip-id="task-calendar-tooltip"
+                  data-tooltip-content={`Current streak: ${stats.currentStreak} consecutive ${getRecurrenceDescription()} completions`}
+                >
+                  <FaCheckCircle className={`w-4 h-4 ${stats.currentStreak > 0 ? 'text-blue-500' : 'text-gray-600'}`} />
+                  {stats.currentStreak}
+                </div>
+                <div
+                  className="text-sm text-gray-400 flex items-center gap-1 cursor-help"
+                  data-tooltip-id="task-calendar-tooltip"
+                  data-tooltip-content={`Longest streak in past 6 months: ${stats.longestStreak} consecutive ${getRecurrenceDescription()} completions`}
+                >
+                  <IoMdTrendingUp className={`w-4 h-4 ${stats.longestStreak > 0 ? 'text-yellow-500' : 'text-gray-600'}`} />
+                  {stats.longestStreak}
+                </div>
+              </>
+            )}
           </div>
 
           <div
             className="w-full"
             data-tooltip-id="task-calendar-tooltip"
-            data-tooltip-content="Completion trend over the past 6 months"
+            data-tooltip-content={stats.isLongTerm 
+              ? `Long-term recurring task (${stats.interval} months) - trend analysis not applicable` 
+              : "Completion trend over the past 6 months"}
           >
             <Sparklines data={trendData} height={20} margin={2}>
               <SparklinesLine
