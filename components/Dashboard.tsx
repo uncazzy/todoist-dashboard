@@ -13,7 +13,7 @@ import { IoMdTrendingDown, IoMdTrendingUp } from 'react-icons/io';
 import { SiTodoist } from 'react-icons/si';
 import CompletionStreak from './CompletionStreak';
 import TaskWordCloud from './TaskWordCloud';
-import RecurringTasksMatrix from './RecurringTasks/index';
+import RecurringTasksPreview from './RecurringTasks/RecurringTasksPreview';
 import { BsQuestionCircle } from 'react-icons/bs';
 import { MAX_TASKS, CACHE_DURATION } from '../utils/constants';
 import { DashboardData, LoadingProgress } from '../types';
@@ -434,7 +434,7 @@ export default function Dashboard(): JSX.Element {
                 <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
               </div>
             ) : (
-              <RecurringTasksMatrix
+              <RecurringTasksPreview
                 activeTasks={activeTasks}
                 allCompletedTasks={allCompletedTasks}
                 projectData={projectData}
