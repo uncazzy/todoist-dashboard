@@ -251,7 +251,7 @@ export const TaskCalendar: React.FC<TaskCalendarProps> = ({ taskData, task, proj
                     >
                       {format(date, 'd')}
                     </div>
-                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 px-2 py-1 
+                    <div className="absolute bottom-full left-0 mb-1 px-2 py-1 
                       bg-gray-800 text-xs text-gray-200 rounded-md opacity-0 group-hover:opacity-100 
                       transition-opacity whitespace-nowrap pointer-events-none z-10">
                       {format(date, 'EEEE, MMMM d, yyyy')}
