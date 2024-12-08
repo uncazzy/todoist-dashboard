@@ -11,7 +11,7 @@ interface Props {
   projectData: ProjectData[];
 }
 
-const RecurringTasksMatrix: React.FC<Props> = ({ activeTasks, allCompletedTasks, projectData }) => {
+const RecurringTasksCard: React.FC<Props> = ({ activeTasks, allCompletedTasks, projectData }) => {
   const [selectedFrequency, setSelectedFrequency] = useState<RecurringFrequency>('daily');
 
   const recurringTasksData = React.useMemo(() => {
@@ -132,4 +132,4 @@ const RecurringTasksMatrix: React.FC<Props> = ({ activeTasks, allCompletedTasks,
   );
 };
 
-export default RecurringTasksMatrix;
+export default RecurringTasksCard;

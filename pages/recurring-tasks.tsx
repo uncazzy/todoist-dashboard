@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useSession } from 'next-auth/react';
-import RecurringTasksMatrix from '../components/RecurringTasks';
+import RecurringTasksCard from '../components/RecurringTasks';
 import { useDashboardData } from '../hooks/useDashboardData';
 import Layout from '../components/layout/Layout';
 import Link from 'next/link';
@@ -60,7 +60,7 @@ const RecurringTasksPage = () => {
           </div>
         ) : (
           <div className="flex-1 overflow-hidden bg-gray-800/50 rounded-lg backdrop-blur-sm">
-            <RecurringTasksMatrix
+            <RecurringTasksCard
               activeTasks={selectedProjectIds.length > 0
                 ? data.activeTasks.filter(task => selectedProjectIds.includes(task.projectId))
                 : data.activeTasks}
