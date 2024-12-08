@@ -67,6 +67,13 @@ export function calculateStats(
       return format(targetDate, 'yyyy-MM') === format(completionDate, 'yyyy-MM');
     }
     
+    // For "every last day", check if completion is on the last day of the month
+    if (lower === 'every last day') {
+      const lastDayOfMonth = new Date(completionDate.getFullYear(), completionDate.getMonth() + 1, 0);
+      return format(completionDate, 'yyyy-MM-dd') === format(lastDayOfMonth, 'yyyy-MM-dd') &&
+             format(targetDate, 'yyyy-MM') === format(completionDate, 'yyyy-MM');
+    }
+    
     // For specific date monthly tasks (e.g., "every 26" or "every 26th"), require exact date match
     const specificDateMatch = lower.match(/every (\d+)(?:st|nd|rd|th)?(?:\s|$)/i);
     if (specificDateMatch) {
@@ -98,6 +105,30 @@ export function calculateStats(
       recurrencePattern = 'months';
       interval = parseInt(monthMatch[1] || '1');
     }
+  } else if (lower === 'every last day') {
+    recurrencePattern = 'monthly-last';
+    
+    // Start from the latest completion month or today, whichever is earlier
+    const startDate = latestCompletion || today;
+    let date = new Date(startDate.getFullYear(), startDate.getMonth() + 1, 0); // Last day of current month
+    
+    // If today is past the last day of current month, start from last month
+    const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+    if (parseInt(format(today, 'd')) > parseInt(format(lastDayOfMonth, 'd'))) {
+      date = new Date(today.getFullYear(), today.getMonth(), 0);
+    }
+    
+    // Generate target dates for the last 5 months (not including current month)
+    for (let i = 0; i < 5; i++) {
+      if (!isAfter(date, today) && (isBefore(sixMonthsAgo, date) || isEqual(sixMonthsAgo, date))) {
+        targetDates.push(date);
+      }
+      // Move to last day of previous month
+      date = new Date(date.getFullYear(), date.getMonth(), 0);
+    }
+    
+    // Sort target dates from newest to oldest
+    targetDates.sort((a, b) => b.getTime() - a.getTime());
   } else if (/every \d+(?:st|nd|rd|th)?(?:\s|$)/.test(lower) || (lower.includes('every') && lower.includes('month'))) {
     recurrencePattern = 'monthly';
     let date: Date;
@@ -125,7 +156,7 @@ export function calculateStats(
       
       while (isBefore(sixMonthsAgo, date) || isEqual(sixMonthsAgo, date)) {
         if (!isAfter(date, today)) {
-          targetDates.push(new Date(date));
+          targetDates.push(date);
         }
         date = subMonths(date, interval);
       }
@@ -213,8 +244,9 @@ export function calculateStats(
   // For monthly tasks, don't count current month in expected count
   const isMonthlyTask = task.due!.string.toLowerCase() === 'every month';
   const specificDateMatch = task.due!.string.toLowerCase().match(/every (\d+)(?:st|nd|rd|th)?(?:\s|$)/i);
+  const isLastDayTask = task.due!.string.toLowerCase() === 'every last day';
   
-  if (isMonthlyTask || specificDateMatch) {
+  if (isMonthlyTask || specificDateMatch || isLastDayTask) {
     const currentMonthTargets = targetDates.filter(date => {
       const isCurrentMonth = format(date, 'yyyy-MM') === format(today, 'yyyy-MM');
       
@@ -223,6 +255,14 @@ export function calculateStats(
         const targetDay = parseInt(specificDateMatch[1] ?? '1');
         const currentDay = parseInt(format(today, 'd'));
         return isCurrentMonth && currentDay >= targetDay;
+      }
+      
+      // For last day of month tasks, only exclude if we haven't reached the last day
+      if (isLastDayTask) {
+        const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+        const currentDay = parseInt(format(today, 'd'));
+        const lastDay = parseInt(format(lastDayOfMonth, 'd'));
+        return isCurrentMonth && currentDay >= lastDay;
       }
       
       // For general monthly tasks, exclude current month entirely
@@ -251,8 +291,14 @@ export function calculateStats(
   // Sort target dates from newest to oldest
   targetDates.sort((a, b) => b.getTime() - a.getTime());
 
-  for (let i = 0; i < targetDates.length; i++) {
-    const targetDate = targetDates[i] as Date;
+  // Filter out target dates before the time window
+  const validTargetDates = targetDates.filter(date => 
+    (isBefore(sixMonthsAgo, date) || isEqual(sixMonthsAgo, date)) &&
+    !isBefore(date, sixMonthsAgo)
+  );
+
+  for (let i = 0; i < validTargetDates.length; i++) {
+    const targetDate = validTargetDates[i] as Date;
     const isToday = isEqual(startOfDay(targetDate), startOfDay(today));
     const isCurrentMonth = format(targetDate, 'yyyy-MM') === format(today, 'yyyy-MM');
     const isFutureDate = isAfter(targetDate, today);
