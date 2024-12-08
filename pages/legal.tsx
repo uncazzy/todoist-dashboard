@@ -6,6 +6,7 @@ import { IoArrowBack } from "react-icons/io5";
 import { useRouter } from 'next/router';
 import { useSession } from "next-auth/react";
 import type { NextPage } from 'next';
+import Link from 'next/link';
 
 const Legal: NextPage = () => {
   const router = useRouter();
@@ -29,13 +30,13 @@ const Legal: NextPage = () => {
         <Header user={session?.user} />
 
         <div className="max-w-3xl mx-auto py-8">
-          <button
-            onClick={() => router.back()}
-            className="flex items-center text-gray-500 hover:text-gray-700 mb-6 transition-colors"
+          <Link
+              href="/"
+              className="flex items-center text-gray-500 hover:text-gray-700 mb-6 transition-colors"
           >
             <IoArrowBack className="mr-1" />
             Back
-          </button>
+          </Link>
           <h1 className="text-2xl font-bold mb-0">About & Legal Information</h1>
           <span className="text-sm text-gray-400">Last updated: 11/30/2024</span>
 
