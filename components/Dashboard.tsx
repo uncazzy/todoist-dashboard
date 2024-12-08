@@ -437,7 +437,6 @@ export default function Dashboard(): JSX.Element {
               <RecurringTasksPreview
                 activeTasks={activeTasks}
                 allCompletedTasks={allCompletedTasks}
-                projectData={projectData}
               />
             )}
           </div>

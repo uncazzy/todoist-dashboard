@@ -3,22 +3,19 @@ import Link from 'next/link';
 import { BsCalendar3 } from 'react-icons/bs';
 import { IoMdTrendingUp } from 'react-icons/io';
 import { FaCheckCircle, FaArrowRight } from 'react-icons/fa';
-import { ActiveTask, ProjectData } from '../../types';
+import { ActiveTask } from '../../types';
 import { calculateStats } from './utils/index';
 
 interface RecurringTasksPreviewProps {
   activeTasks: ActiveTask[];
   allCompletedTasks: any[];
-  projectData: ProjectData[];
 }
 
 const RecurringTasksPreview: React.FC<RecurringTasksPreviewProps> = ({
   activeTasks,
-  allCompletedTasks,
-  projectData
-}) => {
+  allCompletedTasks}) => {
   const recurringTasks = activeTasks.filter(task => task.due?.isRecurring);
-  
+
   // Calculate overall stats
   const totalRecurringTasks = recurringTasks.length;
   const completedRecurringTasks = allCompletedTasks.filter(
@@ -44,6 +41,7 @@ const RecurringTasksPreview: React.FC<RecurringTasksPreviewProps> = ({
             Recurring Tasks
           </h2>
         </div>
+
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
@@ -72,8 +70,8 @@ const RecurringTasksPreview: React.FC<RecurringTasksPreviewProps> = ({
         </div>
       </div>
 
-      <Link 
-        href="/recurring-tasks" 
+      <Link
+        href="/recurring-tasks"
         className="flex items-center justify-center gap-2 w-full bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 py-3 px-4 rounded-lg transition-colors"
       >
         View Detailed Analysis

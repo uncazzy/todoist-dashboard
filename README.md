@@ -9,8 +9,9 @@ A powerful dashboard for Todoist users that provides deep insights into task man
 
 - 📊 Comprehensive task analytics and insights
 - 📈 Productivity scoring and trends
+- 🔄 Recurring task tracking and habit analytics
 - 🎯 Focus time recommendations
-- 📅 Project distribution analysis
+- 📈 Project distribution analysis
 - 🖨️ Printable reports
 - 🌙 Dark mode interface
 - 📱 Responsive design

@@ -3,13 +3,11 @@ import Head from "next/head";
 import Header from "../components/layout/Header";
 import Footer from "../components/layout/Footer";
 import { IoArrowBack } from "react-icons/io5";
-import { useRouter } from 'next/router';
 import { useSession } from "next-auth/react";
 import type { NextPage } from 'next';
 import Link from 'next/link';
 
 const Legal: NextPage = () => {
-  const router = useRouter();
   const { data: session } = useSession();
 
   return (
@@ -32,7 +30,7 @@ const Legal: NextPage = () => {
         <div className="max-w-3xl mx-auto py-8">
           <Link
               href="/"
-              className="flex items-center text-gray-500 hover:text-gray-700 mb-6 transition-colors"
+              className="flex items-center text-gray-500 hover:text-gray-700 mb-6 transition-colors no-underline"
           >
             <IoArrowBack className="mr-1" />
             Back
