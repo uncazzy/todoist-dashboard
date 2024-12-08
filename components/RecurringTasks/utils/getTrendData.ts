@@ -26,7 +26,7 @@ export function getTrendData(
     if (pattern === 'every last day') {
       const lastDayOfMonth = new Date(completionDate.getFullYear(), completionDate.getMonth() + 1, 0);
       return format(completionDate, 'yyyy-MM-dd') === format(lastDayOfMonth, 'yyyy-MM-dd') &&
-             format(targetDate, 'yyyy-MM') === format(completionDate, 'yyyy-MM');
+        format(targetDate, 'yyyy-MM') === format(completionDate, 'yyyy-MM');
     }
 
     // For specific date monthly tasks (e.g., "every 26" or "every 26th")
@@ -34,7 +34,7 @@ export function getTrendData(
     if (specificDateMatch) {
       const targetDay = parseInt(specificDateMatch[1] ?? '1');
       return parseInt(format(completionDate, 'd')) === targetDay &&
-             format(targetDate, 'yyyy-MM') === format(completionDate, 'yyyy-MM');
+        format(targetDate, 'yyyy-MM') === format(completionDate, 'yyyy-MM');
     }
 
     // For weekly tasks, allow completion within the same week

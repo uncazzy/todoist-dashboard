@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo } from 'react';
-import { format, isEqual, isBefore, startOfMonth, endOfMonth, eachDayOfInterval, getDay, subMonths } from 'date-fns';
-import { BsCalendar3 } from 'react-icons/bs';
+import { format, isEqual, isBefore, startOfMonth, endOfMonth, eachDayOfInterval, getDay, subMonths, parseISO } from 'date-fns';
+import { BsCalendar3, BsAlarm } from 'react-icons/bs';
 import { IoMdTrendingUp } from 'react-icons/io';
 import { FaCheckCircle } from 'react-icons/fa';
 import { ActiveTask, ProjectData } from '../../types';
@@ -67,18 +67,75 @@ export const TaskCalendar: React.FC<TaskCalendarProps> = ({ taskData, task, proj
     return 'daily';
   }, [task.due?.string]);
 
+  // Format the next due date
+  const formatNextDue = useCallback(() => {
+    if (!task.due?.date) return null;
+    const dueDate = parseISO(task.due.date);
+    const today = new Date();
+    
+    // Compare just the dates without time
+    const isDueToday = format(dueDate, 'yyyy-MM-dd') === format(today, 'yyyy-MM-dd');
+    const isPastDue = isBefore(dueDate, today) && !isDueToday;
+    const daysUntil = Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+    const isTomorrow = daysUntil === 1;
+    
+    if (isDueToday) {
+      return 'Today';
+    } else if (isPastDue) {
+      return 'Overdue';
+    } else if (isTomorrow) {
+      return 'Tomorrow';
+    } else {
+      const formattedDate = format(dueDate, 'MMM d');
+      return `${formattedDate} (in ${daysUntil} days)`;
+    }
+  }, [task.due?.date]);
+
+  // Get next due date status color
+  const getNextDueColor = useCallback(() => {
+    if (!task.due?.date) return 'text-gray-400';
+    const dueDate = parseISO(task.due.date);
+    const today = new Date();
+    
+    // Compare just the dates without time
+    const isDueToday = format(dueDate, 'yyyy-MM-dd') === format(today, 'yyyy-MM-dd');
+    const isPastDue = isBefore(dueDate, today) && !isDueToday;
+    
+    if (isDueToday) {
+      return 'text-yellow-500';
+    } else if (isPastDue) {
+      return 'text-red-500';
+    } else {
+      return 'text-green-500';
+    }
+  }, [task.due?.date]);
+
   // Memoize months calculation
   const months = useMemo(() =>
     [0, 1, 2, 3, 4, 5].map(getCalendarDays),
     [getCalendarDays]
   );
 
+  const nextDue = formatNextDue();
+  const nextDueColor = getNextDueColor();
+
   return (
     <div className="bg-gray-900/50 rounded-lg p-4 hover:bg-gray-900/70 transition-colors">
       <div className="flex items-start justify-between mb-2">
         <div className="space-y-1">
-          <h3 className="font-medium text-gray-200">{task.content}</h3>
-          <div className="flex items-center gap-2 text-sm">
+          <div className="space-y-0.5 mb-4">
+            <h3 className="font-medium text-gray-200 mb-0">{task.content}</h3>
+            {nextDue && (
+              <span className={`${nextDueColor} text-xs flex items-center gap-1`}
+                data-tooltip-id="task-calendar-tooltip"
+                data-tooltip-content="Next scheduled due date"
+              >
+                <BsAlarm className="w-3 h-3" />
+                {nextDue}
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-2 text-sm flex-wrap">
             {project && (
               <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-opacity-20">
                 {project.name}
