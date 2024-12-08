@@ -52,11 +52,14 @@ export const TaskCalendar: React.FC<TaskCalendarProps> = ({ taskData, task, proj
   const getRecurrenceDescription = useCallback(() => {
     if (!task.due?.string) return '';
     const lower = task.due.string.toLowerCase();
-    if (lower.includes('every other')) {
-      return 'bi-weekly';
-    } else if (lower.includes('every day')) {
+    
+    if (lower.includes('every day') || lower.includes('daily')) {
       return 'daily';
-    } else if (lower.includes('month')) {
+    } else if (lower.includes('every other')) {
+      return 'bi-weekly';
+    } else if (lower.match(/every (\d+) months?/)) {
+      return 'monthly';
+    } else if (lower === 'every last day' || /every \d+(?:st|nd|rd|th)?(?:\s|$)/.test(lower) || lower.includes('month')) {
       return 'monthly';
     } else if (lower.includes('every')) {
       return 'weekly';
