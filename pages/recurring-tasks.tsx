@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useSession } from 'next-auth/react';
 import RecurringTasksMatrix from '../components/RecurringTasks';
 import { useDashboardData } from '../hooks/useDashboardData';
@@ -6,10 +6,12 @@ import Layout from '../components/layout/Layout';
 import Link from 'next/link';
 import { FaArrowLeft } from 'react-icons/fa';
 import LoadingIndicator from '../components/LoadingIndicator';
+import ProjectPicker from '../components/ProjectPicker';
 
 const RecurringTasksPage = () => {
   const { data: session } = useSession();
   const { data, isLoading, loadingProgress, isLoadingFromCache, refreshData } = useDashboardData();
+  const [selectedProjectIds, setSelectedProjectIds] = useState<string[]>([]);
 
   if (!session) {
     return null;
@@ -25,12 +27,23 @@ const RecurringTasksPage = () => {
               <span>Back</span>
             </Link>
           </div>
-          <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500 mb-2 flex items-center gap-3 leading-normal">
-            Recurring Tasks
-          </h1>
-          <p className="text-gray-400">
-            Track and manage your recurring tasks and habits
-          </p>
+          <div className="flex flex-col gap-4 mb-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500 mb-0 flex items-center gap-3 leading-normal">
+                Recurring Tasks
+              </h1>
+              {data?.projectData && (
+                <ProjectPicker
+                  projects={data.projectData}
+                  selectedProjectIds={selectedProjectIds}
+                  onProjectSelect={setSelectedProjectIds}
+                />
+              )}
+            </div>
+            <p className="text-gray-400">
+              Track and manage your recurring tasks and habits
+            </p>
+          </div>
         </header>
 
         {loadingProgress && (
@@ -50,7 +63,9 @@ const RecurringTasksPage = () => {
             <div className="p-6 overflow-x-auto">
               <div className="min-w-[768px]">
                 <RecurringTasksMatrix
-                  activeTasks={data.activeTasks}
+                  activeTasks={selectedProjectIds.length > 0
+                    ? data.activeTasks.filter(task => selectedProjectIds.includes(task.projectId))
+                    : data.activeTasks}
                   allCompletedTasks={data.allCompletedTasks}
                   projectData={data.projectData}
                 />

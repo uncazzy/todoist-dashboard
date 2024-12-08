@@ -52,7 +52,7 @@ export const TaskCalendar: React.FC<TaskCalendarProps> = ({ taskData, task, proj
   const getRecurrenceDescription = useCallback(() => {
     if (!task.due?.string) return '';
     const lower = task.due.string.toLowerCase();
-    
+
     if (lower.includes('every day') || lower.includes('daily')) {
       return 'daily';
     } else if (lower.includes('every other')) {
@@ -72,13 +72,13 @@ export const TaskCalendar: React.FC<TaskCalendarProps> = ({ taskData, task, proj
     if (!task.due?.date) return null;
     const dueDate = parseISO(task.due.date);
     const today = new Date();
-    
+
     // Compare just the dates without time
     const isDueToday = format(dueDate, 'yyyy-MM-dd') === format(today, 'yyyy-MM-dd');
     const isPastDue = isBefore(dueDate, today) && !isDueToday;
     const daysUntil = Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
     const isTomorrow = daysUntil === 1;
-    
+
     if (isDueToday) {
       return 'Today';
     } else if (isPastDue) {
@@ -96,11 +96,11 @@ export const TaskCalendar: React.FC<TaskCalendarProps> = ({ taskData, task, proj
     if (!task.due?.date) return 'text-gray-400';
     const dueDate = parseISO(task.due.date);
     const today = new Date();
-    
+
     // Compare just the dates without time
     const isDueToday = format(dueDate, 'yyyy-MM-dd') === format(today, 'yyyy-MM-dd');
     const isPastDue = isBefore(dueDate, today) && !isDueToday;
-    
+
     if (isDueToday) {
       return 'text-yellow-500';
     } else if (isPastDue) {
@@ -137,9 +137,15 @@ export const TaskCalendar: React.FC<TaskCalendarProps> = ({ taskData, task, proj
           </div>
           <div className="flex items-center gap-2 text-sm flex-wrap">
             {project && (
-              <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-opacity-20">
-                {project.name}
-              </span>
+              <div>
+                <div
+                  className="w-2 h-2 rounded-sm flex-shrink-0 inline-block"
+                  style={{ backgroundColor: project.color }}
+                />
+                <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-opacity-20">
+                  {project.name}
+                </span>
+              </div>
             )}
             <span className="text-gray-400 text-xs flex items-center gap-1">
               <BsCalendar3 className="w-3 h-3" />
@@ -153,7 +159,7 @@ export const TaskCalendar: React.FC<TaskCalendarProps> = ({ taskData, task, proj
             <div
               className="text-sm text-gray-400 flex items-center gap-1 cursor-help"
               data-tooltip-id="task-calendar-tooltip"
-              data-tooltip-content={stats.isLongTerm 
+              data-tooltip-content={stats.isLongTerm
                 ? `This task recurs every ${stats.interval} months - too long for 6-month analysis window. ${stats.totalCompletions > 0 ? 'Task was completed at least once in the past 6 months.' : 'Task has not been completed in the past 6 months.'}`
                 : `6-month completion rate: ${stats.completionRate}% of scheduled tasks completed`}
             >
@@ -185,8 +191,8 @@ export const TaskCalendar: React.FC<TaskCalendarProps> = ({ taskData, task, proj
           <div
             className="w-full"
             data-tooltip-id="task-calendar-tooltip"
-            data-tooltip-content={stats.isLongTerm 
-              ? `Long-term recurring task (${stats.interval} months) - trend analysis not applicable` 
+            data-tooltip-content={stats.isLongTerm
+              ? `Long-term recurring task (${stats.interval} months) - trend analysis not applicable`
               : "Completion trend over the past 6 months"}
           >
             <Sparklines data={trendData} height={20} margin={2}>
