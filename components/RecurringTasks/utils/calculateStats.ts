@@ -1,4 +1,4 @@
-import { format, isEqual, isBefore, subMonths, subDays, startOfDay, isAfter, startOfWeek, endOfWeek, isWithinInterval } from 'date-fns';
+import { format, isEqual, isBefore, subMonths, subDays, startOfDay, isAfter, startOfWeek, endOfWeek, isWithinInterval, startOfMonth } from 'date-fns';
 import { ActiveTask } from '../../../types';
 
 interface TaskStats {
@@ -44,6 +44,11 @@ export function calculateStats(
   const totalCompletions = recentCompletions.length;
   console.log('Total completions:', totalCompletions);
 
+  // Initialize variables
+  let recurrencePattern = '';
+  let interval = 1;
+  let targetDates: Date[] = [];
+
   // Calculate completion rate
   let completionRate = 0;
   let expectedCount = 0;
@@ -53,6 +58,11 @@ export function calculateStats(
     const targetStr = format(targetDate, 'yyyy-MM-dd');
     const completionStr = format(completionDate, 'yyyy-MM-dd');
     const lower = dueString.toLowerCase();
+    
+    // For "every month" without a specific day, check if completion is in the same month
+    if (lower === 'every month') {
+      return format(targetDate, 'yyyy-MM') === format(completionDate, 'yyyy-MM');
+    }
     
     // For weekly tasks, allow completion within the same week
     if (lower.includes('every') && !lower.includes('month') && !lower.includes('other') && !lower.includes('day')) {
@@ -66,9 +76,6 @@ export function calculateStats(
   };
 
   // Parse and normalize the recurrence pattern
-  let recurrencePattern = '';
-  let interval = 1;
-
   if (lower.includes('every day') || lower.includes('daily')) {
     recurrencePattern = 'daily';
   } else if (lower.includes('every other')) {
@@ -82,7 +89,27 @@ export function calculateStats(
     }
   } else if (lower.includes('every') && lower.includes('month')) {
     recurrencePattern = 'monthly';
-    interval = 1;
+    let date: Date;
+    
+    // Check if it's "every month on the X" or just "every month"
+    const monthlyMatch = lower.match(/every( \d+)? months? on the (\d+)(?:st|nd|rd|th)/i);
+    if (monthlyMatch) {
+      // Handle specific day of month
+      const targetDay = parseInt(monthlyMatch[2] || '1');
+      date = new Date(today.getFullYear(), today.getMonth(), targetDay);
+      
+      while (isBefore(sixMonthsAgo, date) || isEqual(sixMonthsAgo, date)) {
+        targetDates.push(new Date(date));
+        date = subMonths(date, interval);
+      }
+    } else {
+      // For "every month" without a specific day, generate one target per month
+      date = startOfMonth(today);
+      while (isBefore(sixMonthsAgo, date) || isEqual(sixMonthsAgo, date)) {
+        targetDates.push(new Date(date));
+        date = subMonths(date, interval);
+      }
+    }
   } else if (lower.includes('every')) {
     recurrencePattern = 'weekly';
     interval = 7;
@@ -92,7 +119,6 @@ export function calculateStats(
 
   // Calculate expected completions based on pattern
   let date = today;
-  let targetDates: Date[] = [];
 
   switch (recurrencePattern) {
     case 'daily':
@@ -154,9 +180,23 @@ export function calculateStats(
     if (isCompleted) validCompletions++;
   });
 
-  completionRate = expectedCount > 0 ? Math.round((validCompletions / expectedCount) * 100) : 0;
-  console.log('Valid completions:', validCompletions);
-  console.log('Completion rate:', completionRate + '%');
+  // For monthly tasks, don't count current month in expected count
+  const isMonthlyTask = task.due!.string.toLowerCase() === 'every month';
+  if (isMonthlyTask) {
+    const currentMonthTargets = targetDates.filter(date => 
+      format(date, 'yyyy-MM') === format(today, 'yyyy-MM')
+    );
+    expectedCount -= currentMonthTargets.length;
+  }
+
+  if (expectedCount > 0) {
+    const completedCount = validCompletions;
+    completionRate = Math.round((completedCount / expectedCount) * 100);
+  }
+
+  console.log('Expected count:', expectedCount, 
+    'Completed count:', validCompletions,
+    'Rate:', completionRate);
 
   // Calculate streaks
   let currentStreak = 0;
@@ -171,6 +211,7 @@ export function calculateStats(
   for (let i = 0; i < targetDates.length; i++) {
     const targetDate = targetDates[i] as Date;
     const isToday = isEqual(startOfDay(targetDate), startOfDay(today));
+    const isCurrentMonth = format(targetDate, 'yyyy-MM') === format(today, 'yyyy-MM');
     
     // Find the completion for this target date
     const completion = recentCompletions.find(completionDate => 
@@ -180,6 +221,7 @@ export function calculateStats(
     console.log('Checking date:', format(targetDate, 'yyyy-MM-dd'), 
       'completed:', !!completion, 
       'isToday:', isToday,
+      'isCurrentMonth:', isCurrentMonth,
       'tempStreak:', tempStreak);
 
     if (completion) {
@@ -199,8 +241,14 @@ export function calculateStats(
         currentStreak = tempStreak;
       }
     } else {
-      // Don't break the streak for today's incomplete task
-      if (!isToday) {
+      // For monthly tasks, don't break streak if we're in current month
+      const isMonthlyTask = task.due!.string.toLowerCase() === 'every month';
+      if (isMonthlyTask && isCurrentMonth) {
+        // Keep the streak going if we have one
+        if (tempStreak > 0) {
+          currentStreak = tempStreak;
+        }
+      } else if (!isToday) {
         // Break the streak if we miss a day (except today)
         activeStreak = false;
         if (lastCompletedDate) {

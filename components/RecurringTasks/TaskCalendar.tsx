@@ -56,10 +56,10 @@ export const TaskCalendar: React.FC<TaskCalendarProps> = ({ taskData, task, proj
       return 'bi-weekly';
     } else if (lower.includes('every day')) {
       return 'daily';
-    } else if (lower.includes('every') && !lower.includes('month')) {
-      return 'weekly';
     } else if (lower.includes('month')) {
       return 'monthly';
+    } else if (lower.includes('every')) {
+      return 'weekly';
     }
     return 'daily';
   }, [task.due?.string]);
