@@ -3,7 +3,7 @@ import { BsCalendar3, BsCalendarWeek, BsCalendarMonth, BsThreeDots, BsChevronDow
 import { ActiveTask, CompletedTask, ProjectData } from '../../types';
 import { TaskCalendar } from './TaskCalendar';
 import { RecurringFrequency } from './types';
-import { getTaskFrequency } from './utils';
+import { getTaskFrequency } from './utils/index';
 
 interface Props {
   activeTasks: ActiveTask[];

@@ -1,6 +1,6 @@
-import { RecurringFrequency } from './types';
+import { RecurringFrequency } from '../types';
 
-export const getTaskFrequency = (dueString: string | undefined): RecurringFrequency => {
+export function getTaskFrequency(dueString: string | undefined): RecurringFrequency {
   if (!dueString) return 'other';
   const lower = dueString.toLowerCase();
   
@@ -20,4 +20,4 @@ export const getTaskFrequency = (dueString: string | undefined): RecurringFreque
   ) return 'monthly';
   
   return 'other';
-};
+}

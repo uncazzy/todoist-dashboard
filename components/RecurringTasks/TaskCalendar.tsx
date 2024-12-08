@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo } from 'react';
-import { format, isEqual, isBefore, startOfMonth, endOfMonth, eachDayOfInterval, getDay, subMonths, subDays, endOfWeek, eachWeekOfInterval } from 'date-fns';
+import { format, isEqual, isBefore, startOfMonth, endOfMonth, eachDayOfInterval, getDay, subMonths } from 'date-fns';
 import { BsCalendar3 } from 'react-icons/bs';
 import { IoMdTrendingUp } from 'react-icons/io';
 import { FaCheckCircle } from 'react-icons/fa';
@@ -7,6 +7,7 @@ import { ActiveTask, ProjectData } from '../../types';
 import { TaskStats } from './types';
 import { Tooltip } from 'react-tooltip';
 import { Sparklines, SparklinesLine, SparklinesBars } from 'react-sparklines';
+import { calculateStats, getTrendData } from './utils/index';
 
 interface TaskCalendarProps {
   taskData: TaskStats;
@@ -44,324 +45,8 @@ export const TaskCalendar: React.FC<TaskCalendarProps> = ({ taskData, task, proj
     };
   }, []);
 
-  // Calculate completion rate based on task frequency
-  const calculateCompletionRate = useCallback(() => {
-    if (!task.due?.string) return 0;
-    const lower = task.due.string.toLowerCase();
-    const today = new Date();
-
-    // Sort completion dates
-    const sortedCompletions = [...taskData.completionDates].sort((a, b) => a.getTime() - b.getTime());
-    if (sortedCompletions.length === 0) return 0;
-
-    // Look back 90 days to get a good sample
-    const startDate = new Date(today);
-    startDate.setDate(startDate.getDate() - 90);
-
-    // Filter completions within our date range
-    const recentCompletions = sortedCompletions.filter(date =>
-      (isBefore(startDate, date) || isEqual(startDate, date)) &&
-      (isBefore(date, today) || isEqual(date, today))
-    );
-
-    if (recentCompletions.length === 0) return 0;
-
-    // For "every other" patterns, calculate based on actual intervals
-    if (lower.includes('every other')) {
-      // Get the weekday if it's "every other Monday" etc.
-      const weekdayMatch = lower.match(/every other (monday|tuesday|wednesday|thursday|friday|saturday|sunday)/i);
-
-      if (weekdayMatch?.[1]) {
-        const weekday = weekdayMatch[1].toLowerCase();
-        // Filter all matching weekdays in our date range
-        const days = eachDayOfInterval({ start: startDate, end: today });
-        const expectedDays = days.filter(date =>
-          format(date, 'EEEE').toLowerCase() === weekday &&
-          (isBefore(date, today) || isEqual(date, today))
-        );
-
-        // Count every other occurrence as expected
-        let expectedCount = Math.ceil(expectedDays.length / 2);
-        let completedCount = recentCompletions.filter(date =>
-          format(date, 'EEEE').toLowerCase() === weekday
-        ).length;
-
-        return Math.round((completedCount / expectedCount) * 100);
-      } else {
-        // "every other day" pattern
-        const days = eachDayOfInterval({ start: startDate, end: today });
-        const expectedCount = Math.ceil(days.length / 2);
-        return Math.round((recentCompletions.length / expectedCount) * 100);
-      }
-    }
-
-    // For weekly tasks
-    if (lower.includes('every') && !lower.includes('month')) {
-      const weekdayMatch = lower.match(/every (monday|tuesday|wednesday|thursday|friday|saturday|sunday|sun|mon|tue|wed|thu|fri|sat)/i);
-      if (weekdayMatch?.[1]) {
-        // Normalize day names
-        const dayMap: { [key: string]: string } = {
-          sun: 'sunday',
-          mon: 'monday',
-          tue: 'tuesday',
-          wed: 'wednesday',
-          thu: 'thursday',
-          fri: 'friday',
-          sat: 'saturday'
-        };
-        const weekday = dayMap[weekdayMatch[1].toLowerCase()] || weekdayMatch[1].toLowerCase();
-        const days = eachDayOfInterval({ start: startDate, end: today });
-        const expectedDays = days.filter(date =>
-          format(date, 'EEEE').toLowerCase() === weekday &&
-          (isBefore(date, today) || isEqual(date, today))
-        );
-
-        const completedCount = recentCompletions.filter(date =>
-          format(date, 'EEEE').toLowerCase() === weekday
-        ).length;
-
-        return Math.round((completedCount / expectedDays.length) * 100);
-      }
-    }
-
-    // For monthly tasks
-    if (lower.includes('every') && lower.includes('month')) {
-      const dayMatch = lower.match(/(\d{1,2})(st|nd|rd|th)?/);
-      if (dayMatch?.[1]) {
-        const targetDay = dayMatch[1];
-        const days = eachDayOfInterval({ start: startDate, end: today });
-        const expectedDays = days.filter(date =>
-          format(date, 'd') === targetDay &&
-          (isBefore(date, today) || isEqual(date, today))
-        );
-        return Math.round((recentCompletions.length / expectedDays.length) * 100);
-      }
-    }
-
-    // For daily tasks
-    if (lower.includes('every day') || lower.includes('daily')) {
-      const days = eachDayOfInterval({ start: startDate, end: today });
-      return Math.round((recentCompletions.length / days.length) * 100);
-    }
-
-    // For other patterns (every X days)
-    const xDaysMatch = lower.match(/every (\d+) days?/);
-    if (xDaysMatch?.[1]) {
-      const interval = parseInt(xDaysMatch[1]);
-      const days = eachDayOfInterval({ start: startDate, end: today });
-      const expectedCount = Math.ceil(days.length / interval);
-      return Math.round((recentCompletions.length / expectedCount) * 100);
-    }
-
-    return 0;
-  }, [task.due?.string, taskData.completionDates]);
-
-  // Calculate streak based on completion pattern
-  const calculateStreak = useCallback(() => {
-    if (!task.due?.string) return 0;
-    const lower = task.due.string.toLowerCase();
-    const today = new Date();
-
-    // Sort completion dates in descending order (newest first)
-    const sortedCompletions = [...taskData.completionDates]
-      .sort((a, b) => b.getTime() - a.getTime())
-      .filter(date => isBefore(date, today) || isEqual(date, today));
-
-    if (sortedCompletions.length === 0) return 0;
-
-    // For weekly tasks
-    if (lower.includes('every') && !lower.includes('month') && !lower.includes('other')) {
-      const weekdayMatch = lower.match(/every (monday|tuesday|wednesday|thursday|friday|saturday|sunday|sun|mon|tue|wed|thu|fri|sat)/i);
-      if (weekdayMatch?.[1]) {
-        // Normalize day names
-        const dayMap: { [key: string]: string } = {
-          sun: 'sunday',
-          mon: 'monday',
-          tue: 'tuesday',
-          wed: 'wednesday',
-          thu: 'thursday',
-          fri: 'friday',
-          sat: 'saturday'
-        };
-        const weekday = dayMap[weekdayMatch[1].toLowerCase()] || weekdayMatch[1].toLowerCase();
-        let streak = 0;
-        let lastExpectedDate = today;
-
-        // Find the most recent occurrence of the weekday
-        while (format(lastExpectedDate, 'EEEE').toLowerCase() !== weekday) {
-          lastExpectedDate = subDays(lastExpectedDate, 1);
-        }
-
-        while (true) {
-          const completed = sortedCompletions.some(date =>
-            format(date, 'yyyy-MM-dd') === format(lastExpectedDate, 'yyyy-MM-dd')
-          );
-
-          if (!completed) break;
-          streak++;
-          lastExpectedDate = subDays(lastExpectedDate, 7); // Move to previous week
-        }
-
-        return streak;
-      }
-    }
-
-    // For "every other" patterns
-    if (lower.includes('every other')) {
-      const weekdayMatch = lower.match(/every other (monday|tuesday|wednesday|thursday|friday|saturday|sunday)/i);
-
-      if (weekdayMatch?.[1]) {
-        const weekday = weekdayMatch[1].toLowerCase();
-        let streak = 0;
-        let lastExpectedDate = today;
-
-        while (format(lastExpectedDate, 'EEEE').toLowerCase() !== weekday) {
-          lastExpectedDate = subDays(lastExpectedDate, 1);
-        }
-
-        while (true) {
-          const completed = sortedCompletions.some(date =>
-            format(date, 'yyyy-MM-dd') === format(lastExpectedDate, 'yyyy-MM-dd')
-          );
-
-          if (!completed) break;
-          streak++;
-          lastExpectedDate = subDays(lastExpectedDate, 14); // Skip two weeks for "every other"
-        }
-
-        return streak;
-      }
-    }
-
-    // For other patterns, keep the existing streak calculation
-    return taskData.currentStreak;
-  }, [task.due?.string, taskData.completionDates, taskData.currentStreak]);
-
-  // Calculate stats including longest streak and total completions
-  const calculateStats = useCallback(() => {
-    if (!task.due?.string) return { currentStreak: 0, longestStreak: 0, totalCompletions: 0, completionRate: 0 };
-    const lower = task.due.string.toLowerCase();
-    const today = new Date();
-    const sixMonthsAgo = subMonths(today, 6);
-
-    // Get completions within 6 month window
-    const recentCompletions = taskData.completionDates
-      .filter(date =>
-        (isBefore(sixMonthsAgo, date) || isEqual(sixMonthsAgo, date)) &&
-        (isBefore(date, today) || isEqual(date, today))
-      )
-      .sort((a, b) => b.getTime() - a.getTime());
-
-    const totalCompletions = recentCompletions.length;
-    const completionRate = calculateCompletionRate();
-
-    // Calculate longest streak within 6 months
-    let longestStreak = 0;
-    let currentStreak = 0;
-
-    if (lower.includes('every') && !lower.includes('month') && !lower.includes('other')) {
-      // Weekly tasks
-      const weekdayMatch = lower.match(/every (monday|tuesday|wednesday|thursday|friday|saturday|sunday|sun|mon|tue|wed|thu|fri|sat)/i);
-      if (weekdayMatch?.[1]) {
-        const dayMap: { [key: string]: string } = {
-          sun: 'sunday', mon: 'monday', tue: 'tuesday', wed: 'wednesday',
-          thu: 'thursday', fri: 'friday', sat: 'saturday'
-        };
-        const weekday = dayMap[weekdayMatch[1].toLowerCase()] || weekdayMatch[1].toLowerCase();
-
-        let tempStreak = 0;
-        let date = today;
-
-        // Find most recent occurrence of weekday
-        while (format(date, 'EEEE').toLowerCase() !== weekday) {
-          date = subDays(date, 1);
-        }
-
-        while (isBefore(sixMonthsAgo, date) || isEqual(sixMonthsAgo, date)) {
-          const completed = recentCompletions.some(d =>
-            format(d, 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd')
-          );
-
-          if (completed) {
-            tempStreak++;
-            if (tempStreak > longestStreak) longestStreak = tempStreak;
-            if (isBefore(sixMonthsAgo, date)) currentStreak = tempStreak;
-          } else {
-            tempStreak = 0;
-          }
-          date = subDays(date, 7);
-        }
-      }
-    } else if (lower.includes('every other')) {
-      // Handle "every other" patterns similarly but with 14-day intervals
-      // ... existing every other logic ...
-      currentStreak = calculateStreak();
-      longestStreak = currentStreak; // For now, we'll use current streak as longest
-    }
-
-    return {
-      currentStreak,
-      longestStreak,
-      totalCompletions,
-      completionRate
-    };
-  }, [task.due?.string, taskData.completionDates, calculateCompletionRate, calculateStreak]);
-
-  const stats = useMemo(() => calculateStats(), [calculateStats]);
-
-  // Calculate completion trend data
-  const getTrendData = useCallback(() => {
-    const today = new Date();
-    const sixMonthsAgo = subMonths(today, 6);
-    const weeks = eachWeekOfInterval({ start: sixMonthsAgo, end: today });
-
-    // Get the pattern type
-    const pattern = task.due?.string?.toLowerCase() || '';
-    const isWeekly = pattern.includes('every') && !pattern.includes('month') && !pattern.includes('other');
-    const isMonthly = pattern.includes('month');
-    const isBiWeekly = pattern.includes('every other');
-
-    // For weekly/bi-weekly tasks, calculate weekly completion rate
-    if (isWeekly || isBiWeekly) {
-      return weeks.map(weekStart => {
-        const weekEnd = endOfWeek(weekStart);
-        const completionsInWeek = taskData.completionDates.filter(date =>
-          (isBefore(weekStart, date) || isEqual(weekStart, date)) &&
-          (isBefore(date, weekEnd) || isEqual(date, weekEnd))
-        ).length;
-
-        // Bi-weekly tasks should only expect completion every other week
-        const expectedCompletions = isBiWeekly ? 0.5 : 1;
-        return (completionsInWeek / expectedCompletions) * 100;
-      });
-    }
-
-    // For monthly tasks, calculate monthly completion rate
-    if (isMonthly) {
-      return Array.from({ length: 6 }, (_, i) => {
-        const monthStart = startOfMonth(subMonths(today, 5 - i));
-        const monthEnd = endOfMonth(monthStart);
-        const completionsInMonth = taskData.completionDates.filter(date =>
-          (isBefore(monthStart, date) || isEqual(monthStart, date)) &&
-          (isBefore(date, monthEnd) || isEqual(date, monthEnd))
-        ).length;
-        return (completionsInMonth / 1) * 100;
-      });
-    }
-
-    // For daily tasks, calculate weekly average completion rate
-    return weeks.map(weekStart => {
-      const weekEnd = endOfWeek(weekStart);
-      const daysInWeek = eachDayOfInterval({ start: weekStart, end: weekEnd });
-      const completionsInWeek = taskData.completionDates.filter(date =>
-        (isBefore(weekStart, date) || isEqual(weekStart, date)) &&
-        (isBefore(date, weekEnd) || isEqual(date, weekEnd))
-      ).length;
-      return (completionsInWeek / daysInWeek.length) * 100;
-    });
-  }, [task.due?.string, taskData.completionDates]);
-
-  const trendData = useMemo(() => getTrendData(), [getTrendData]);
+  const stats = useMemo(() => calculateStats(task, taskData.completionDates), [task, taskData.completionDates]);
+  const trendData = useMemo(() => getTrendData(task, taskData.completionDates), [task, taskData.completionDates]);
 
   // Get descriptive text for the recurrence pattern
   const getRecurrenceDescription = useCallback(() => {
@@ -455,7 +140,6 @@ export const TaskCalendar: React.FC<TaskCalendarProps> = ({ taskData, task, proj
 
       </div>
 
-
       <div className="flex gap-4 overflow-x-auto pb-2">
         {months.map(({ month, days }) => (
           <div key={month} className="flex-none min-w-[180px]">
@@ -478,8 +162,7 @@ export const TaskCalendar: React.FC<TaskCalendarProps> = ({ taskData, task, proj
                 return (
                   <div key={date.toString()} className="group relative">
                     <div
-                      className={`
-                        h-5 w-5 rounded-sm flex items-center justify-center text-[10px]
+                      className={`h-5 w-5 rounded-sm flex items-center justify-center text-[10px]
                         ${completed ? 'bg-emerald-500 dark:bg-emerald-500 text-white' :
                           isPast ? 'bg-gray-800 dark:bg-gray-800 text-gray-400' :
                             'bg-gray-900 dark:bg-gray-900 text-gray-500'
