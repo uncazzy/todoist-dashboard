@@ -19,8 +19,8 @@ const RecurringTasksPage = () => {
 
   return (
     <Layout>
-      <div className="overflow-hidden bg-gray-800 p-6 rounded-lg min-h-[80vh] h-full">
-        <header className="mb-8">
+      <div className="overflow-hidden bg-gray-800 p-2 sm:p-6 rounded-lg min-h-[80vh] h-full flex flex-col">
+        <header className="flex-none mb-8">
           <div className="flex items-center gap-2 mb-4">
             <Link href="/" className="flex items-center text-gray-500 hover:text-gray-700 transition-colors no-underline">
               <FaArrowLeft className="w-3 h-3 mr-1" />
@@ -59,18 +59,14 @@ const RecurringTasksPage = () => {
             <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
           </div>
         ) : (
-          <div className="bg-gray-800/50 rounded-lg backdrop-blur-sm overflow-hidden">
-            <div className="p-6 overflow-x-auto">
-              <div className="min-w-[768px]">
-                <RecurringTasksMatrix
-                  activeTasks={selectedProjectIds.length > 0
-                    ? data.activeTasks.filter(task => selectedProjectIds.includes(task.projectId))
-                    : data.activeTasks}
-                  allCompletedTasks={data.allCompletedTasks}
-                  projectData={data.projectData}
-                />
-              </div>
-            </div>
+          <div className="flex-1 overflow-hidden bg-gray-800/50 rounded-lg backdrop-blur-sm">
+            <RecurringTasksMatrix
+              activeTasks={selectedProjectIds.length > 0
+                ? data.activeTasks.filter(task => selectedProjectIds.includes(task.projectId))
+                : data.activeTasks}
+              allCompletedTasks={data.allCompletedTasks}
+              projectData={data.projectData}
+            />
           </div>
         )}
       </div>

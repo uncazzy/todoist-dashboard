@@ -123,8 +123,8 @@ export const TaskCalendar: React.FC<TaskCalendarProps> = ({ taskData, task, proj
 
   return (
     <div className="bg-gray-900/50 rounded-lg p-4 hover:bg-gray-900/70 transition-colors">
-      <div className="flex items-start justify-between mb-2">
-        <div className="space-y-1">
+      <div className="flex flex-col sm:flex-row items-start justify-between mb-4 sm:mb-2 gap-4 sm:gap-0">
+        <div className="space-y-1 w-full sm:w-auto">
           <div className="space-y-0.5 mb-4">
             <h3 className="font-medium text-gray-200 mb-0">{task.content}</h3>
             {nextDue && (
@@ -156,8 +156,8 @@ export const TaskCalendar: React.FC<TaskCalendarProps> = ({ taskData, task, proj
           </div>
         </div>
 
-        <div className="flex flex-col items-center gap-2">
-          <div className="flex items-center gap-4">
+        <div className="flex flex-col items-start sm:items-center gap-2 w-full sm:w-auto">
+          <div className="flex items-center gap-4 w-full sm:w-auto justify-start sm:justify-end">
             <div
               className="text-sm text-gray-400 flex items-center gap-1 cursor-help"
               data-tooltip-id="task-calendar-tooltip"
@@ -191,7 +191,7 @@ export const TaskCalendar: React.FC<TaskCalendarProps> = ({ taskData, task, proj
           </div>
 
           <div
-            className="w-full"
+            className="w-full sm:w-48"
             data-tooltip-id="task-calendar-tooltip"
             data-tooltip-content={stats.isLongTerm
               ? `Long-term recurring task (${stats.interval} months) - trend analysis not applicable`
@@ -213,12 +213,10 @@ export const TaskCalendar: React.FC<TaskCalendarProps> = ({ taskData, task, proj
               />
             </Sparklines>
           </div>
-
         </div>
-
       </div>
 
-      <div className="flex gap-4 overflow-x-auto pb-2">
+      <div className="flex gap-4 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0">
         {months.map(({ month, days }) => (
           <div key={month} className="flex-none min-w-[180px]">
             <div className="text-xs text-gray-400 mb-1">{month}</div>
@@ -230,7 +228,7 @@ export const TaskCalendar: React.FC<TaskCalendarProps> = ({ taskData, task, proj
               ))}
               {days.map((date, index) => {
                 if (!date) {
-                  return <div key={`empty-${index}`} className="h-5 w-5" />;
+                  return <div key={`empty-${index}`} className="h-6 sm:h-5 w-full" />;
                 }
 
                 const completed = isCompleted(date);
@@ -240,7 +238,7 @@ export const TaskCalendar: React.FC<TaskCalendarProps> = ({ taskData, task, proj
                 return (
                   <div key={date.toString()} className="group relative">
                     <div
-                      className={`h-5 w-5 rounded-sm flex items-center justify-center text-[10px]
+                      className={`h-6 sm:h-5 w-full rounded-sm flex items-center justify-center text-[11px] sm:text-[10px]
                         ${completed ? 'bg-emerald-500 dark:bg-emerald-500 text-white' :
                           isPast ? 'bg-gray-800 dark:bg-gray-800 text-gray-400' :
                             'bg-gray-900 dark:bg-gray-900 text-gray-500'

@@ -230,7 +230,7 @@ export default function Dashboard(): JSX.Element {
     };
 
     return (
-      <div className="mb-8 bg-gray-800 p-6 rounded-xl shadow-lg">
+      <div className="mb-8 bg-gray-800 p-2 sm:p-6 rounded-xl shadow-lg">
         <div className="flex justify-between items-center mb-2">
           <div className="text-sm text-gray-400">
             Last updated: {getTimeAgo(lastUpdateTime)}

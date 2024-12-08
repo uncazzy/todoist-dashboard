@@ -128,3 +128,13 @@ a {
   scrollbar-width: thin;
   scrollbar-color: rgba(155, 155, 155, 0.5) rgba(0, 0, 0, 0.05);
 }
+
+/* Hide scrollbar but maintain functionality */
+.hide-scrollbar {
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* Internet Explorer 10+ */
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none; /* WebKit */
+}
