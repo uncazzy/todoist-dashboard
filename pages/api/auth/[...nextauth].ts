@@ -27,7 +27,7 @@ export const authOptions: NextAuthOptions = {
       authorization: {
         url: "https://todoist.com/oauth/authorize",
         params: {
-          scope: "data:read_write",
+          scope: "data:read",
           response_type: "code",
           redirect_uri: `${process.env.NEXTAUTH_URL}/api/auth/callback/todoist`,
         },
