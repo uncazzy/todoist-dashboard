@@ -20,6 +20,7 @@
     "@types/d3-cloud": "^1.2.9",
     "@types/d3-scale-chromatic": "^3.1.0",
     "@types/echarts": "^4.9.22",
+    "@types/react-sparklines": "^1.7.5",
     "d3": "^7.9.0",
     "d3-cloud": "^1.2.7",
     "d3-scale-chromatic": "^3.1.0",
@@ -37,6 +38,7 @@
     "react-dom": "18.2.0",
     "react-icons": "^4.10.1",
     "react-markdown": "^8.0.7",
+    "react-sparklines": "^1.7.0",
     "react-tooltip": "^5.28.0"
   },
   "devDependencies": {
