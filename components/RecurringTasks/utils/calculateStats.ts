@@ -1,4 +1,4 @@
-import { format, isEqual, isBefore, subMonths, subDays, startOfDay, isAfter, startOfWeek, endOfWeek, isWithinInterval, startOfMonth, addMonths } from 'date-fns';
+import { format, isEqual, isBefore, subMonths, subDays, startOfDay, isAfter, startOfWeek, endOfWeek, isWithinInterval, startOfMonth, addMonths, differenceInMonths } from 'date-fns';
 import { ActiveTask } from '../../../types';
 
 interface TaskStats {
@@ -56,6 +56,11 @@ export function calculateStats(
   // Calculate completion rate
   let completionRate = 0;
   let expectedCount = 0;
+  let validCompletions = 0;
+  let currentStreak = 0;
+  let longestStreak = 0;
+  let lastCompletedDate: Date | null = null;
+  let activeStreak = false;
 
   // Helper function to check if a completion is valid for a given target date
   const isValidCompletion = (targetDate: Date, completionDate: Date, dueString: string): boolean => {
@@ -146,20 +151,26 @@ export function calculateStats(
       
       console.log('Detected specific day:', targetDay);
       
-      // Start from the latest completion month or today, whichever is earlier
-      const startDate = latestCompletion || today;
-      date = new Date(startDate.getFullYear(), startDate.getMonth(), targetDay);
+      // Start from current month and work backwards
+      date = new Date(today.getFullYear(), today.getMonth(), targetDay);
       
-      // If the target day hasn't passed this month, start from last month
-      if (parseInt(format(today, 'd')) < targetDay) {
-        date = subMonths(date, 1);
+      // Only include current month's target if we've passed the target day
+      const currentDay = parseInt(format(today, 'd'));
+      const includeCurrentMonth = currentDay >= targetDay;
+      
+      if (includeCurrentMonth) {
+        if (!isAfter(date, today)) {
+          targetDates.push(new Date(date));
+        }
       }
       
+      // Add previous months' target dates
+      date = subMonths(date, 1); // Start from previous month
       while (isBefore(sixMonthsAgo, date) || isEqual(sixMonthsAgo, date)) {
         if (!isAfter(date, today)) {
-          targetDates.push(date);
+          targetDates.push(new Date(date));
         }
-        date = subMonths(date, interval);
+        date = subMonths(date, 1);
       }
       
       // Sort target dates from newest to oldest
@@ -216,29 +227,49 @@ export function calculateStats(
     case 'months':
       // Handle tasks with specific intervals (e.g., every 7 months)
       if (interval > 1) {
-        // If we have a completion, use that as the anchor point
-        if (latestCompletion) {
-          // Calculate next target date from the last completion
-          let nextTargetDate = new Date(latestCompletion);
-          nextTargetDate = addMonths(nextTargetDate, interval);
-          
-          // Only add this as a target date if it falls within our window
-          if (isBefore(nextTargetDate, today)) {
-            targetDates.push(nextTargetDate);
-          }
-          
-          // The task is considered complete until the next target date
-          if (isBefore(today, nextTargetDate)) {
-            expectedCount = 0;  // No completions expected yet
+        // For intervals greater than 6 months
+        if (interval > 6) {
+          // If we have at least one completion in the time window, consider it 100% complete
+          if (recentCompletions.length > 0 && recentCompletions[0]) {
+            expectedCount = 1;
+            validCompletions = 1;
+            currentStreak = 1;
+            longestStreak = 1;
+            lastCompletedDate = recentCompletions[0];
+            activeStreak = true;
           } else {
-            expectedCount = 1;  // One completion expected
+            expectedCount = 1;
+            validCompletions = 0;
+            currentStreak = 0;
+            longestStreak = 0;
+            activeStreak = false;
           }
         } else {
-          // If no completions yet, count from the start of our window
-          let currentDate = sixMonthsAgo;
-          while (isBefore(currentDate, today) || isEqual(currentDate, today)) {
-            targetDates.push(new Date(currentDate));
-            currentDate = addMonths(currentDate, interval);
+          // For tasks with shorter intervals
+          if (latestCompletion) {
+            // Calculate next target date from the last completion
+            let nextTargetDate = new Date(latestCompletion);
+            nextTargetDate = addMonths(nextTargetDate, interval);
+            
+            // If next target date is in the future, count current completion
+            if (isAfter(nextTargetDate, today)) {
+              expectedCount = 1;
+              validCompletions = 1;
+            } else {
+              // If we've passed the next target date, expect another completion
+              expectedCount = 2;
+              validCompletions = recentCompletions.length;
+            }
+          } else {
+            // If no completions yet, count from the start of our window
+            let currentDate = sixMonthsAgo;
+            let count = 0;
+            while (isBefore(currentDate, today) || isEqual(currentDate, today)) {
+              count++;
+              currentDate = addMonths(currentDate, interval);
+            }
+            expectedCount = count;
+            validCompletions = recentCompletions.length;
           }
         }
       } else {
@@ -264,7 +295,6 @@ export function calculateStats(
   console.log('Expected completions:', expectedCount);
 
   // Calculate completion rate
-  let validCompletions = 0;
   targetDates.forEach(targetDate => {
     const isCompleted = recentCompletions.some(completionDate => 
       isValidCompletion(targetDate, completionDate, task.due!.string)
@@ -272,40 +302,23 @@ export function calculateStats(
     if (isCompleted) validCompletions++;
   });
 
-  // For monthly tasks, don't count current month in expected count
-  const isMonthlyTask = task.due!.string.toLowerCase() === 'every month';
-  const specificDateMatch = task.due!.string.toLowerCase().match(/every (\d+)(?:st|nd|rd|th)?(?:\s|$)/i);
-  const isLastDayTask = task.due!.string.toLowerCase() === 'every last day';
-  
-  if (isMonthlyTask || specificDateMatch || isLastDayTask) {
-    const currentMonthTargets = targetDates.filter(date => {
-      const isCurrentMonth = format(date, 'yyyy-MM') === format(today, 'yyyy-MM');
-      
-      // For specific date tasks, only exclude if the date hasn't passed yet
-      if (specificDateMatch) {
-        const targetDay = parseInt(specificDateMatch[1] ?? '1');
-        const currentDay = parseInt(format(today, 'd'));
-        return isCurrentMonth && currentDay >= targetDay;
-      }
-      
-      // For last day of month tasks, only exclude if we haven't reached the last day
-      if (isLastDayTask) {
-        const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-        const currentDay = parseInt(format(today, 'd'));
-        const lastDay = parseInt(format(lastDayOfMonth, 'd'));
-        return isCurrentMonth && currentDay >= lastDay;
-      }
-      
-      // For general monthly tasks, exclude current month entirely
-      return isCurrentMonth;
-    });
-    
-    expectedCount -= currentMonthTargets.length;
-  }
-
   if (expectedCount > 0) {
     const completedCount = validCompletions;
-    completionRate = Math.round((completedCount / expectedCount) * 100);
+    
+    // For monthly tasks with specific dates, adjust completion rate calculation
+    const specificDateMatch = lower.match(/every (\d+)(?:st|nd|rd|th)?(?:\s|$)/i);
+    if (specificDateMatch?.[1]) {
+      const targetDay = parseInt(specificDateMatch[1] ?? '1');
+      const currentDay = parseInt(format(today, 'd'));
+      
+      // If we haven't reached this month's target day, don't count it in expected completions
+      if (currentDay < targetDay) {
+        expectedCount = targetDates.length;
+      }
+    }
+    
+    // For tasks completed more times than expected, cap at 200%
+    completionRate = Math.min(200, Math.round((completedCount / expectedCount) * 100));
   }
 
   console.log('Expected count:', expectedCount, 
@@ -313,11 +326,8 @@ export function calculateStats(
     'Rate:', completionRate);
 
   // Calculate streaks
-  let currentStreak = 0;
-  let longestStreak = 0;
   let tempStreak = 0;
-  let lastCompletedDate: Date | null = null;
-  let activeStreak = true;
+  let lastDate: Date | null = null;
 
   // Sort target dates from newest to oldest
   targetDates.sort((a, b) => b.getTime() - a.getTime());
@@ -328,63 +338,150 @@ export function calculateStats(
     !isBefore(date, sixMonthsAgo)
   );
 
-  for (let i = 0; i < validTargetDates.length; i++) {
-    const targetDate = validTargetDates[i] as Date;
-    const isToday = isEqual(startOfDay(targetDate), startOfDay(today));
-    const isCurrentMonth = format(targetDate, 'yyyy-MM') === format(today, 'yyyy-MM');
-    const isFutureDate = isAfter(targetDate, today);
+  // Calculate streaks for monthly tasks
+  if ((lower.match(/every (\d+)(?:st|nd|rd|th)?(?:\s|$)/i) || lower === 'every last day') && interval === 1) {
+    currentStreak = 0;
+    longestStreak = 0;
+    tempStreak = 0;
+    lastCompletedDate = null;
     
-    // Skip future dates
-    if (isFutureDate) continue;
+    // Get the target day of month
+    let targetDay: number;
+    if (lower === 'every last day') {
+      const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+      targetDay = parseInt(format(lastDayOfMonth, 'd'));
+    } else {
+      const match = lower.match(/every (\d+)(?:st|nd|rd|th)?(?:\s|$)/i);
+      targetDay = parseInt(match?.[1] ?? '1');
+    }
     
-    // Find the completion for this target date
-    const completion = recentCompletions.find(completionDate => 
-      isValidCompletion(targetDate, completionDate, task.due!.string)
-    );
-
-    console.log('Checking date:', format(targetDate, 'yyyy-MM-dd'), 
-      'completed:', !!completion, 
-      'isToday:', isToday,
-      'isCurrentMonth:', isCurrentMonth,
-      'tempStreak:', tempStreak);
-
-    if (completion) {
-      // If this is our first completion in the streak
-      if (tempStreak === 0) {
-        lastCompletedDate = completion;
+    // Sort completions from newest to oldest
+    const sortedCompletions = [...recentCompletions].sort((a, b) => b.getTime() - a.getTime());
+    
+    // Check each completion
+    let currentTempStreak = 0;
+    for (const completion of sortedCompletions) {
+      const completionDay = parseInt(format(completion, 'd'));
+      
+      // Check if this completion was on the correct day
+      if (completionDay === targetDay) {
+        currentTempStreak++;
+        if (currentTempStreak > longestStreak) {
+          longestStreak = currentTempStreak;
+        }
+        // Only update current streak if we're still in sequence
+        if (currentTempStreak === sortedCompletions.indexOf(completion) + 1) {
+          currentStreak = currentTempStreak;
+        }
+      } else {
+        // If we missed the target day, break the current streak
+        currentTempStreak = 0;
+        // If this is the most recent completion and it wasn't on target, current streak is 0
+        if (sortedCompletions.indexOf(completion) === 0) {
+          currentStreak = 0;
+        }
       }
-      
-      tempStreak++;
-      
-      if (tempStreak > longestStreak) {
-        longestStreak = tempStreak;
-      }
-      
-      // Update current streak if we're still in an active streak
-      if (activeStreak) {
-        currentStreak = tempStreak;
+    }
+    
+    // Update active streak based on current streak
+    activeStreak = currentStreak > 0;
+  } else if (recurrencePattern === 'months' && interval > 1) {
+    // For tasks with interval > 6 months
+    if (interval > 6) {
+      if (recentCompletions.length > 0) {
+        currentStreak = 1;
+        longestStreak = 1;
+        activeStreak = true;
+      } else {
+        currentStreak = 0;
+        longestStreak = 0;
+        activeStreak = false;
       }
     } else {
-      // For monthly tasks, don't break streak if we're in current month
-      const isMonthlyTask = task.due!.string.toLowerCase() === 'every month';
-      if (isMonthlyTask && isCurrentMonth) {
-        // Keep the streak going if we have one
-        if (tempStreak > 0) {
+      // For tasks with shorter intervals
+      currentStreak = 0;
+      longestStreak = 0;
+      lastDate = null;
+
+      // Sort completions from oldest to newest
+      const sortedCompletions = [...recentCompletions].sort((a, b) => a.getTime() - b.getTime());
+      
+      for (const completion of sortedCompletions) {
+        if (!lastDate || (lastDate && 
+            Math.abs(differenceInMonths(completion, lastDate)) <= interval)) {
+          currentStreak++;
+          longestStreak = Math.max(longestStreak, currentStreak);
+        } else {
+          currentStreak = 1;
+        }
+        lastDate = completion;
+      }
+
+      // Cap streak at maximum possible within 6 month window
+      const maxPossibleStreak = Math.floor(6 / interval);
+      currentStreak = Math.min(currentStreak, maxPossibleStreak);
+      longestStreak = Math.min(longestStreak, maxPossibleStreak);
+      activeStreak = currentStreak > 0;
+    }
+  } else {
+    for (let i = 0; i < validTargetDates.length; i++) {
+      const targetDate = validTargetDates[i] as Date;
+      const isToday = isEqual(startOfDay(targetDate), startOfDay(today));
+      const isCurrentMonth = format(targetDate, 'yyyy-MM') === format(today, 'yyyy-MM');
+      const isFutureDate = isAfter(targetDate, today);
+      
+      // Skip future dates
+      if (isFutureDate) continue;
+      
+      // Find the completion for this target date
+      const completion = recentCompletions.find(completionDate => 
+        isValidCompletion(targetDate, completionDate, task.due!.string)
+      );
+
+      console.log('Checking date:', format(targetDate, 'yyyy-MM-dd'), 
+        'completed:', !!completion, 
+        'isToday:', isToday,
+        'isCurrentMonth:', isCurrentMonth,
+        'tempStreak:', tempStreak);
+
+      if (completion) {
+        // If this is our first completion in the streak
+        if (tempStreak === 0) {
+          lastCompletedDate = completion;
+        }
+        
+        tempStreak++;
+        
+        if (tempStreak > longestStreak) {
+          longestStreak = tempStreak;
+        }
+        
+        // Update current streak if we're still in an active streak
+        if (activeStreak) {
           currentStreak = tempStreak;
         }
-      } else if (!isToday) {
-        // Break the streak if we miss a day (except today)
-        activeStreak = false;
-        if (lastCompletedDate) {
-          console.log('Streak broken at:', format(targetDate, 'yyyy-MM-dd'),
-            'Last completed:', format(lastCompletedDate, 'yyyy-MM-dd'));
-        }
-        tempStreak = 0;
-        lastCompletedDate = null;
       } else {
-        // For today's incomplete task, keep the streak going if we have one
-        if (tempStreak > 0) {
-          currentStreak = tempStreak;
+        // For monthly tasks, don't break streak if we're in current month
+        const isMonthlyTask = task.due!.string.toLowerCase() === 'every month';
+        if (isMonthlyTask && isCurrentMonth) {
+          // Keep the streak going if we have one
+          if (tempStreak > 0) {
+            currentStreak = tempStreak;
+          }
+        } else if (!isToday) {
+          // Break the streak if we miss a day (except today)
+          activeStreak = false;
+          if (lastCompletedDate) {
+            console.log('Streak broken at:', format(targetDate, 'yyyy-MM-dd'),
+              'Last completed:', format(lastCompletedDate, 'yyyy-MM-dd'));
+          }
+          tempStreak = 0;
+          lastCompletedDate = null;
+        } else {
+          // For today's incomplete task, keep the streak going if we have one
+          if (tempStreak > 0) {
+            currentStreak = tempStreak;
+          }
         }
       }
     }

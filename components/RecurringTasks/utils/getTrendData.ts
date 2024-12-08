@@ -1,4 +1,4 @@
-import { subMonths, endOfWeek, eachWeekOfInterval, startOfMonth, endOfMonth, eachDayOfInterval, startOfWeek, format, isWithinInterval } from 'date-fns';
+import { subMonths, endOfWeek, eachWeekOfInterval, startOfMonth, eachDayOfInterval, startOfWeek, format, isWithinInterval } from 'date-fns';
 import { ActiveTask } from '../../../types';
 
 export function getTrendData(
@@ -52,7 +52,6 @@ export function getTrendData(
   if (pattern.includes('every') && !pattern.includes('month') && !pattern.includes('other')) {
     // Weekly tasks
     return weeks.map(weekStart => {
-      const weekEnd = endOfWeek(weekStart);
       const completionsInWeek = completionDates.filter(date =>
         isValidCompletion(weekStart, date)
       ).length;
@@ -62,7 +61,6 @@ export function getTrendData(
     // Bi-weekly tasks
     return weeks.map((weekStart, index) => {
       if (index % 2 !== 0) return 0; // Skip alternate weeks
-      const weekEnd = endOfWeek(weekStart);
       const completionsInWeek = completionDates.filter(date =>
         isValidCompletion(weekStart, date)
       ).length;
@@ -72,7 +70,6 @@ export function getTrendData(
     // Monthly tasks
     return Array.from({ length: 6 }, (_, i) => {
       const monthStart = startOfMonth(subMonths(today, 5 - i));
-      const monthEnd = endOfMonth(monthStart);
       const completionsInMonth = completionDates.filter(date =>
         isValidCompletion(monthStart, date)
       ).length;
