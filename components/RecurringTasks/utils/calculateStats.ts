@@ -1,4 +1,4 @@
-import { format, isEqual, isBefore, subMonths, subDays, startOfDay, isAfter, startOfWeek, endOfWeek, isWithinInterval, startOfMonth } from 'date-fns';
+import { format, isEqual, isBefore, subMonths, subDays, startOfDay, isAfter, startOfWeek, endOfWeek, isWithinInterval, startOfMonth, addMonths } from 'date-fns';
 import { ActiveTask } from '../../../types';
 
 interface TaskStats {
@@ -18,7 +18,8 @@ export function calculateStats(
 
   const lower = task.due!.string.toLowerCase();
   const today = new Date();
-  const sixMonthsAgo = subMonths(today, 6);
+  // Change to use startOfMonth to get the first day of the current month
+  const sixMonthsAgo = startOfMonth(subMonths(today, 5)); // Changed from 6 to 5 to get last 6 months inclusive
 
   console.log('\n========================================');
   console.log('Calculating stats for task:', task.content);
@@ -213,16 +214,46 @@ export function calculateStats(
 
     case 'monthly':
     case 'months':
-      const monthlyMatch = lower.match(/every( \d+)? months? on the (\d+)(?:st|nd|rd|th)?/i);
-      if (monthlyMatch) {
-        const targetDay = parseInt(monthlyMatch[2] ?? '1');
-        date = new Date(today.getFullYear(), today.getMonth(), targetDay);
-        
-        while (isBefore(sixMonthsAgo, date) || isEqual(sixMonthsAgo, date)) {
-          if (!isAfter(date, today)) {
-            targetDates.push(date);
+      // Handle tasks with specific intervals (e.g., every 7 months)
+      if (interval > 1) {
+        // If we have a completion, use that as the anchor point
+        if (latestCompletion) {
+          // Calculate next target date from the last completion
+          let nextTargetDate = new Date(latestCompletion);
+          nextTargetDate = addMonths(nextTargetDate, interval);
+          
+          // Only add this as a target date if it falls within our window
+          if (isBefore(nextTargetDate, today)) {
+            targetDates.push(nextTargetDate);
           }
-          date = subMonths(date, interval);
+          
+          // The task is considered complete until the next target date
+          if (isBefore(today, nextTargetDate)) {
+            expectedCount = 0;  // No completions expected yet
+          } else {
+            expectedCount = 1;  // One completion expected
+          }
+        } else {
+          // If no completions yet, count from the start of our window
+          let currentDate = sixMonthsAgo;
+          while (isBefore(currentDate, today) || isEqual(currentDate, today)) {
+            targetDates.push(new Date(currentDate));
+            currentDate = addMonths(currentDate, interval);
+          }
+        }
+      } else {
+        // Original logic for monthly tasks
+        const monthlyMatch = lower.match(/every( \d+)? months? on the (\d+)(?:st|nd|rd|th)?/i);
+        if (monthlyMatch) {
+          const targetDay = parseInt(monthlyMatch[2] ?? '1');
+          date = new Date(today.getFullYear(), today.getMonth(), targetDay);
+          
+          while (isBefore(sixMonthsAgo, date) || isEqual(sixMonthsAgo, date)) {
+            if (!isAfter(date, today)) {
+              targetDates.push(date);
+            }
+            date = subMonths(date, interval);
+          }
         }
       }
       break;

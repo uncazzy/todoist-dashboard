@@ -1,4 +1,4 @@
-import { isEqual, isBefore, subMonths, endOfWeek, eachWeekOfInterval, startOfMonth, endOfMonth, eachDayOfInterval, startOfWeek, format, isWithinInterval } from 'date-fns';
+import { subMonths, endOfWeek, eachWeekOfInterval, startOfMonth, endOfMonth, eachDayOfInterval, startOfWeek, format, isWithinInterval } from 'date-fns';
 import { ActiveTask } from '../../../types';
 
 export function getTrendData(

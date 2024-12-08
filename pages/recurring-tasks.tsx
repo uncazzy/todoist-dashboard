@@ -5,10 +5,11 @@ import { useDashboardData } from '../hooks/useDashboardData';
 import Layout from '../components/layout/Layout';
 import Link from 'next/link';
 import { FaArrowLeft } from 'react-icons/fa';
+import LoadingIndicator from '../components/LoadingIndicator';
 
 const RecurringTasksPage = () => {
   const { data: session } = useSession();
-  const { data, isLoading } = useDashboardData();
+  const { data, isLoading, loadingProgress, isLoadingFromCache, refreshData } = useDashboardData();
 
   if (!session) {
     return null;
@@ -31,6 +32,14 @@ const RecurringTasksPage = () => {
             Track and manage your recurring tasks and habits
           </p>
         </header>
+
+        {loadingProgress && (
+          <LoadingIndicator
+            loadingProgress={loadingProgress}
+            isLoadingFromCache={isLoadingFromCache}
+            onRefresh={refreshData}
+          />
+        )}
 
         {isLoading || !data ? (
           <div className="flex justify-center items-center h-48">
