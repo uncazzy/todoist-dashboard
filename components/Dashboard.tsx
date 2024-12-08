@@ -522,22 +522,28 @@ export default function Dashboard(): JSX.Element {
           </div>
         </div>
 
-        <div className="space-y-8">
-          {/* Task Topics Section */}
-          <div className="bg-gray-800 rounded-lg p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg sm:text-xl font-semibold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
-                Task Topics
-              </h2>
-              <div className="flex items-center space-x-2">
-                <Tooltip content="Shows the most common topics in your tasks">
-                  <BsQuestionCircle className="w-5 h-5 text-gray-400" />
-                </Tooltip>
-              </div>
+
+        {/* Task Topics Section */}
+        <div className="bg-gray-800 rounded-lg p-6 my-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg sm:text-xl font-semibold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
+              Task Topics
+            </h2>
+            <div className="flex items-center space-x-2">
+              <Tooltip content="Shows the most common topics in your tasks">
+                <BsQuestionCircle className="w-5 h-5 text-gray-400" />
+              </Tooltip>
             </div>
-            <TaskWordCloud tasks={[...activeTasks, ...allCompletedTasks]} />
           </div>
+          {needsFullData ? (
+            <div className="flex justify-center items-center h-48">
+              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+            </div>
+          ) : (
+            <TaskWordCloud tasks={[...activeTasks, ...allCompletedTasks]} />
+          )}
         </div>
+
 
       </div>
       <Tooltip

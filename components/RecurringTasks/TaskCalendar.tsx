@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { format, isEqual, isBefore, startOfMonth, endOfMonth, eachDayOfInterval, getDay, subMonths } from 'date-fns';
 import { BsCalendar3 } from 'react-icons/bs';
 import { IoMdTrendingUp } from 'react-icons/io';
@@ -6,6 +6,7 @@ import { FaCheckCircle } from 'react-icons/fa';
 import { ActiveTask, ProjectData } from '../../types';
 import { TaskStats } from './types';
 import { getTaskFrequency } from './utils';
+import { Tooltip } from 'react-tooltip';
 
 interface TaskCalendarProps {
   taskData: TaskStats;
@@ -24,13 +25,13 @@ const weekDays = [
 ];
 
 export const TaskCalendar: React.FC<TaskCalendarProps> = ({ taskData, task, project }) => {
-  const isCompleted = (date: Date): boolean => {
+  const isCompleted = useCallback((date: Date): boolean => {
     return taskData.completionDates.some(
       completionDate => format(completionDate, 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd')
     );
-  };
+  }, [taskData.completionDates]);
 
-  const getCalendarDays = (monthsAgo: number) => {
+  const getCalendarDays = useCallback((monthsAgo: number) => {
     const start = startOfMonth(subMonths(new Date(), monthsAgo));
     const end = endOfMonth(subMonths(new Date(), monthsAgo));
     const days = eachDayOfInterval({ start, end });
@@ -41,12 +42,93 @@ export const TaskCalendar: React.FC<TaskCalendarProps> = ({ taskData, task, proj
       month: format(start, 'MMM yyyy'),
       days: paddedDays
     };
-  };
+  }, []);
 
-  // Show 6 months
-  const months = [5, 4,3, 2, 1, 0].map(getCalendarDays);
-  const completionRate = Math.round((taskData.completedCount / taskData.totalDueCount) * 100);
-  const streak = taskData.currentStreak;
+  // Calculate completion rate based on task frequency
+  const calculateCompletionRate = useCallback(() => {
+    const frequency = getTaskFrequency(task.due?.string);
+    const today = new Date();
+    let expectedCount = 0;
+    let completedCount = 0;
+
+    // Look back 30 days for the completion rate
+    const startDate = new Date(today);
+    startDate.setDate(startDate.getDate() - 30);
+
+    const days = eachDayOfInterval({ start: startDate, end: today });
+    
+    // Limit the number of iterations for performance
+    const relevantDays = days.filter(date => {
+      if (isBefore(date, today) || isEqual(date, today)) {
+        switch (frequency) {
+          case 'daily':
+            return true;
+          case 'weekly':
+            return format(date, 'EEEE').toLowerCase() === task.due?.string?.toLowerCase()?.replace('every ', '');
+          case 'monthly':
+            const dayOfMonth = format(date, 'd');
+            return task.due?.string?.includes(dayOfMonth);
+          default:
+            return false;
+        }
+      }
+      return false;
+    });
+
+    relevantDays.forEach(date => {
+      expectedCount++;
+      if (isCompleted(date)) completedCount++;
+    });
+
+    return expectedCount > 0 ? Math.round((completedCount / expectedCount) * 100) : 0;
+  }, [task.due?.string, isCompleted]);
+
+  // Calculate current streak based on frequency
+  const calculateStreak = useCallback(() => {
+    const frequency = getTaskFrequency(task.due?.string);
+    const today = new Date();
+    let streak = 0;
+    let date = new Date(today);
+    let daysChecked = 0;
+    const MAX_DAYS_TO_CHECK = 365; // Limit how far back we look
+
+    while (daysChecked < MAX_DAYS_TO_CHECK) {
+      const shouldCheck = frequency === 'daily' ||
+        (frequency === 'weekly' && format(date, 'EEEE').toLowerCase() === task.due?.string?.toLowerCase()?.replace('every ', '')) ||
+        (frequency === 'monthly' && task.due?.string?.includes(format(date, 'd')));
+
+      if (shouldCheck) {
+        if (!isCompleted(date) && (isBefore(date, today) || isEqual(date, today))) {
+          break;
+        }
+        if (isCompleted(date)) {
+          streak++;
+        }
+      }
+
+      date = new Date(date.setDate(date.getDate() - 1));
+      daysChecked++;
+    }
+
+    return streak;
+  }, [task.due?.string, isCompleted]);
+
+  // Memoize months calculation
+  const months = useMemo(() => 
+    [0, 1, 2, 3, 4, 5].map(getCalendarDays),
+    [getCalendarDays]
+  );
+
+  // Memoize stats calculations
+  const completionRate = useMemo(() => 
+    calculateCompletionRate(),
+    [calculateCompletionRate]
+  );
+
+  const streak = useMemo(() => 
+    calculateStreak(),
+    [calculateStreak]
+  );
 
   return (
     <div className="bg-gray-900/50 rounded-lg p-4 hover:bg-gray-900/70 transition-colors">
@@ -66,11 +148,23 @@ export const TaskCalendar: React.FC<TaskCalendarProps> = ({ taskData, task, proj
           </div>
         </div>
         <div className="flex items-center gap-4 text-sm">
-          <div className="flex items-center gap-1 text-gray-400">
+          <div 
+            className="flex items-center gap-1 text-gray-400 cursor-help"
+            data-tooltip-id="task-calendar-tooltip"
+            data-tooltip-content={`30-day completion rate: ${completionRate}% of scheduled tasks completed`}
+          >
             <IoMdTrendingUp className={`w-4 h-4 ${completionRate >= 70 ? 'text-emerald-500' : 'text-yellow-500'}`} />
             <span>{completionRate}%</span>
           </div>
-          <div className="flex items-center gap-1 text-gray-400">
+          <div 
+            className="flex items-center gap-1 text-gray-400 cursor-help"
+            data-tooltip-id="task-calendar-tooltip"
+            data-tooltip-content={`Current streak: ${streak} consecutive ${
+              getTaskFrequency(task.due?.string) === 'daily' ? 'days' :
+              getTaskFrequency(task.due?.string) === 'weekly' ? 'weeks' :
+              getTaskFrequency(task.due?.string) === 'monthly' ? 'months' : 'occurrences'
+            } completed on schedule`}
+          >
             <FaCheckCircle className={`w-4 h-4 ${streak > 0 ? 'text-blue-500' : 'text-gray-600'}`} />
             <span>{streak}</span>
           </div>
@@ -125,6 +219,7 @@ export const TaskCalendar: React.FC<TaskCalendarProps> = ({ taskData, task, proj
           </div>
         ))}
       </div>
+      <Tooltip id="task-calendar-tooltip" />
     </div>
   );
 };
