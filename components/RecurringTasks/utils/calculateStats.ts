@@ -44,6 +44,9 @@ export function calculateStats(
   const totalCompletions = recentCompletions.length;
   console.log('Total completions:', totalCompletions);
 
+  // Find the latest completion date to set our window
+  const latestCompletion = recentCompletions[0];
+
   // Initialize variables
   let recurrencePattern = '';
   let interval = 1;
@@ -62,6 +65,14 @@ export function calculateStats(
     // For "every month" without a specific day, check if completion is in the same month
     if (lower === 'every month') {
       return format(targetDate, 'yyyy-MM') === format(completionDate, 'yyyy-MM');
+    }
+    
+    // For specific date monthly tasks (e.g., "every 26" or "every 26th"), require exact date match
+    const specificDateMatch = lower.match(/every (\d+)(?:st|nd|rd|th)?(?:\s|$)/i);
+    if (specificDateMatch) {
+      const targetDay = parseInt(specificDateMatch[1] ?? '1');
+      return parseInt(format(completionDate, 'd')) === targetDay &&
+             format(targetDate, 'yyyy-MM') === format(completionDate, 'yyyy-MM');
     }
     
     // For weekly tasks, allow completion within the same week
@@ -87,23 +98,42 @@ export function calculateStats(
       recurrencePattern = 'months';
       interval = parseInt(monthMatch[1] || '1');
     }
-  } else if (lower.includes('every') && lower.includes('month')) {
+  } else if (/every \d+(?:st|nd|rd|th)?(?:\s|$)/.test(lower) || (lower.includes('every') && lower.includes('month'))) {
     recurrencePattern = 'monthly';
     let date: Date;
     
-    // Check if it's "every month on the X" or just "every month"
-    const monthlyMatch = lower.match(/every( \d+)? months? on the (\d+)(?:st|nd|rd|th)/i);
-    if (monthlyMatch) {
+    // Check if it's "every month on the X", "every X", or just "every month"
+    const monthlyMatch = lower.match(/every( \d+)? months? on the (\d+)(?:st|nd|rd|th)?/i);
+    const specificDateMatch = lower.match(/every (\d+)(?:st|nd|rd|th)?(?:\s|$)/i);
+    
+    if (monthlyMatch || specificDateMatch) {
       // Handle specific day of month
-      const targetDay = parseInt(monthlyMatch[2] || '1');
-      date = new Date(today.getFullYear(), today.getMonth(), targetDay);
+      const targetDay = monthlyMatch ? 
+        parseInt(monthlyMatch[2] ?? '1') : 
+        parseInt(specificDateMatch![1] ?? '1');
+      
+      console.log('Detected specific day:', targetDay);
+      
+      // Start from the latest completion month or today, whichever is earlier
+      const startDate = latestCompletion || today;
+      date = new Date(startDate.getFullYear(), startDate.getMonth(), targetDay);
+      
+      // If the target day hasn't passed this month, start from last month
+      if (parseInt(format(today, 'd')) < targetDay) {
+        date = subMonths(date, 1);
+      }
       
       while (isBefore(sixMonthsAgo, date) || isEqual(sixMonthsAgo, date)) {
-        targetDates.push(new Date(date));
+        if (!isAfter(date, today)) {
+          targetDates.push(new Date(date));
+        }
         date = subMonths(date, interval);
       }
+      
+      // Sort target dates from newest to oldest
+      targetDates.sort((a, b) => b.getTime() - a.getTime());
     } else {
-      // For "every month" without a specific day, generate one target per month
+      // For "every month" without a specific day
       date = startOfMonth(today);
       while (isBefore(sixMonthsAgo, date) || isEqual(sixMonthsAgo, date)) {
         targetDates.push(new Date(date));
@@ -152,9 +182,9 @@ export function calculateStats(
 
     case 'monthly':
     case 'months':
-      const monthlyMatch = lower.match(/every( \d+)? months? on the (\d+)(?:st|nd|rd|th)/i);
+      const monthlyMatch = lower.match(/every( \d+)? months? on the (\d+)(?:st|nd|rd|th)?/i);
       if (monthlyMatch) {
-        const targetDay = parseInt(monthlyMatch[2] || '1');
+        const targetDay = parseInt(monthlyMatch[2] ?? '1');
         date = new Date(today.getFullYear(), today.getMonth(), targetDay);
         
         while (isBefore(sixMonthsAgo, date) || isEqual(sixMonthsAgo, date)) {
@@ -182,10 +212,23 @@ export function calculateStats(
 
   // For monthly tasks, don't count current month in expected count
   const isMonthlyTask = task.due!.string.toLowerCase() === 'every month';
-  if (isMonthlyTask) {
-    const currentMonthTargets = targetDates.filter(date => 
-      format(date, 'yyyy-MM') === format(today, 'yyyy-MM')
-    );
+  const specificDateMatch = task.due!.string.toLowerCase().match(/every (\d+)(?:st|nd|rd|th)?(?:\s|$)/i);
+  
+  if (isMonthlyTask || specificDateMatch) {
+    const currentMonthTargets = targetDates.filter(date => {
+      const isCurrentMonth = format(date, 'yyyy-MM') === format(today, 'yyyy-MM');
+      
+      // For specific date tasks, only exclude if the date hasn't passed yet
+      if (specificDateMatch) {
+        const targetDay = parseInt(specificDateMatch[1] ?? '1');
+        const currentDay = parseInt(format(today, 'd'));
+        return isCurrentMonth && currentDay >= targetDay;
+      }
+      
+      // For general monthly tasks, exclude current month entirely
+      return isCurrentMonth;
+    });
+    
     expectedCount -= currentMonthTargets.length;
   }
 
@@ -203,7 +246,7 @@ export function calculateStats(
   let longestStreak = 0;
   let tempStreak = 0;
   let lastCompletedDate: Date | null = null;
-  let activeStreak = true; // Track if we're in an active streak
+  let activeStreak = true;
 
   // Sort target dates from newest to oldest
   targetDates.sort((a, b) => b.getTime() - a.getTime());
@@ -212,6 +255,10 @@ export function calculateStats(
     const targetDate = targetDates[i] as Date;
     const isToday = isEqual(startOfDay(targetDate), startOfDay(today));
     const isCurrentMonth = format(targetDate, 'yyyy-MM') === format(today, 'yyyy-MM');
+    const isFutureDate = isAfter(targetDate, today);
+    
+    // Skip future dates
+    if (isFutureDate) continue;
     
     // Find the completion for this target date
     const completion = recentCompletions.find(completionDate => 
