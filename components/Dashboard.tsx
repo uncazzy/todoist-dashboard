@@ -422,6 +422,26 @@ export default function Dashboard(): JSX.Element {
             <NeglectedTasks activeTasks={activeTasks} projectData={projectData} />
           </div>
 
+          {/* Recurring Tasks Section */}
+          <div className="md:col-span-3 bg-gray-800 rounded-lg">
+            <div className="flex items-center">
+              <Tooltip content="Track your recurring tasks and habits. View completion rates, streaks, and trends.">
+                <BsQuestionCircle className="w-5 h-5 text-gray-400" />
+              </Tooltip>
+            </div>
+            {needsFullData ? (
+              <div className="flex justify-center items-center h-48">
+                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+              </div>
+            ) : (
+              <RecurringTasksMatrix
+                activeTasks={activeTasks}
+                allCompletedTasks={allCompletedTasks}
+                projectData={projectData}
+              />
+            )}
+          </div>
+
           {/* Task Management Section */}
           <div className="lg:col-span-3 grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div
@@ -516,31 +536,6 @@ export default function Dashboard(): JSX.Element {
               </div>
             </div>
             <TaskWordCloud tasks={[...activeTasks, ...allCompletedTasks]} />
-          </div>
-
-          {/* Recurring Tasks Section */}
-          <div className="bg-gray-800 rounded-lg p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-lg sm:text-xl font-semibold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
-                Recurring Tasks
-              </h2>
-              <div className="flex items-center space-x-2">
-                <Tooltip content="Track your recurring tasks and habits. View completion rates, streaks, and trends.">
-                  <BsQuestionCircle className="w-5 h-5 text-gray-400" />
-                </Tooltip>
-              </div>
-            </div>
-            {needsFullData ? (
-              <div className="flex justify-center items-center h-48">
-                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
-              </div>
-            ) : (
-              <RecurringTasksMatrix
-                activeTasks={activeTasks}
-                allCompletedTasks={allCompletedTasks}
-                projectData={projectData}
-              />
-            )}
           </div>
         </div>
 
