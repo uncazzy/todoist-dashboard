@@ -13,8 +13,8 @@ import { IoMdTrendingDown, IoMdTrendingUp } from 'react-icons/io';
 import { SiTodoist } from 'react-icons/si';
 import CompletionStreak from './CompletionStreak';
 import TaskWordCloud from './TaskWordCloud';
-import RecurringTasksMatrix from './RecurringTasksMatrix';
-import { BsQuestionCircle, BsListTask, BsArrowRepeat } from 'react-icons/bs';
+import RecurringTasksMatrix from './RecurringTasks/index';
+import { BsQuestionCircle } from 'react-icons/bs';
 import { MAX_TASKS, CACHE_DURATION } from '../utils/constants';
 import { DashboardData, LoadingProgress } from '../types';
 
@@ -506,9 +506,8 @@ export default function Dashboard(): JSX.Element {
           {/* Task Topics Section */}
           <div className="bg-gray-800 rounded-lg p-6">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold flex items-center space-x-2">
-                <BsListTask className="w-5 h-5" />
-                <span>Task Topics</span>
+              <h2 className="text-lg sm:text-xl font-semibold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
+                Task Topics
               </h2>
               <div className="flex items-center space-x-2">
                 <Tooltip content="Shows the most common topics in your tasks">
@@ -522,9 +521,8 @@ export default function Dashboard(): JSX.Element {
           {/* Recurring Tasks Section */}
           <div className="bg-gray-800 rounded-lg p-6">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold flex items-center space-x-2">
-                <BsArrowRepeat className="w-5 h-5" />
-                <span>Recurring Tasks</span>
+              <h2 className="text-lg sm:text-xl font-semibold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
+                Recurring Tasks
               </h2>
               <div className="flex items-center space-x-2">
                 <Tooltip content="Track your recurring tasks and habits. View completion rates, streaks, and trends.">

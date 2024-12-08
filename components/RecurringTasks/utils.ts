@@ -1,0 +1,23 @@
+import { RecurringFrequency } from './types';
+
+export const getTaskFrequency = (dueString: string | undefined): RecurringFrequency => {
+  if (!dueString) return 'other';
+  const lower = dueString.toLowerCase();
+  
+  if (lower.includes('every other')) return 'other';
+  if (lower.includes('every day') || lower.includes('daily')) return 'daily';
+  if (
+    lower.includes('every week') || 
+    lower.includes('weekly') ||
+    /every (monday|tuesday|wednesday|thursday|friday|saturday|sunday)/i.test(lower) ||
+    /every (mon|tue|wed|thu|fri|sat|sun)/i.test(lower)
+  ) return 'weekly';
+  if (
+    lower === 'every month' || 
+    lower.includes('monthly') ||
+    /every (\d{1,2})(st|nd|rd|th)?( day)?( of)?( the)?( month)?$/i.test(lower) || 
+    /every (first|last|1st) day/i.test(lower)
+  ) return 'monthly';
+  
+  return 'other';
+};
