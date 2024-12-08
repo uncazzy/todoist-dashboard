@@ -19,6 +19,14 @@ export function detectPattern(dueString: string, today: Date, sixMonthsAgo: Date
       targetDates.push(date);
       date = subDays(date, 1);
     }
+  } else if (lower === 'every other day') {
+    pattern = 'every-other-day';
+    interval = 2;
+    let date = today;
+    while (isBefore(sixMonthsAgo, date) || isEqual(sixMonthsAgo, date)) {
+      targetDates.push(date);
+      date = subDays(date, 2);
+    }
   } else if (lower.includes('every other')) {
     pattern = 'biweekly';
     interval = 14;
@@ -47,7 +55,15 @@ export function detectPattern(dueString: string, today: Date, sixMonthsAgo: Date
 
 function generateWeeklyDates(lower: string, today: Date, sixMonthsAgo: Date, interval: number, targetDates: Date[]) {
   const weekdayMatch = lower.match(/every( other)? (monday|tuesday|wednesday|thursday|friday|saturday|sunday|sun|mon|tue|wed|thu|fri|sat)/i);
-  if (weekdayMatch) {
+  
+  if (lower === 'every other day') {
+    // For "every other day", start from today and go back
+    let date = today;
+    while (isBefore(sixMonthsAgo, date) || isEqual(sixMonthsAgo, date)) {
+      targetDates.push(new Date(date));
+      date = subDays(date, 2); // Subtract 2 days for "every other day"
+    }
+  } else if (weekdayMatch) {
     const dayMap: { [key: string]: string } = {
       sun: 'sunday', mon: 'monday', tue: 'tuesday', wed: 'wednesday',
       thu: 'thursday', fri: 'friday', sat: 'saturday'
