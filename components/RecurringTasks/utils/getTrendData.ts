@@ -75,6 +75,7 @@ export function getTrendData(
 
       data.push(expected > 0 ? (actual / expected) * 100 : 0);
     }
+    data.reverse();
     return data;
   } else {
     // Default case, if pattern is not recognized (should not happen with detectPattern)
