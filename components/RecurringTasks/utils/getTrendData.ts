@@ -37,12 +37,10 @@ export function getTrendData(
   if (pattern === 'daily' || pattern === 'every-other-day' || pattern === 'weekly' || pattern === 'biweekly') {
     // Aggregate by week
     const weeksAscending = eachWeekOfInterval({ start: sixMonthsAgo, end: today });
-    // weeksAscending[0] = oldest week, weeksAscending[last] = most recent week
-    // We want data[0] = most recent, so we’ll build data accordingly and then reverse at the end.
-    const weeklyDataAscending = weeksAscending.map((weekStart) => {
-      const weekEnd = endOfWeek(weekStart);
+    const weeklyDataAscending: number[] = [];
 
-      // Identify target dates in this week
+    for (const weekStart of weeksAscending) {
+      const weekEnd = endOfWeek(weekStart);
       const weekTargets = filteredTargets.filter(td => isWithinInterval(td, { start: weekStart, end: weekEnd }));
       const expected = weekTargets.length;
 
@@ -50,21 +48,22 @@ export function getTrendData(
         // Daily: count completions in this week vs 7 days
         const daysInWeek = eachDayOfInterval({ start: weekStart, end: weekEnd });
         const completedDays = daysInWeek.filter(isCompletedOn).length;
-        return (completedDays / daysInWeek.length) * 100;
-      }
-
-      // For other weekly patterns:
-      if (expected > 0) {
-        const actual = weekTargets.filter(isCompletedOn).length;
-        return (actual / expected) * 100;
+        weeklyDataAscending.push((completedDays / daysInWeek.length) * 100);
       } else {
-        return 0;
+        // For other weekly patterns
+        if (expected > 0) {
+          const actual = weekTargets.filter(isCompletedOn).length;
+          weeklyDataAscending.push((actual / expected) * 100);
+        } else {
+          // If no tasks were expected this week, skip adding a point altogether
+        }
       }
-    });
+    }
 
-    // Now reverse it so that weeklyData[0] = most recent week
+    // Reverse so that data[0] = most recent week
     return weeklyDataAscending.reverse();
-  } else if (pattern === 'months' || pattern === 'monthly' || pattern === 'monthly-last') {
+  }
+  else if (pattern === 'months' || pattern === 'monthly' || pattern === 'monthly-last') {
     // Aggregate by month - 6 data points: current month to 5 months ago
     // We want index 0 = current month, index 5 = oldest month.
     const data: number[] = [];
