@@ -1,4 +1,4 @@
-import { format, isEqual, isBefore, isAfter, subMonths, startOfMonth } from 'date-fns';
+import { format, isEqual, isBefore, subMonths, startOfMonth } from 'date-fns';
 import { ActiveTask } from '../../../types';
 import { TaskStats } from './types';
 import { isValidCompletion } from './validationUtils';
@@ -17,17 +17,13 @@ export function calculateStats(
   const today = new Date();
   const sixMonthsAgo = startOfMonth(subMonths(today, 5));
 
-  console.log('\n========================================');
-  console.log('Calculating stats for task:', task.content);
-  console.log('Due string:', task.due!.string);
-  console.log('Time window:', format(sixMonthsAgo, 'yyyy-MM-dd'), 'to', format(today, 'yyyy-MM-dd'));
-
-  // Get completions within 6 month window, deduplicated by day
+  // Filter completions within the last 6 months
   const recentCompletions = completionDates
     .filter(date =>
       (isBefore(sixMonthsAgo, date) || isEqual(sixMonthsAgo, date)) &&
       (isBefore(date, today) || isEqual(date, today))
     )
+    // Deduplicate completions by day
     .reduce((acc: Date[], date) => {
       const dateStr = format(date, 'yyyy-MM-dd');
       if (!acc.some(d => format(d, 'yyyy-MM-dd') === dateStr)) {
@@ -37,128 +33,69 @@ export function calculateStats(
     }, [])
     .sort((a, b) => b.getTime() - a.getTime());
 
-  console.log('Recent completions:', recentCompletions.map(d => format(d, 'yyyy-MM-dd')));
   const totalCompletions = recentCompletions.length;
-  console.log('Total completions:', totalCompletions);
 
-  // Find the latest completion date to set our window
+  // Detect the pattern and generate target dates
   const latestCompletion = recentCompletions[0];
-
-  // Detect pattern and generate target dates
   const { pattern, interval, targetDates } = detectPattern(lower, today, sixMonthsAgo, latestCompletion, recentCompletions);
-  console.log('Detected pattern:', pattern, 'with interval:', interval);
-  console.log('Target dates:', targetDates.map(d => format(d, 'yyyy-MM-dd')));
 
-  // Check if this is a long-term recurring task (> 6 months)
+  // For tasks that recur less frequently than every 6 months, treat them as long-term
   const isLongTermRecurring = pattern === 'months' && interval > 6;
+
   if (isLongTermRecurring) {
-    console.log('Long-term recurring task detected - task recurs every', interval, 'months');
-    // For long-term tasks, we'll return info about the recurrence pattern
+    // If the task recurs less than once every 6 months, we can't do a normal rate calculation
+    // If there's at least one completion, consider completionRate=100% (on-time)
     const hasCompletionInWindow = totalCompletions > 0;
     return {
       currentStreak: 0,
       longestStreak: 0,
-      totalCompletions,
+      totalCompletions: totalCompletions, // total completions in the window
       completionRate: hasCompletionInWindow ? 100 : 0,
       isLongTerm: true,
       interval: interval
     };
   }
 
-  // Calculate completion rate
-  let expectedCount = 0;
-  let validCompletions = 0;
+  // Calculate the expected occurrences and on-time completions
+  // targetDates are generated in descending order (newest first)
+  const filteredTargets = targetDates.filter(d =>
+    (isBefore(sixMonthsAgo, d) || isEqual(sixMonthsAgo, d)) &&
+    (isBefore(d, today) || isEqual(d, today))
+  );
 
-  if (pattern === 'months' && interval > 1) {
-    // For multi-month intervals, calculate expected completions differently
-    if (recentCompletions.length > 0) {
-      // Get the earliest completion in our window
-      const earliestCompletion = recentCompletions[recentCompletions.length - 1]!; // Assert non-null with !
-      
-      // Generate expected dates from the earliest completion
-      let expectedDates: Date[] = [];
-      let expectedDate = new Date(earliestCompletion);
-      
-      // First, add the initial completion
-      if (isBefore(sixMonthsAgo, earliestCompletion) || isEqual(sixMonthsAgo, earliestCompletion)) {
-        expectedDates.push(new Date(earliestCompletion));
-      }
-      
-      // Then add interval months to get subsequent expected dates
-      expectedDate.setMonth(expectedDate.getMonth() + interval);
-      while (isEqual(expectedDate, today) || isBefore(expectedDate, today)) {
-        if (isBefore(sixMonthsAgo, expectedDate) || isEqual(sixMonthsAgo, expectedDate)) {
-          expectedDates.push(new Date(expectedDate));
-        }
-        expectedDate = new Date(expectedDate);
-        expectedDate.setMonth(expectedDate.getMonth() + interval);
-      }
-
-      expectedCount = expectedDates.length;
-      console.log('Expected dates:', expectedDates.map(d => format(d, 'yyyy-MM-dd')));
-
-      // Count completions that are within the expected interval
-      for (const expectedDate of expectedDates) {
-        const hasValidCompletion = recentCompletions.some(completion => {
-          // Check if completion is before or on the expected date
-          return !isAfter(completion, expectedDate);
-        });
-        if (hasValidCompletion) {
-          validCompletions++;
-        }
-      }
-    }
-  } else {
-    // Original logic for other patterns
-    expectedCount = targetDates.length;
-    
-    if (lower === 'every month' && recentCompletions.length > 0) {
-      const lastCompletion = recentCompletions[0]!; // Assert non-null with !
-      const lastCompletionDay = parseInt(format(lastCompletion, 'd'));
-      const currentDay = parseInt(format(today, 'd'));
-      
-      // If we haven't reached the day of the month when the task was last completed,
-      // don't count this month in the expected count
-      if (currentDay < lastCompletionDay) {
-        expectedCount--;
-      }
-    }
-
-    targetDates.forEach(targetDate => {
-      const isCompleted = recentCompletions.some(completionDate => 
-        isValidCompletion(targetDate, completionDate, task.due!.string)
-      );
-      if (isCompleted) validCompletions++;
-    });
-  }
+  const expectedCount = filteredTargets.length;
+  let onTimeCompletions = 0;
+  filteredTargets.forEach(targetDate => {
+    const completed = recentCompletions.some(completionDate =>
+      isValidCompletion(targetDate, completionDate, task.due!.string)
+    );
+    if (completed) onTimeCompletions++;
+  });
 
   let completionRate = 0;
   if (expectedCount > 0) {
-    // For tasks completed more times than expected, cap at 200%
-    completionRate = Math.min(200, Math.round((validCompletions / expectedCount) * 100));
+    // Cap at 200% just in case user completes more often than expected
+    completionRate = Math.min(200, Math.round((onTimeCompletions / expectedCount) * 100));
   }
-
-  console.log('Expected count:', expectedCount, 
-    'Completed count:', validCompletions,
-    'Rate:', completionRate);
 
   // Calculate streaks
   const { currentStreak, longestStreak } = calculateStreaks(
     task.due!.string,
     interval,
-    targetDates,
+    filteredTargets,
     recentCompletions,
     today,
     sixMonthsAgo
   );
 
-  console.log('Final streaks:', { currentStreak, longestStreak });
-  console.log('========================================\n');
-
   return {
     currentStreak,
     longestStreak,
-    totalCompletions: validCompletions,
-    completionRate
+    // totalCompletions is just how many completions occurred in the last 6 months
+    // This is useful for showing raw count. On-time completions affect completionRate.
+    totalCompletions: totalCompletions,
+    completionRate,
+    isLongTerm: false,
+    interval
   };
 }

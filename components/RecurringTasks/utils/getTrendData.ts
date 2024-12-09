@@ -1,89 +1,83 @@
-import { subMonths, endOfWeek, eachWeekOfInterval, startOfMonth, eachDayOfInterval, startOfWeek, format, isWithinInterval } from 'date-fns';
+import { subMonths, endOfWeek, eachWeekOfInterval, startOfMonth, endOfMonth, eachDayOfInterval, isWithinInterval, format } from 'date-fns';
 import { ActiveTask } from '../../../types';
+import { detectPattern } from './patternUtils';
 
+/**
+ * Produce an array of percentage completion rates for a trend chart.
+ * We rely on detectPattern to identify the recurrence pattern.
+ *
+ * For daily/weekly-based tasks: we aggregate by week.
+ * For monthly-based tasks: we aggregate by month.
+ * 
+ * The array represents the last 6 months of data. For weekly tasks, each element 
+ * represents a week; for monthly tasks, each element represents a month.
+ */
 export function getTrendData(
   task: ActiveTask,
   completionDates: Date[]
 ): number[] {
   const today = new Date();
   const sixMonthsAgo = subMonths(today, 6);
-  const weeks = eachWeekOfInterval({ start: sixMonthsAgo, end: today });
 
-  // Get the pattern type and normalize it
-  const pattern = task.due?.string?.toLowerCase() || '';
+  // Detect the pattern from the task's due string
+  const { pattern, interval, targetDates } = detectPattern(
+    task.due?.string?.toLowerCase() || '',
+    today,
+    sixMonthsAgo,
+    completionDates[0],
+    completionDates
+  );
 
-  // Helper function to check if a completion is valid for a target date
-  const isValidCompletion = (targetDate: Date, completionDate: Date): boolean => {
-    const targetStr = format(targetDate, 'yyyy-MM-dd');
-    const completionStr = format(completionDate, 'yyyy-MM-dd');
+  // Filter target dates within the last 6 months
+  const filteredTargets = targetDates.filter(td => isWithinInterval(td, { start: sixMonthsAgo, end: today }));
 
-    // For "every month" without a specific day, check if completion is in the same month
-    if (pattern === 'every month') {
-      return format(targetDate, 'yyyy-MM') === format(completionDate, 'yyyy-MM');
-    }
+  // For calculating completion, we define a helper
+  const isCompletedOn = (date: Date) =>
+    completionDates.some(cd => format(cd, 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd'));
 
-    // For "every last day", check if completion is on the last day of the month
-    if (pattern === 'every last day') {
-      const lastDayOfMonth = new Date(completionDate.getFullYear(), completionDate.getMonth() + 1, 0);
-      return format(completionDate, 'yyyy-MM-dd') === format(lastDayOfMonth, 'yyyy-MM-dd') &&
-        format(targetDate, 'yyyy-MM') === format(completionDate, 'yyyy-MM');
-    }
+  if (pattern === 'daily' || pattern === 'every-other-day' || pattern === 'weekly' || pattern === 'biweekly') {
+    // Aggregate by week
+    const weeks = eachWeekOfInterval({ start: sixMonthsAgo, end: today });
+    return weeks.map((weekStart) => {
+      const weekEnd = endOfWeek(weekStart);
+      // Identify which target dates fall in this week
+      const weekTargets = filteredTargets.filter(td => isWithinInterval(td, { start: weekStart, end: weekEnd }));
+      const expected = weekTargets.length;
 
-    // For specific date monthly tasks (e.g., "every 26" or "every 26th")
-    const specificDateMatch = pattern.match(/every (\d+)(?:st|nd|rd|th)?(?:\s|$)/i);
-    if (specificDateMatch) {
-      const targetDay = parseInt(specificDateMatch[1] ?? '1');
-      return parseInt(format(completionDate, 'd')) === targetDay &&
-        format(targetDate, 'yyyy-MM') === format(completionDate, 'yyyy-MM');
-    }
+      // For daily tasks, if no explicit targets, we assume a daily pattern = 7 days/week
+      if (pattern === 'daily') {
+        const daysInWeek = eachDayOfInterval({ start: weekStart, end: weekEnd });
+        const completedDays = daysInWeek.filter(isCompletedOn).length;
+        return (completedDays / daysInWeek.length) * 100;
+      }
 
-    // For weekly tasks, allow completion within the same week
-    if (pattern.includes('every') && !pattern.includes('month') && !pattern.includes('other')) {
-      const weekStart = startOfWeek(targetDate);
-      const weekEnd = endOfWeek(targetDate);
-      return isWithinInterval(completionDate, { start: weekStart, end: weekEnd });
-    }
-
-    // For daily tasks and others, require exact date match
-    return targetStr === completionStr;
-  };
-
-  // Calculate trend based on pattern type
-  if (pattern.includes('every') && !pattern.includes('month') && !pattern.includes('other')) {
-    // Weekly tasks
-    return weeks.map(weekStart => {
-      const completionsInWeek = completionDates.filter(date =>
-        isValidCompletion(weekStart, date)
-      ).length;
-      return completionsInWeek > 0 ? 100 : 0;
+      // For every-other-day and weekly/biweekly tasks, rely on targetDates
+      if (expected > 0) {
+        const actual = weekTargets.filter(isCompletedOn).length;
+        return (actual / expected) * 100;
+      } else {
+        // No expected occurrences this week
+        return 0;
+      }
     });
-  } else if (pattern.includes('every other')) {
-    // Bi-weekly tasks
-    return weeks.map((weekStart, index) => {
-      if (index % 2 !== 0) return 0; // Skip alternate weeks
-      const completionsInWeek = completionDates.filter(date =>
-        isValidCompletion(weekStart, date)
-      ).length;
-      return completionsInWeek > 0 ? 100 : 0;
-    });
-  } else if (pattern.includes('month')) {
-    // Monthly tasks
-    return Array.from({ length: 6 }, (_, i) => {
-      const monthStart = startOfMonth(subMonths(today, 5 - i));
-      const completionsInMonth = completionDates.filter(date =>
-        isValidCompletion(monthStart, date)
-      ).length;
-      return completionsInMonth > 0 ? 100 : 0;
-    });
+  } else if (pattern === 'months' || pattern === 'monthly' || pattern === 'monthly-last') {
+    // Aggregate by month - last 6 months
+    const data: number[] = [];
+    for (let i = 0; i < 6; i++) {
+      const monthStart = startOfMonth(subMonths(today, i));
+      const monthEnd = endOfMonth(monthStart);
+
+      const monthTargets = filteredTargets.filter(td =>
+        isWithinInterval(td, { start: monthStart, end: monthEnd })
+      );
+      const expected = monthTargets.length;
+      const actual = monthTargets.filter(isCompletedOn).length;
+
+      data.push(expected > 0 ? (actual / expected) * 100 : 0);
+    }
+    return data;
+  } else {
+    // Default case, if pattern is not recognized (should not happen with detectPattern)
+    return [];
   }
-
-  // Daily tasks
-  return weeks.map(weekStart => {
-    const weekEnd = endOfWeek(weekStart);
-    const daysInWeek = eachDayOfInterval({ start: weekStart, end: weekEnd });
-    const completionsInWeek = daysInWeek.filter(day =>
-      completionDates.some(date => isValidCompletion(day, date))
-    ).length;
-    return (completionsInWeek / daysInWeek.length) * 100;
-  });
 }
