@@ -201,7 +201,7 @@ export const TaskCalendar: React.FC<TaskCalendarProps> = ({ taskData, task, proj
               ? `Long-term recurring task (${stats.interval} months) - trend analysis not applicable`
               : "Completion trend over the past 6 months"}
           >
-            <Sparklines data={[...trendData].reverse()} height={20} margin={2}>
+            <Sparklines data={trendData} height={20} margin={2}>
               <SparklinesLine
                 style={{
                   stroke: "#60a5fa",

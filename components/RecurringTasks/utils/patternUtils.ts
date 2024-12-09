@@ -11,7 +11,13 @@ interface PatternInfo {
  * It returns a standardized pattern string, an interval (in days or months), and
  * a set of targetDates (descending order) representing when the task was expected.
  */
-export function detectPattern(dueString: string, today: Date, sixMonthsAgo: Date, latestCompletion: Date | undefined, recentCompletions: Date[]): PatternInfo {
+export function detectPattern(
+  dueString: string,
+  today: Date,
+  sixMonthsAgo: Date,
+  latestCompletion: Date | undefined,
+  recentCompletions: Date[]
+): PatternInfo {
   const lower = dueString.toLowerCase();
   let pattern = '';
   let interval = 1;
@@ -21,31 +27,63 @@ export function detectPattern(dueString: string, today: Date, sixMonthsAgo: Date
   if (lower.includes('every day') || lower.includes('daily')) {
     pattern = 'daily';
     let date = today;
-    while (isBefore(sixMonthsAgo, date) || isEqual(sixMonthsAgo, date)) {
+    while (isBefore(date, sixMonthsAgo) === false) {
       targetDates.push(date);
       date = subDays(date, 1);
     }
   }
   else if (lower === 'every other day') {
+    // Adaptive scheduling for every-other-day tasks
     pattern = 'every-other-day';
     interval = 2;
-    // Generate target dates based on earliest completion if available, else from today backward
-    if (recentCompletions.length > 0) {
-      const firstCompletion = recentCompletions[recentCompletions.length - 1]!; // non-null assertion here
-      let currentDate = new Date(firstCompletion);
-      while (isBefore(currentDate, today) || isEqual(currentDate, today)) {
-        targetDates.push(new Date(currentDate));
-        currentDate = addDays(currentDate, interval);
+    targetDates = [];
+
+    // Filter completions within the window [sixMonthsAgo, today] and sort ascending
+    const windowCompletions = recentCompletions
+      .filter(c => !isBefore(c, sixMonthsAgo) && !isAfter(c, today))
+      .sort((a, b) => a.getTime() - b.getTime());
+
+    if (windowCompletions.length === 0) {
+      // No completions in this window
+      // Create a baseline schedule starting at sixMonthsAgo going forward every 2 days
+      let anchor = new Date(sixMonthsAgo);
+      while (anchor <= today) {
+        targetDates.push(new Date(anchor));
+        anchor = addDays(anchor, interval);
+      }
+    } else {
+      // We have completions, use them to anchor the schedule
+      const firstCompletion = windowCompletions[0];
+      if (!firstCompletion) {
+        return { pattern, interval, targetDates };
+      }
+      
+      let anchor: Date = firstCompletion;
+
+      // For each completion, fill in every-other-day targets from the previous anchor
+      // up to (and including) the current completion if it aligns
+      for (let i = 0; i < windowCompletions.length; i++) {
+        const currentCompletion = windowCompletions[i];
+        // Generate target dates starting from anchor + interval until you reach currentCompletion
+        if (currentCompletion) {
+          let tempDate = addDays(anchor, interval);
+          while (tempDate <= currentCompletion) {
+            targetDates.push(new Date(tempDate));
+            tempDate = addDays(tempDate, interval);
+          }
+          // Current completion becomes the new anchor
+          anchor = currentCompletion;
+        }
+      }
+
+      // After the last completion, continue generating targets every 2 days until today
+      let finalAnchor = addDays(anchor, interval);
+      while (finalAnchor <= today) {
+        targetDates.push(new Date(finalAnchor));
+        finalAnchor = addDays(finalAnchor, interval);
       }
     }
-    else {
-      let currentDate = today;
-      while (isBefore(sixMonthsAgo, currentDate) || isEqual(sixMonthsAgo, currentDate)) {
-        targetDates.push(new Date(currentDate));
-        currentDate = subDays(currentDate, interval);
-      }
-    }
-    targetDates.sort((a, b) => b.getTime() - a.getTime());
+
   }
   else if (lower.includes('every other')) {
     pattern = 'biweekly';
@@ -77,7 +115,17 @@ export function detectPattern(dueString: string, today: Date, sixMonthsAgo: Date
   return { pattern, interval, targetDates };
 }
 
-function generateWeeklyDates(lower: string, today: Date, sixMonthsAgo: Date, interval: number, latestCompletion: Date | undefined, targetDates: Date[]) {
+function generateWeeklyDates(
+  lower: string, 
+  today: Date, 
+  sixMonthsAgo: Date, 
+  interval: number, 
+  latestCompletion: Date | undefined, 
+  targetDates: Date[]
+) {
+  // If latestCompletion is undefined, use sixMonthsAgo as the anchor
+  const completionAnchor = latestCompletion !== undefined ? latestCompletion : sixMonthsAgo;
+
   const weekdayMatch = lower.match(/every( other)? (monday|tuesday|wednesday|thursday|friday|saturday|sunday|sun|mon|tue|wed|thu|fri|sat)/i);
 
   if (weekdayMatch) {
@@ -88,7 +136,7 @@ function generateWeeklyDates(lower: string, today: Date, sixMonthsAgo: Date, int
     const targetDay = weekdayMatch[2] ? (dayMap[weekdayMatch[2].toLowerCase()] || weekdayMatch[2].toLowerCase()) : 'monday';
 
     // Start from the most recent completion or today
-    let date = latestCompletion || today;
+    let date = completionAnchor;
 
     // If using latestCompletion, move forward one interval to get next target
     if (latestCompletion) {
@@ -125,7 +173,14 @@ function generateWeeklyDates(lower: string, today: Date, sixMonthsAgo: Date, int
   }
 }
 
-function generateMonthlyDates(lower: string, today: Date, sixMonthsAgo: Date, interval: number, latestCompletion: Date | undefined, targetDates: Date[]) {
+function generateMonthlyDates(
+  lower: string, 
+  today: Date, 
+  sixMonthsAgo: Date, 
+  interval: number, 
+  latestCompletion: Date | undefined, 
+  targetDates: Date[]
+) {
   const monthlyMatch = lower.match(/every( \d+)? months? on the (\d+)(?:st|nd|rd|th)?/i);
   const specificDateMatch = lower.match(/every (\d+)(?:st|nd|rd|th)?(?:\s|$)/i);
   const monthIntervalMatch = lower.match(/every (\d+) months?/i);
@@ -194,8 +249,11 @@ function generateMonthlyDates(lower: string, today: Date, sixMonthsAgo: Date, in
 }
 
 function generateLastDayDates(today: Date, sixMonthsAgo: Date, latestCompletion: Date | undefined, targetDates: Date[]) {
+  // If latestCompletion is undefined, use sixMonthsAgo as the anchor
+  const completionAnchor = latestCompletion !== undefined ? latestCompletion : sixMonthsAgo;
+
   // Start from the latest completion month or today, whichever is earlier
-  const startDate = latestCompletion || today;
+  const startDate = completionAnchor;
   let date = new Date(startDate.getFullYear(), startDate.getMonth() + 1, 0); // Last day of current month
 
   // If today is past the last day of current month, start from last month
