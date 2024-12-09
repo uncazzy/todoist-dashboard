@@ -1,4 +1,4 @@
-import { format, isEqual, isBefore, isAfter, startOfDay, differenceInMonths, differenceInDays, parseISO, isSameDay, compareDesc } from 'date-fns';
+import { format, isEqual, isBefore, isAfter, startOfDay, differenceInDays, parseISO, isSameDay, compareDesc } from 'date-fns';
 import { isValidCompletion } from './validationUtils';
 
 interface StreakResult {
@@ -108,45 +108,64 @@ function calculateMultiMonthStreaks(interval: number, recentCompletions: Date[],
   // For tasks with interval > 6 months
   if (interval > 6) {
     if (recentCompletions.length > 0) {
-      return {
-        currentStreak: 1,
-        longestStreak: 1,
-      };
+      return { currentStreak: 1, longestStreak: 1 };
     }
-    return {
-      currentStreak: 0,
-      longestStreak: 0,
-    };
+    return { currentStreak: 0, longestStreak: 0 };
   }
 
-  // For tasks with shorter intervals
-  let currentStreak = 0;
-  let longestStreak = 0;
-  let lastDate: Date | null = null;
-
-  // Sort completions from oldest to newest
-  const sortedCompletions = [...recentCompletions].sort((a, b) => a.getTime() - b.getTime());
+  // Sort completions from newest to oldest
+  const sortedCompletions = [...recentCompletions].sort((a, b) => b.getTime() - a.getTime());
   
-  for (const completion of sortedCompletions) {
-    if (!lastDate || (lastDate && 
-        Math.abs(differenceInMonths(completion, lastDate)) <= interval)) {
+  if (sortedCompletions.length === 0) {
+    return { currentStreak: 0, longestStreak: 0 };
+  }
+
+  // For multi-month intervals, we'll consider a streak valid if:
+  // 1. The completion is within 1 month of the expected date
+  // 2. The time between consecutive completions is close to the interval
+  
+  let currentStreak = 1;  // Start with 1 for the most recent completion
+  let longestStreak = 1;
+  let lastValidDate = sortedCompletions[0]!;  // We know this exists because we checked length above
+  let expectedNextDate = new Date(lastValidDate);
+  expectedNextDate.setMonth(expectedNextDate.getMonth() + interval);
+
+  // Check each completion against its expected date
+  for (let i = 1; i < sortedCompletions.length; i++) {
+    const currentDate = sortedCompletions[i]!;  // Non-null assertion since i < length
+    const monthDiff = Math.abs(
+      (expectedNextDate.getFullYear() - currentDate.getFullYear()) * 12 +
+      (expectedNextDate.getMonth() - currentDate.getMonth())
+    );
+
+    // If this completion is within 1 month of when it was expected
+    if (monthDiff <= 1) {
       currentStreak++;
       longestStreak = Math.max(longestStreak, currentStreak);
+      lastValidDate = currentDate;
+      expectedNextDate = new Date(currentDate);
+      expectedNextDate.setMonth(expectedNextDate.getMonth() + interval);
     } else {
+      // This completion was too far from the expected date
+      if (i === 1) {
+        // If this is the second-most recent completion and it's off,
+        // current streak should be 1 (just the most recent completion)
+        currentStreak = 1;
+      }
+      // Start a new potential streak from this point
+      lastValidDate = currentDate;
+      expectedNextDate = new Date(currentDate);
+      expectedNextDate.setMonth(expectedNextDate.getMonth() + interval);
       currentStreak = 1;
     }
-    lastDate = completion;
   }
 
-  // Cap streak at maximum possible within 6 month window
+  // Cap streak at maximum possible within time window
   const maxPossibleStreak = Math.floor(6 / interval);
   currentStreak = Math.min(currentStreak, maxPossibleStreak);
   longestStreak = Math.min(longestStreak, maxPossibleStreak);
 
-  return {
-    currentStreak,
-    longestStreak,
-  };
+  return { currentStreak, longestStreak };
 }
 
 function calculateRegularStreaks(

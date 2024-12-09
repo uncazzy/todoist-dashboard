@@ -66,29 +66,74 @@ export function calculateStats(
   }
 
   // Calculate completion rate
-  let expectedCount = targetDates.length;
+  let expectedCount = 0;
   let validCompletions = 0;
-  console.log('Expected completions:', expectedCount);
 
-  // For "every month" tasks, don't count current month if we're still within the grace period
-  if (lower === 'every month' && recentCompletions.length > 0) {
-    const lastCompletion = recentCompletions[0]!; // Assert non-null with !
-    const lastCompletionDay = parseInt(format(lastCompletion, 'd'));
-    const currentDay = parseInt(format(today, 'd'));
-    
-    // If we haven't reached the day of the month when the task was last completed,
-    // don't count this month in the expected count
-    if (currentDay < lastCompletionDay) {
-      expectedCount--;
+  if (pattern === 'months' && interval > 1) {
+    // For multi-month intervals, calculate expected completions differently
+    if (recentCompletions.length > 0) {
+      // Get the earliest completion in our window
+      const earliestCompletion = recentCompletions[recentCompletions.length - 1]!; // Assert non-null with !
+      
+      // Generate expected dates from the earliest completion
+      let expectedDates: Date[] = [];
+      let expectedDate = new Date(earliestCompletion);
+      
+      // First, add the initial completion
+      if (isBefore(sixMonthsAgo, earliestCompletion) || isEqual(sixMonthsAgo, earliestCompletion)) {
+        expectedDates.push(new Date(earliestCompletion));
+      }
+      
+      // Then add interval months to get subsequent expected dates
+      expectedDate.setMonth(expectedDate.getMonth() + interval);
+      while (isEqual(expectedDate, today) || isBefore(expectedDate, today)) {
+        if (isBefore(sixMonthsAgo, expectedDate) || isEqual(sixMonthsAgo, expectedDate)) {
+          expectedDates.push(new Date(expectedDate));
+        }
+        expectedDate = new Date(expectedDate);
+        expectedDate.setMonth(expectedDate.getMonth() + interval);
+      }
+
+      expectedCount = expectedDates.length;
+      console.log('Expected dates:', expectedDates.map(d => format(d, 'yyyy-MM-dd')));
+
+      // Count completions that are within 1 month of any expected date
+      for (const expectedDate of expectedDates) {
+        const hasValidCompletion = recentCompletions.some(completion => {
+          const monthDiff = Math.abs(
+            (expectedDate.getFullYear() - completion.getFullYear()) * 12 +
+            (expectedDate.getMonth() - completion.getMonth())
+          );
+          return monthDiff <= 1;
+        });
+        if (hasValidCompletion) {
+          validCompletions++;
+        }
+      }
     }
-  }
+  } else {
+    // Original logic for other patterns
+    expectedCount = targetDates.length;
+    
+    if (lower === 'every month' && recentCompletions.length > 0) {
+      const lastCompletion = recentCompletions[0]!; // Assert non-null with !
+      const lastCompletionDay = parseInt(format(lastCompletion, 'd'));
+      const currentDay = parseInt(format(today, 'd'));
+      
+      // If we haven't reached the day of the month when the task was last completed,
+      // don't count this month in the expected count
+      if (currentDay < lastCompletionDay) {
+        expectedCount--;
+      }
+    }
 
-  targetDates.forEach(targetDate => {
-    const isCompleted = recentCompletions.some(completionDate => 
-      isValidCompletion(targetDate, completionDate, task.due!.string)
-    );
-    if (isCompleted) validCompletions++;
-  });
+    targetDates.forEach(targetDate => {
+      const isCompleted = recentCompletions.some(completionDate => 
+        isValidCompletion(targetDate, completionDate, task.due!.string)
+      );
+      if (isCompleted) validCompletions++;
+    });
+  }
 
   let completionRate = 0;
   if (expectedCount > 0) {
