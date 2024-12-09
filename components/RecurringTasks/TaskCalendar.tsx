@@ -3,11 +3,12 @@ import { format, isEqual, isBefore, startOfMonth, endOfMonth, eachDayOfInterval,
 import { BsCalendar3, BsAlarm } from 'react-icons/bs';
 import { IoMdTrendingUp } from 'react-icons/io';
 import { FaCheckCircle } from 'react-icons/fa';
-import { ActiveTask, ProjectData } from '../../types';
+import { ActiveTask, ProjectData, TodoistColor } from '../../types';
 import { TaskStats } from './types';
 import { Tooltip } from 'react-tooltip';
 import { Sparklines, SparklinesLine, SparklinesBars } from 'react-sparklines';
 import { calculateStats, getTrendData } from './utils/index';
+import { getColorClass } from '../../utils/projectUtils';
 
 interface TaskCalendarProps {
   taskData: TaskStats;
@@ -31,6 +32,8 @@ export const TaskCalendar: React.FC<TaskCalendarProps> = ({ taskData, task, proj
       completionDate => format(completionDate, 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd')
     );
   }, [taskData.completionDates]);
+
+  console.log("Current project", project)
 
   const getCalendarDays = useCallback((monthsAgo: number) => {
     const start = startOfMonth(subMonths(new Date(), monthsAgo));
@@ -141,8 +144,8 @@ export const TaskCalendar: React.FC<TaskCalendarProps> = ({ taskData, task, proj
             {project && (
               <div>
                 <div
-                  className="w-2 h-2 rounded-sm flex-shrink-0 inline-block"
-                  style={{ backgroundColor: project.color }}
+                  className={`w-2 h-2 rounded-sm inline-block bg-${getColorClass(project.color as TodoistColor)}`}
+                  data-tooltip-id="task-calendar-tooltip"
                 />
                 <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-opacity-20">
                   {project.name}
