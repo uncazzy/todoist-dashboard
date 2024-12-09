@@ -64,25 +64,54 @@ export function getTrendData(
     return weeklyDataAscending.reverse();
   }
   else if (pattern === 'months' || pattern === 'monthly' || pattern === 'monthly-last') {
-    // Aggregate by month - 6 data points: current month to 5 months ago
-    // We want index 0 = current month, index 5 = oldest month.
-    const data: number[] = [];
-    for (let i = 0; i < 6; i++) {
-      const monthStart = startOfMonth(subMonths(today, i));
-      const monthEnd = endOfMonth(monthStart);
+    // For tasks that recur every X months, we need a different approach than calendar month aggregation
+    if (pattern === 'months') {
+      // For "every X months" pattern, we'll calculate completion rates for each month
+      const data: number[] = [];
+      for (let i = 0; i < 6; i++) {
+        const monthStart = startOfMonth(subMonths(today, i));
+        const monthEnd = endOfMonth(monthStart);
 
-      const monthTargets = filteredTargets.filter(td =>
-        isWithinInterval(td, { start: monthStart, end: monthEnd })
-      );
-      const expected = monthTargets.length;
-      const actual = monthTargets.filter(isCompletedOn).length;
+        // Get targets that were due in this month
+        const monthTargets = filteredTargets.filter(td =>
+          isWithinInterval(td, { start: monthStart, end: monthEnd })
+        );
 
-      // i=0: current month, data[0] = current month’s rate
-      data.push(expected > 0 ? (actual / expected) * 100 : 0);
+        // Get completions in this month
+        const monthCompletions = completionDates.filter(cd =>
+          isWithinInterval(cd, { start: monthStart, end: monthEnd })
+        );
+
+        if (monthTargets.length > 0) {
+          // If there were targets this month, calculate completion rate based on targets
+          const actual = monthTargets.filter(isCompletedOn).length;
+          data.push((actual / monthTargets.length) * 100);
+        } else if (monthCompletions.length > 0) {
+          // If there were no targets but there were completions, count as 100%
+          data.push(100);
+        } else {
+          // No targets and no completions
+          data.push(0);
+        }
+      }
+      return data;
+    } else {
+      // For regular monthly patterns, continue with month-by-month aggregation
+      const data: number[] = [];
+      for (let i = 0; i < 6; i++) {
+        const monthStart = startOfMonth(subMonths(today, i));
+        const monthEnd = endOfMonth(monthStart);
+
+        const monthTargets = filteredTargets.filter(td =>
+          isWithinInterval(td, { start: monthStart, end: monthEnd })
+        );
+        const expected = monthTargets.length;
+        const actual = monthTargets.filter(isCompletedOn).length;
+
+        data.push(expected > 0 ? (actual / expected) * 100 : 0);
+      }
+      return data;
     }
-
-    // data[0] = current month, data[5] = oldest month, matches desired order (now at 0, older at end)
-    return data;
   } else {
     // If pattern not recognized, return empty. Should not happen as detectPattern covers all.
     return [];

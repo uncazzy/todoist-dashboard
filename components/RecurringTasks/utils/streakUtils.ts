@@ -120,39 +120,45 @@ function calculateMultiMonthStreaks(interval: number, recentCompletions: Date[],
     return { currentStreak: 0, longestStreak: 0 };
   }
 
-  // For multi-month intervals, we'll consider a streak valid if:
-  // The completion is on or before the expected date
-  
+  // For multi-month intervals, we need to:
+  // 1. Start from the latest completion
+  // 2. Look back at expected completion dates based on the interval
+  // 3. Count streak only if completions match these expected dates
+
   let currentStreak = 1;  // Start with 1 for the most recent completion
   let longestStreak = 1;
   let lastValidDate = sortedCompletions[0]!;  // We know this exists because we checked length above
-  let expectedNextDate = new Date(lastValidDate);
-  expectedNextDate.setMonth(expectedNextDate.getMonth() + interval);
 
-  // Check each completion against its expected date
-  for (let i = 1; i < sortedCompletions.length; i++) {
-    const currentDate = sortedCompletions[i]!;  // Non-null assertion since i < length
-    
-    // If this completion is on or before when it was expected
-    if (!isAfter(currentDate, expectedNextDate)) {
+  // Generate expected dates working backwards from the latest completion
+  let expectedDate = new Date(lastValidDate);
+  expectedDate.setMonth(expectedDate.getMonth() - interval);  // First expected date before latest completion
+
+  // Keep track of which completions we've matched to avoid counting duplicates
+  const usedCompletions = new Set<string>([format(lastValidDate, 'yyyy-MM-dd')]);
+
+  while (expectedDate >= _sixMonthsAgo) {
+    // Look for a completion around this expected date
+    // Allow completion to be up to 15 days before or after the expected date
+    const foundCompletion = sortedCompletions.find(completion => {
+      const dateStr = format(completion, 'yyyy-MM-dd');
+      if (usedCompletions.has(dateStr)) return false;  // Skip if we've already used this completion
+
+      const daysDiff = Math.abs(completion.getTime() - expectedDate.getTime()) / (1000 * 60 * 60 * 24);
+      return daysDiff <= 15;  // Allow 15 days before or after expected date
+    });
+
+    if (foundCompletion) {
+      // Found a valid completion for this expected date
       currentStreak++;
       longestStreak = Math.max(longestStreak, currentStreak);
-      lastValidDate = currentDate;
-      expectedNextDate = new Date(currentDate);
-      expectedNextDate.setMonth(expectedNextDate.getMonth() + interval);
+      usedCompletions.add(format(foundCompletion, 'yyyy-MM-dd'));
     } else {
-      // This completion was after the expected date
-      if (i === 1) {
-        // If this is the second-most recent completion and it's late,
-        // current streak should be 1 (just the most recent completion)
-        currentStreak = 1;
-      }
-      // Start a new potential streak from this point
-      lastValidDate = currentDate;
-      expectedNextDate = new Date(currentDate);
-      expectedNextDate.setMonth(expectedNextDate.getMonth() + interval);
-      currentStreak = 1;
+      // No completion found for this expected date - break the streak
+      break;
     }
+
+    // Move to the next expected date
+    expectedDate.setMonth(expectedDate.getMonth() - interval);
   }
 
   // Cap streak at maximum possible within time window
