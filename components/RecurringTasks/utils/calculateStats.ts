@@ -1,4 +1,4 @@
-import { format, isEqual, isBefore, subMonths, startOfMonth } from 'date-fns';
+import { format, isEqual, isBefore, isAfter, subMonths, startOfMonth } from 'date-fns';
 import { ActiveTask } from '../../../types';
 import { TaskStats } from './types';
 import { isValidCompletion } from './validationUtils';
@@ -97,14 +97,11 @@ export function calculateStats(
       expectedCount = expectedDates.length;
       console.log('Expected dates:', expectedDates.map(d => format(d, 'yyyy-MM-dd')));
 
-      // Count completions that are within 1 month of any expected date
+      // Count completions that are within the expected interval
       for (const expectedDate of expectedDates) {
         const hasValidCompletion = recentCompletions.some(completion => {
-          const monthDiff = Math.abs(
-            (expectedDate.getFullYear() - completion.getFullYear()) * 12 +
-            (expectedDate.getMonth() - completion.getMonth())
-          );
-          return monthDiff <= 1;
+          // Check if completion is before or on the expected date
+          return !isAfter(completion, expectedDate);
         });
         if (hasValidCompletion) {
           validCompletions++;

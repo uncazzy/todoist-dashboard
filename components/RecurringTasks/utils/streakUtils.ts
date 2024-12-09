@@ -121,8 +121,7 @@ function calculateMultiMonthStreaks(interval: number, recentCompletions: Date[],
   }
 
   // For multi-month intervals, we'll consider a streak valid if:
-  // 1. The completion is within 1 month of the expected date
-  // 2. The time between consecutive completions is close to the interval
+  // The completion is on or before the expected date
   
   let currentStreak = 1;  // Start with 1 for the most recent completion
   let longestStreak = 1;
@@ -133,22 +132,18 @@ function calculateMultiMonthStreaks(interval: number, recentCompletions: Date[],
   // Check each completion against its expected date
   for (let i = 1; i < sortedCompletions.length; i++) {
     const currentDate = sortedCompletions[i]!;  // Non-null assertion since i < length
-    const monthDiff = Math.abs(
-      (expectedNextDate.getFullYear() - currentDate.getFullYear()) * 12 +
-      (expectedNextDate.getMonth() - currentDate.getMonth())
-    );
-
-    // If this completion is within 1 month of when it was expected
-    if (monthDiff <= 1) {
+    
+    // If this completion is on or before when it was expected
+    if (!isAfter(currentDate, expectedNextDate)) {
       currentStreak++;
       longestStreak = Math.max(longestStreak, currentStreak);
       lastValidDate = currentDate;
       expectedNextDate = new Date(currentDate);
       expectedNextDate.setMonth(expectedNextDate.getMonth() + interval);
     } else {
-      // This completion was too far from the expected date
+      // This completion was after the expected date
       if (i === 1) {
-        // If this is the second-most recent completion and it's off,
+        // If this is the second-most recent completion and it's late,
         // current streak should be 1 (just the most recent completion)
         currentStreak = 1;
       }
