@@ -222,7 +222,7 @@ export const TaskCalendar: React.FC<TaskCalendarProps> = ({ taskData, task, proj
             <div className="text-xs text-gray-400 mb-1">{month}</div>
             <div className="grid grid-cols-7 gap-0.5">
               {weekDays.map(day => (
-                <div key={day.key} className="text-[10px] text-gray-500 h-4 flex items-center justify-center">
+                <div key={day.key} className="text-xs text-gray-500 h-4 flex items-center justify-center">
                   {day.label}
                 </div>
               ))}
@@ -238,7 +238,7 @@ export const TaskCalendar: React.FC<TaskCalendarProps> = ({ taskData, task, proj
                 return (
                   <div key={date.toString()} className="group relative">
                     <div
-                      className={`h-6 sm:h-5 w-full rounded-sm flex items-center justify-center text-[11px] sm:text-[10px]
+                      className={`h-6 sm:h-5 w-full rounded-sm flex items-center justify-center text-[11px] sm:text-xs
                         ${completed ? 'bg-emerald-500 dark:bg-emerald-500 text-white' :
                           isPast ? 'bg-gray-800 dark:bg-gray-800 text-gray-400' :
                             'bg-gray-900 dark:bg-gray-900 text-gray-500'

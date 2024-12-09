@@ -102,7 +102,7 @@ const RecurringTasksCard: React.FC<Props> = ({ activeTasks, allCompletedTasks, p
                 >
                   <div className="p-3 sm:p-6">
                     <div className="overflow-x-auto -mx-6 px-6 hide-scrollbar">
-                      <div className="min-w-[768px]">
+                      <div className="">
                         <TaskCalendar
                           taskData={taskData}
                           task={task}
