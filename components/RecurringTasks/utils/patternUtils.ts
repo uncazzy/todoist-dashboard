@@ -1,4 +1,4 @@
-import { format, subMonths, subDays, isAfter, isEqual, isBefore } from 'date-fns';
+import { format, subMonths, subDays, isAfter, isEqual, isBefore, addDays } from 'date-fns';
 
 interface PatternInfo {
   pattern: string;
@@ -6,7 +6,7 @@ interface PatternInfo {
   targetDates: Date[];
 }
 
-export function detectPattern(dueString: string, today: Date, sixMonthsAgo: Date, latestCompletion: Date | undefined): PatternInfo {
+export function detectPattern(dueString: string, today: Date, sixMonthsAgo: Date, latestCompletion: Date | undefined, recentCompletions: Date[]): PatternInfo {
   const lower = dueString.toLowerCase();
   let pattern = '';
   let interval = 1;
@@ -22,15 +22,35 @@ export function detectPattern(dueString: string, today: Date, sixMonthsAgo: Date
   } else if (lower === 'every other day') {
     pattern = 'every-other-day';
     interval = 2;
-    let date = today;
-    while (isBefore(sixMonthsAgo, date) || isEqual(sixMonthsAgo, date)) {
-      targetDates.push(date);
-      date = subDays(date, 2);
+    
+    // For "every other day", generate target dates independently of completions
+    if (recentCompletions.length > 0) {
+      // Start from the first completion
+      const firstCompletion = recentCompletions[recentCompletions.length - 1]; // Earliest completion
+      if (firstCompletion) {
+        let currentDate = new Date(firstCompletion);
+        
+        // Generate all target dates from first completion to today
+        while (isBefore(currentDate, today) || isEqual(currentDate, today)) {
+          targetDates.push(new Date(currentDate));
+          currentDate = addDays(currentDate, interval);
+        }
+      }
+    } else {
+      // If no completions, start from today and work backwards
+      let currentDate = today;
+      while (isBefore(sixMonthsAgo, currentDate) || isEqual(sixMonthsAgo, currentDate)) {
+        targetDates.push(new Date(currentDate));
+        currentDate = subDays(currentDate, interval);
+      }
     }
+    
+    // Sort target dates from newest to oldest to match other patterns
+    targetDates.sort((a, b) => b.getTime() - a.getTime());
   } else if (lower.includes('every other')) {
     pattern = 'biweekly';
     interval = 14;
-    generateWeeklyDates(lower, today, sixMonthsAgo, interval, targetDates);
+    generateWeeklyDates(lower, today, sixMonthsAgo, interval, latestCompletion, targetDates);
   } else if (lower.match(/every (\d+) months?/)) {
     const monthMatch = lower.match(/every (\d+) months?/);
     if (monthMatch) {
@@ -47,37 +67,55 @@ export function detectPattern(dueString: string, today: Date, sixMonthsAgo: Date
   } else if (lower.includes('every')) {
     pattern = 'weekly';
     interval = 7;
-    generateWeeklyDates(lower, today, sixMonthsAgo, interval, targetDates);
+    generateWeeklyDates(lower, today, sixMonthsAgo, interval, latestCompletion, targetDates);
   }
 
   return { pattern, interval, targetDates };
 }
 
-function generateWeeklyDates(lower: string, today: Date, sixMonthsAgo: Date, interval: number, targetDates: Date[]) {
+function generateWeeklyDates(lower: string, today: Date, sixMonthsAgo: Date, interval: number, latestCompletion: Date | undefined, targetDates: Date[]) {
   const weekdayMatch = lower.match(/every( other)? (monday|tuesday|wednesday|thursday|friday|saturday|sunday|sun|mon|tue|wed|thu|fri|sat)/i);
   
-  if (lower === 'every other day') {
-    // For "every other day", start from today and go back
-    let date = today;
-    while (isBefore(sixMonthsAgo, date) || isEqual(sixMonthsAgo, date)) {
-      targetDates.push(new Date(date));
-      date = subDays(date, 2); // Subtract 2 days for "every other day"
-    }
-  } else if (weekdayMatch) {
+  if (weekdayMatch) {
     const dayMap: { [key: string]: string } = {
       sun: 'sunday', mon: 'monday', tue: 'tuesday', wed: 'wednesday',
       thu: 'thursday', fri: 'friday', sat: 'saturday'
     };
     const targetDay = weekdayMatch[2] ? (dayMap[weekdayMatch[2].toLowerCase()] || weekdayMatch[2].toLowerCase()) : 'monday';
     
-    let date = today;
+    // Start from the most recent completion or today
+    let date = latestCompletion || today;
+    
+    // If using latestCompletion, move forward one interval to get next target
+    if (latestCompletion) {
+      date = addDays(latestCompletion, interval);
+    }
+    
     // Align to the target weekday
     while (format(date, 'EEEE').toLowerCase() !== targetDay) {
       date = subDays(date, 1);
     }
 
+    // For "every other" patterns, ensure we're on the correct alternating week
+    if (lower.includes('every other') && latestCompletion) {
+      // Find the next target date after the last completion
+      let checkDate = latestCompletion;
+      while (format(checkDate, 'EEEE').toLowerCase() !== targetDay) {
+        checkDate = subDays(checkDate, 1);
+      }
+      
+      // If we're not on the right schedule, adjust back one more interval
+      const diffInDays = Math.abs(date.getTime() - checkDate.getTime()) / (1000 * 60 * 60 * 24);
+      if (Math.round(diffInDays) % interval !== 0) {
+        date = subDays(date, interval);
+      }
+    }
+
+    // Generate target dates
     while (isBefore(sixMonthsAgo, date) || isEqual(sixMonthsAgo, date)) {
-      targetDates.push(date);
+      if (!isAfter(date, today)) {
+        targetDates.push(new Date(date));
+      }
       date = subDays(date, interval);
     }
   }

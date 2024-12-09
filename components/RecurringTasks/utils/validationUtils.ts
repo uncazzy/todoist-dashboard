@@ -25,6 +25,16 @@ export const isValidCompletion = (targetDate: Date, completionDate: Date, dueStr
            format(targetDate, 'yyyy-MM') === format(completionDate, 'yyyy-MM');
   }
   
+  // For biweekly tasks, require exact date match
+  if (lower.includes('every other')) {
+    // For "every other day", check if the completion matches the target date exactly
+    if (lower === 'every other day') {
+      return format(targetDate, 'yyyy-MM-dd') === format(completionDate, 'yyyy-MM-dd');
+    }
+    // For other biweekly tasks (e.g., "every other Monday"), require exact date match
+    return format(targetDate, 'yyyy-MM-dd') === format(completionDate, 'yyyy-MM-dd');
+  }
+  
   // For weekly tasks, allow completion within the same week
   if (lower.includes('every') && !lower.includes('month') && !lower.includes('other') && !lower.includes('day')) {
     const targetWeekStart = startOfWeek(targetDate);

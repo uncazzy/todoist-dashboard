@@ -45,7 +45,7 @@ export function calculateStats(
   const latestCompletion = recentCompletions[0];
 
   // Detect pattern and generate target dates
-  const { pattern, interval, targetDates } = detectPattern(lower, today, sixMonthsAgo, latestCompletion);
+  const { pattern, interval, targetDates } = detectPattern(lower, today, sixMonthsAgo, latestCompletion, recentCompletions);
   console.log('Detected pattern:', pattern, 'with interval:', interval);
   console.log('Target dates:', targetDates.map(d => format(d, 'yyyy-MM-dd')));
 
@@ -92,22 +92,8 @@ export function calculateStats(
 
   let completionRate = 0;
   if (expectedCount > 0) {
-    const completedCount = validCompletions;
-    
-    // For monthly tasks with specific dates, adjust completion rate calculation
-    const specificDateMatch = lower.match(/every (\d+)(?:st|nd|rd|th)?(?:\s|$)/i);
-    if (specificDateMatch?.[1]) {
-      const targetDay = parseInt(specificDateMatch[1] ?? '1');
-      const currentDay = parseInt(format(today, 'd'));
-      
-      // If we haven't reached this month's target day, don't count it in expected completions
-      if (currentDay < targetDay) {
-        expectedCount = targetDates.length;
-      }
-    }
-    
     // For tasks completed more times than expected, cap at 200%
-    completionRate = Math.min(200, Math.round((completedCount / expectedCount) * 100));
+    completionRate = Math.min(200, Math.round((validCompletions / expectedCount) * 100));
   }
 
   console.log('Expected count:', expectedCount, 

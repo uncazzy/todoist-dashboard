@@ -33,8 +33,6 @@ export const TaskCalendar: React.FC<TaskCalendarProps> = ({ taskData, task, proj
     );
   }, [taskData.completionDates]);
 
-  console.log("Current project", project)
-
   const getCalendarDays = useCallback((monthsAgo: number) => {
     const start = startOfMonth(subMonths(new Date(), monthsAgo));
     const end = endOfMonth(subMonths(new Date(), monthsAgo));
@@ -193,6 +191,9 @@ export const TaskCalendar: React.FC<TaskCalendarProps> = ({ taskData, task, proj
             )}
           </div>
 
+
+
+
           <div
             className="w-full sm:w-48"
             data-tooltip-id="task-calendar-tooltip"
@@ -200,7 +201,7 @@ export const TaskCalendar: React.FC<TaskCalendarProps> = ({ taskData, task, proj
               ? `Long-term recurring task (${stats.interval} months) - trend analysis not applicable`
               : "Completion trend over the past 6 months"}
           >
-            <Sparklines data={trendData} height={20} margin={2}>
+            <Sparklines data={[...trendData].reverse()} height={20} margin={2}>
               <SparklinesLine
                 style={{
                   stroke: "#60a5fa",
@@ -215,6 +216,10 @@ export const TaskCalendar: React.FC<TaskCalendarProps> = ({ taskData, task, proj
                 }}
               />
             </Sparklines>
+            <div className="flex justify-between text-[10px] text-gray-400 mt-1">
+              <span>now</span>
+              <span>6mo ago</span>
+            </div>
           </div>
         </div>
       </div>
