@@ -1,35 +1,71 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { BsCalendar3, BsCalendarWeek, BsCalendarMonth, BsThreeDots } from 'react-icons/bs';
+import { Virtuoso } from 'react-virtuoso';
 import { ActiveTask, ProjectData } from '../../types';
 import { TaskCalendar } from './TaskCalendar';
 import { RecurringFrequency } from './types';
 import { getTaskFrequency, calculateStats } from './utils';
-import { useInView } from '../../hooks/useInView';
+
+interface TaskItemProps {
+  taskData: RecurringTaskData;
+  activeTasksMap: Map<string, ActiveTask>;
+  projectDataMap: Map<string, ProjectData>;
+}
+
+interface CompletedTask {
+  task_id: string;
+  completed_at: string;
+}
 
 interface Props {
   activeTasks: ActiveTask[];
-  allCompletedTasks: any[];
+  allCompletedTasks: CompletedTask[];
   projectData: ProjectData[];
+}
+
+interface RecurringTaskData {
+  taskId: string;
+  frequency: RecurringFrequency;
+  completionDates: Date[];
+  completedCount: number;
+  totalDueCount: number;
+  currentStreak: number;
+  completionRate: number;
 }
 
 const RecurringTasksCard: React.FC<Props> = ({ activeTasks, allCompletedTasks, projectData }) => {
   const [selectedFrequency, setSelectedFrequency] = useState<RecurringFrequency>('daily');
 
-  const frequencies: { freq: RecurringFrequency; icon: JSX.Element; label: string }[] = React.useMemo(() => [
+  const frequencies = useMemo(() => [
     { freq: 'daily' as const, icon: <BsCalendar3 className="w-4 h-4" />, label: 'Daily Tasks' },
     { freq: 'weekly' as const, icon: <BsCalendarWeek className="w-4 h-4" />, label: 'Weekly Tasks' },
     { freq: 'monthly' as const, icon: <BsCalendarMonth className="w-4 h-4" />, label: 'Monthly Tasks' },
     { freq: 'other' as const, icon: <BsThreeDots className="w-4 h-4" />, label: 'Other Recurring' }
   ], []);
 
-  const recurringTasksData = React.useMemo(() => {
+  // Create lookup maps for efficient data retrieval
+  const activeTasksMap = useMemo(() => {
+    const map = new Map<string, ActiveTask>();
+    activeTasks.forEach(task => map.set(task.id, task));
+    return map;
+  }, [activeTasks]);
+
+  const projectDataMap = useMemo(() => {
+    const map = new Map<string, ProjectData>();
+    projectData.forEach(project => map.set(project.id, project));
+    return map;
+  }, [projectData]);
+
+  // Prepare recurring tasks data
+  const recurringTasksData = useMemo<RecurringTaskData[]>(() => {
     const recurringTasks = activeTasks.filter(task => task.due?.isRecurring);
-    return recurringTasks.map(task => {
+
+    return recurringTasks.map((task) => {
       const taskCompletions = allCompletedTasks.filter(ct => ct.task_id === task.id);
       const frequency = getTaskFrequency(task.due?.string);
       const completionDates = taskCompletions.map(ct => new Date(ct.completed_at));
       const stats = calculateStats(task, completionDates);
-      
+
       return {
         taskId: task.id,
         frequency,
@@ -42,58 +78,49 @@ const RecurringTasksCard: React.FC<Props> = ({ activeTasks, allCompletedTasks, p
     });
   }, [activeTasks, allCompletedTasks]);
 
-  const frequencyCounts = React.useMemo(() => 
-    frequencies.reduce((acc, { freq }) => ({
-      ...acc,
-      [freq]: recurringTasksData.filter(td => td.frequency === freq).length
-    }), {} as Record<RecurringFrequency, number>),
-    [recurringTasksData, frequencies]
-  );
+  const frequencyCounts = useMemo(() => {
+    const counts: Record<RecurringFrequency, number> = {
+      daily: 0,
+      weekly: 0,
+      monthly: 0,
+      other: 0
+    };
 
-  const filteredTasks = React.useMemo(() => 
-    recurringTasksData.filter(taskData => taskData.frequency === selectedFrequency),
+    recurringTasksData.forEach(taskData => {
+      if (counts[taskData.frequency] !== undefined) {
+        counts[taskData.frequency]++;
+      }
+    });
+
+    return counts;
+  }, [recurringTasksData]);
+
+  const filteredTasks = useMemo(
+    () => recurringTasksData.filter(taskData => taskData.frequency === selectedFrequency),
     [recurringTasksData, selectedFrequency]
   );
 
-  const TaskItem = React.useCallback(({ taskData }: { taskData: typeof filteredTasks[0] }) => {
-    const [ref, shouldRender] = useInView({
-      viewportBufferFactor: 2,
-      threshold: 0.1,
-      keepRendered: true
-    });
-    const task = activeTasks.find(t => t.id === taskData.taskId);
-    const project = projectData.find(p => p.id === task?.projectId);
+  const TaskItem: React.FC<TaskItemProps> = React.memo(({ taskData, activeTasksMap, projectDataMap }: TaskItemProps) => {
+    const task = activeTasksMap.get(taskData.taskId);
+    const project = task ? projectDataMap.get(task.projectId) : undefined;
 
-    if (!task) return null;
+    if (!task) {
+      console.warn(`Task with ID ${taskData.taskId} not found.`);
+      return null;
+    }
 
     return (
-      <div 
-        ref={ref}
-        className="bg-gray-900/30 rounded-lg backdrop-blur-sm hover:bg-gray-900/40 transition-colors"
-      >
-        {shouldRender ? (
-          <div className="p-3 sm:p-6">
-            <div className="overflow-x-auto -mx-6 px-6 hide-scrollbar">
-              <TaskCalendar
-                taskData={taskData}
-                task={task}
-                project={project}
-              />
-            </div>
+      <div className="bg-gray-900/30 rounded-lg backdrop-blur-sm hover:bg-gray-900/40 transition-colors">
+        <div className="p-3 sm:p-6">
+          <div className="overflow-x-auto -mx-6 px-6 hide-scrollbar">
+            <TaskCalendar taskData={taskData} task={task} project={project} />
           </div>
-        ) : (
-          <div className="h-[300px] animate-pulse bg-gray-800/20 rounded-lg">
-            <div className="h-full flex items-center justify-center">
-              <div className="space-y-4 w-full px-6">
-                <div className="h-6 bg-gray-800/40 rounded w-3/4 mx-auto" />
-                <div className="h-4 bg-gray-800/40 rounded w-1/2 mx-auto" />
-              </div>
-            </div>
-          </div>
-        )}
+        </div>
       </div>
     );
-  }, [activeTasks, projectData]);
+  });
+
+  TaskItem.displayName = 'TaskItem';
 
   if (!recurringTasksData || recurringTasksData.length === 0) {
     return (
@@ -131,25 +158,22 @@ const RecurringTasksCard: React.FC<Props> = ({ activeTasks, allCompletedTasks, p
       </div>
 
       {/* Tasks Grid */}
-      <div className="flex-1 overflow-hidden mt-6">
-        <div className="h-full overflow-y-auto px-6 -mx-6 sm:px-0 sm:mx-0">
-          <div className="space-y-6">
-            {filteredTasks.map((taskData) => (
-              <TaskItem key={taskData.taskId} taskData={taskData} />
-            ))}
-
-            {filteredTasks.length === 0 && (
-              <div className="bg-gray-900/30 rounded-lg p-8 text-center backdrop-blur-sm">
-                <p className="text-gray-400 text-lg">
-                  No {selectedFrequency} tasks found
-                </p>
-                <p className="text-gray-500 mt-2">
-                  Create some {selectedFrequency} recurring tasks in Todoist to see them here
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
+      <div className="flex-1 mt-6" style={{ minHeight: 0 }}>
+        <Virtuoso
+          data={filteredTasks}
+          useWindowScroll
+          itemContent={(_index, taskData) => (
+            <div className="mb-6">
+              <TaskItem
+                taskData={taskData}
+                activeTasksMap={activeTasksMap}
+                projectDataMap={projectDataMap}
+              />
+            </div>
+          )}
+          increaseViewportBy={{ top: 300, bottom: 300 }}
+          overscan={5}
+        />
       </div>
     </div>
   );

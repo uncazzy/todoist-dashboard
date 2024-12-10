@@ -40,7 +40,8 @@
     "react-icons": "^4.10.1",
     "react-markdown": "^8.0.7",
     "react-sparklines": "^1.7.0",
-    "react-tooltip": "^5.28.0"
+    "react-tooltip": "^5.28.0",
+    "react-virtuoso": "^4.12.3"
   },
   "devDependencies": {
     "@types/node": "^22.10.1",

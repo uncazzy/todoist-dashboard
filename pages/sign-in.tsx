@@ -37,7 +37,7 @@ const SignIn: NextPage = () => {
       console.log('Got code, attempting sign in...');
       handleSignIn();
     }
-  }, [router.query, session, isLoading]);
+  }, [router, session, isLoading]);
 
   const handleSignIn = async (): Promise<void> => {
     setIsLoading(true);

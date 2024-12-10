@@ -26,7 +26,7 @@ const weekDays = [
   { key: 'sat', label: 'S' }
 ];
 
-export const TaskCalendar: React.FC<TaskCalendarProps> = ({ taskData, task, project }) => {
+export const TaskCalendar = React.memo(({ taskData, task, project }: TaskCalendarProps) => {
   const isCompleted = useCallback((date: Date): boolean => {
     return taskData.completionDates.some(
       completionDate => format(completionDate, 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd')
@@ -280,4 +280,6 @@ export const TaskCalendar: React.FC<TaskCalendarProps> = ({ taskData, task, proj
       <Tooltip id="task-calendar-tooltip" />
     </div>
   );
-};
+});
+
+TaskCalendar.displayName = 'TaskCalendar';
