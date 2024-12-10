@@ -191,9 +191,6 @@ export const TaskCalendar: React.FC<TaskCalendarProps> = ({ taskData, task, proj
             )}
           </div>
 
-
-
-
           <div
             className="w-full sm:w-48"
             data-tooltip-id="task-calendar-tooltip"
@@ -201,7 +198,15 @@ export const TaskCalendar: React.FC<TaskCalendarProps> = ({ taskData, task, proj
               ? `Long-term recurring task (${stats.interval} months) - trend analysis not applicable`
               : "Completion trend over the past 6 months"}
           >
-            <Sparklines data={trendData} height={20} margin={2}>
+            <Sparklines
+              data={trendData}
+              height={20}
+              margin={2}
+              min={0}
+              max={100}
+              preserveAspectRatio="none"
+              width={192}
+            >
               <SparklinesLine
                 style={{
                   stroke: "#60a5fa",
@@ -221,6 +226,7 @@ export const TaskCalendar: React.FC<TaskCalendarProps> = ({ taskData, task, proj
               <span>6mo ago</span>
             </div>
           </div>
+
         </div>
       </div>
 
