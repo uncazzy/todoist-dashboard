@@ -71,7 +71,7 @@ const RecurringTasksPreview: React.FC<RecurringTasksPreviewProps> = ({
       </div>
 
       <Link
-        href="/recurring-tasks"
+        href="/recurring"
         className="flex items-center justify-center gap-2 w-full bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 py-3 px-4 rounded-lg transition-colors"
       >
         View Detailed Analysis
