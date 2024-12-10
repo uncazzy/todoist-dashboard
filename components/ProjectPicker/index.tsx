@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ProjectData } from '../../types';
+import { ProjectData, TodoistColor } from '../../types';
 import { HiOutlineChevronDown } from 'react-icons/hi';
 import { motion, AnimatePresence } from 'framer-motion';
+import { getColorClass } from '../../utils/projectUtils';
 
 interface ProjectPickerProps {
   projects: ProjectData[];
@@ -83,8 +84,7 @@ const ProjectPicker: React.FC<ProjectPickerProps> = ({
                   </div>
                   <div className="flex items-start gap-2 min-w-0 flex-1">
                     <div
-                      className="w-3 h-3 rounded-sm flex-shrink-0 mt-1"
-                      style={{ backgroundColor: project.color }}
+                      className={`bg-${getColorClass(project.color as TodoistColor)} w-3 h-3 rounded-sm flex-shrink-0 mt-1`}
                     />
                     <span className="text-gray-300 break-words">{project.name}</span>
                   </div>

@@ -19,7 +19,7 @@ const RecurringTasksPage = () => {
   if (status === "loading") {
     return (
       <Layout>
-        <div className="flex justify-center items-center min-h-screen">
+        <div className="flex justify-center items-center min-h-[80vh]">
           <div className="text-xl">Loading...</div>
         </div>
       </Layout>
