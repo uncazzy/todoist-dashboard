@@ -25,8 +25,8 @@ export function calculateStreaks(
     !isBefore(date, _sixMonthsAgo)
   );
 
-  // Calculate streaks for monthly tasks with specific dates
-  if ((lower.match(/every (\d+)(?:st|nd|rd|th)?(?:\s|$)/i) || lower === 'every last day') && interval === 1) {
+  // Calculate streaks for monthly tasks
+  if (lower === 'every month' || (lower.match(/every (\d+)(?:st|nd|rd|th)?(?:\s|$)/i) || lower === 'every last day') && interval === 1) {
     return calculateMonthlyStreaks(lower, recentCompletions);
   } 
   // Calculate streaks for tasks with multiple month intervals
@@ -45,8 +45,56 @@ function calculateMonthlyStreaks(dueString: string, recentCompletions: Date[]): 
   
   // Sort completions from newest to oldest
   const sortedCompletions = [...recentCompletions].sort((a, b) => b.getTime() - a.getTime());
-  
-  if (dueString === 'every last day') {
+
+  if (dueString === 'every month') {
+    // For "every month" tasks, each completion must be exactly one month after the previous
+    let lastDate: Date | undefined;
+    let currentCount = 0;
+
+    for (let i = sortedCompletions.length - 1; i >= 0; i--) {
+      const completion = sortedCompletions[i];
+      
+      if (!lastDate) {
+        lastDate = completion;
+        currentCount = 1;
+        continue;
+      }
+
+      // Check if this completion is exactly one month after the last one
+      const expectedMonth = new Date(lastDate.getFullYear(), lastDate.getMonth() + 1, 1);
+      const lastDayOfMonth = new Date(expectedMonth.getFullYear(), expectedMonth.getMonth() + 1, 0).getDate();
+      const originalDay = lastDate.getDate();
+      const expectedDay = Math.min(originalDay, lastDayOfMonth);
+      const expectedDate = new Date(expectedMonth.getFullYear(), expectedMonth.getMonth(), expectedDay);
+      
+      // Check if this completion matches the expected date
+      if (completion && format(completion, 'yyyy-MM-dd') === format(expectedDate, 'yyyy-MM-dd')) {
+        currentCount++;
+        lastDate = completion;
+      } else {
+        // Chain broken, update longest streak and reset current
+        longestStreak = Math.max(longestStreak, currentCount);
+        currentCount = 1;
+        lastDate = completion;
+      }
+    }
+
+    // Update longest streak one final time
+    longestStreak = Math.max(longestStreak, currentCount);
+    
+    // Current streak is only maintained if the latest completion is within one month
+    if (sortedCompletions.length > 0) {
+      const latestCompletion = sortedCompletions[0];
+      const nextExpectedDate = latestCompletion ? new Date(latestCompletion) : new Date();
+      nextExpectedDate.setMonth(nextExpectedDate.getMonth() + 1);
+      
+      if (new Date() < nextExpectedDate) {
+        currentStreak = currentCount;
+      }
+    }
+
+    return { currentStreak, longestStreak };
+  } else if (dueString === 'every last day') {
     // For "every last day" tasks, we just need to count consecutive months
     let consecutiveMonths = 0;
     let lastMonth = -1;
@@ -68,35 +116,29 @@ function calculateMonthlyStreaks(dueString: string, recentCompletions: Date[]): 
     }
     
     return { currentStreak, longestStreak };
-  }
-  
-  // Original logic for other monthly tasks with specific dates
-  let targetDay: number;
-  if (dueString === 'every last day') {
-    const today = new Date();
-    const lastDayOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-    targetDay = parseInt(format(lastDayOfMonth, 'd'));
   } else {
+    // Original logic for other monthly tasks with specific dates
+    let targetDay: number;
     const match = dueString.match(/every (\d+)(?:st|nd|rd|th)?(?:\s|$)/i);
     targetDay = parseInt(match?.[1] ?? '1');
-  }
-  
-  let currentTempStreak = 0;
-  for (const completion of sortedCompletions) {
-    const completionDay = parseInt(format(completion, 'd'));
     
-    if (completionDay === targetDay) {
-      currentTempStreak++;
-      if (currentTempStreak > longestStreak) {
-        longestStreak = currentTempStreak;
-      }
-      if (currentTempStreak === sortedCompletions.indexOf(completion) + 1) {
-        currentStreak = currentTempStreak;
-      }
-    } else {
-      currentTempStreak = 0;
-      if (sortedCompletions.indexOf(completion) === 0) {
-        currentStreak = 0;
+    let currentTempStreak = 0;
+    for (const completion of sortedCompletions) {
+      const completionDay = parseInt(format(completion, 'd'));
+      
+      if (completionDay === targetDay) {
+        currentTempStreak++;
+        if (currentTempStreak > longestStreak) {
+          longestStreak = currentTempStreak;
+        }
+        if (currentTempStreak === sortedCompletions.indexOf(completion) + 1) {
+          currentStreak = currentTempStreak;
+        }
+      } else {
+        currentTempStreak = 0;
+        if (sortedCompletions.indexOf(completion) === 0) {
+          currentStreak = 0;
+        }
       }
     }
   }
@@ -147,7 +189,7 @@ function calculateMultiMonthStreaks(interval: number, recentCompletions: Date[],
       return daysDiff <= 15;  // Allow 15 days before or after expected date
     });
 
-    if (foundCompletion) {
+    if (foundCompletion && format(foundCompletion, 'yyyy-MM-dd') === format(expectedDate, 'yyyy-MM-dd')) {
       // Found a valid completion for this expected date
       currentStreak++;
       longestStreak = Math.max(longestStreak, currentStreak);

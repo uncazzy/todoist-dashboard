@@ -5,7 +5,7 @@ export const isValidCompletion = (targetDate: Date, completionDate: Date, dueStr
   const completionStr = format(completionDate, 'yyyy-MM-dd');
   const lower = dueString.toLowerCase();
 
-  // For "every month" without a specific day, check if completion is in the same month
+  // For "monthly-strict" pattern, require exact date match
   if (lower === 'every month') {
     return format(targetDate, 'yyyy-MM') === format(completionDate, 'yyyy-MM');
   }

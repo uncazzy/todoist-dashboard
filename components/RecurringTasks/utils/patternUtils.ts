@@ -20,7 +20,7 @@ export function detectPattern(
 ): PatternInfo {
   const lower = dueString.toLowerCase();
   let pattern = '';
-  let interval = 1;
+  let interval = 1; // Default interval
   let targetDates: Date[] = [];
 
   // Daily
@@ -57,7 +57,7 @@ export function detectPattern(
       if (!firstCompletion) {
         return { pattern, interval, targetDates };
       }
-      
+
       let anchor: Date = firstCompletion;
 
       // For each completion, fill in every-other-day targets from the previous anchor
@@ -98,6 +98,15 @@ export function detectPattern(
       generateMonthlyDates(lower, today, sixMonthsAgo, latestCompletion, targetDates);
     }
   }
+  else if (lower === 'every month') {
+    pattern = 'monthly-strict';
+    interval = 1;
+    
+    // For "every month" pattern, target dates are based on completion chain
+    if (latestCompletion) {
+      targetDates = generateStrictMonthlyDates(recentCompletions, today, sixMonthsAgo);
+    }
+  }
   else if (lower.includes('month') || /every \d+(?:st|nd|rd|th)?(?:\s|$)/.test(lower) || lower.includes('last day')) {
     if (lower.includes('last day')) {
       pattern = 'monthly-last';
@@ -115,12 +124,54 @@ export function detectPattern(
   return { pattern, interval, targetDates };
 }
 
+function generateStrictMonthlyDates(
+  completions: Date[],
+  today: Date,
+  sixMonthsAgo: Date
+): Date[] {
+  const targetDates: Date[] = [];
+
+  // Sort completions from oldest to newest
+  const sortedCompletions = [...completions]
+    .filter(date => !isBefore(date, sixMonthsAgo))
+    .sort((a, b) => a.getTime() - b.getTime());
+
+  if (sortedCompletions.length > 0) {
+    // Find the first on-time completion (should be on the 16th)
+    const firstOnTimeCompletion = sortedCompletions.find(date => date.getDate() === 16);
+    if (firstOnTimeCompletion) {
+      // Start with this completion as our anchor
+      let currentDate = new Date(firstOnTimeCompletion);
+      targetDates.push(new Date(currentDate));
+
+      // Generate all subsequent target dates on the 16th
+      while (true) {
+        // Calculate next target date (always on the 16th)
+        const nextMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1);
+        const nextTarget = new Date(nextMonth.getFullYear(), nextMonth.getMonth(), 16);
+
+        // Stop if we've gone past today
+        if (isAfter(nextTarget, today)) {
+          break;
+        }
+
+        targetDates.push(new Date(nextTarget));
+        currentDate = nextTarget;
+      }
+    }
+  }
+
+  // Sort target dates from newest to oldest
+  targetDates.sort((a, b) => b.getTime() - a.getTime());
+  return targetDates;
+}
+
 function generateWeeklyDates(
-  lower: string, 
-  today: Date, 
-  sixMonthsAgo: Date, 
-  interval: number, 
-  latestCompletion: Date | undefined, 
+  lower: string,
+  today: Date,
+  sixMonthsAgo: Date,
+  interval: number,
+  latestCompletion: Date | undefined,
   targetDates: Date[]
 ) {
   // If latestCompletion is undefined, use sixMonthsAgo as the anchor
@@ -174,10 +225,10 @@ function generateWeeklyDates(
 }
 
 function generateMonthlyDates(
-  lower: string, 
-  today: Date, 
-  sixMonthsAgo: Date, 
-  latestCompletion: Date | undefined, 
+  lower: string,
+  today: Date,
+  sixMonthsAgo: Date,
+  latestCompletion: Date | undefined,
   targetDates: Date[]
 ): string {
   const monthlyMatch = lower.match(/every( \d+)? months? on the (\d+)(?:st|nd|rd|th)?/i);
@@ -186,19 +237,13 @@ function generateMonthlyDates(
   const everyMonthMatch = lower === 'every month';
 
   if (everyMonthMatch) {
-    // For "every month" pattern, target dates are always 1 month after each completion
-    if (latestCompletion) {
-      let date = new Date(latestCompletion);
-      
-      // First, go backwards from the latest completion
-      let pastDate = new Date(date);
-      while (isBefore(sixMonthsAgo, pastDate) || isEqual(sixMonthsAgo, pastDate)) {
-        if (!isAfter(pastDate, today)) {
-          targetDates.push(new Date(pastDate));
-        }
-        // Next target would have been 1 month after this completion
-        pastDate.setMonth(pastDate.getMonth() + 1);
+    // For "every month" pattern, generate target dates for the past 6 months
+    let date = today;
+    while (isBefore(sixMonthsAgo, date) || isEqual(sixMonthsAgo, date)) {
+      if (!isAfter(date, today)) {
+        targetDates.push(new Date(date));
       }
+      date = subMonths(date, 1);
     }
   } else if (monthIntervalMatch) {
     // For "every X months" pattern, generate dates based on latest completion
@@ -208,7 +253,7 @@ function generateMonthlyDates(
     if (latestCompletion) {
       // Start from the latest completion
       date = new Date(latestCompletion);
-      
+
       // Generate past target dates
       let pastDate = new Date(date);
       while (isBefore(sixMonthsAgo, pastDate) || isEqual(sixMonthsAgo, pastDate)) {
@@ -237,8 +282,8 @@ function generateMonthlyDates(
     }
   } else if (monthlyMatch || specificDateMatch) {
     // This is a monthly pattern (e.g. "every 25th" or "every month on the 25th")
-    const targetDay = monthlyMatch ? 
-      parseInt(monthlyMatch[2] ?? '1') : 
+    const targetDay = monthlyMatch ?
+      parseInt(monthlyMatch[2] ?? '1') :
       parseInt(specificDateMatch![1] ?? '1');
 
     let date = new Date(today.getFullYear(), today.getMonth(), targetDay);
@@ -265,7 +310,7 @@ function generateMonthlyDates(
       // Start from the latest completion and generate one target date one month after
       let nextTarget = new Date(latestCompletion);
       nextTarget.setMonth(nextTarget.getMonth() + 1);
-      
+
       // Only add the target if we're looking at historical data
       if (isBefore(nextTarget, today)) {
         targetDates.push(new Date(nextTarget));
@@ -290,8 +335,8 @@ function generateMonthlyDates(
     }
   }
 
-  // Sort target dates from newest to oldest
-  targetDates.sort((a, b) => b.getTime() - a.getTime());
+  // Sort target dates from oldest to newest
+  targetDates.sort((a, b) => a.getTime() - b.getTime());
 
   return (monthIntervalMatch || everyMonthMatch) ? 'months' : 'monthly';
 }
@@ -308,6 +353,6 @@ function generateLastDayDates(today: Date, sixMonthsAgo: Date, targetDates: Date
     date = new Date(date.getFullYear(), date.getMonth(), 0);
   }
 
-  // Sort target dates from newest to oldest
-  targetDates.sort((a, b) => b.getTime() - a.getTime());
+  // Sort target dates from oldest to newest
+  targetDates.sort((a, b) => a.getTime() - b.getTime());
 }

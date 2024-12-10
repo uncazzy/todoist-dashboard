@@ -32,7 +32,39 @@ export function getTrendData(
   const isCompletedOn = (date: Date) =>
     completionDates.some(cd => format(cd, 'yyyy-MM-dd') === format(date, 'yyyy-MM-dd'));
 
-  if (pattern === 'daily' || pattern === 'every-other-day' || pattern === 'weekly' || pattern === 'biweekly') {
+  if (pattern === 'monthly-strict') {
+    // For 'monthly-strict' pattern, aggregate by month
+    const data: number[] = [];
+
+    // Iterate from newest to oldest (now to 6 months ago)
+    for (let i = 0; i < 6; i++) {
+      const monthStart = startOfMonth(subMonths(today, i));
+      const monthStr = format(monthStart, 'yyyy-MM');
+      
+      // Find target date for this month (should be on the 16th)
+      const monthTargets = filteredTargets.filter(td => 
+        format(td, 'yyyy-MM') === monthStr
+      );
+
+      if (monthTargets.length > 0) {
+        // For each target in this month, check if it was completed exactly on that date
+        const hasValidCompletion = monthTargets.some(target => {
+          // Find a completion that matches this target date exactly
+          return completionDates.some(cd => 
+            format(cd, 'yyyy-MM-dd') === format(target, 'yyyy-MM-dd')
+          );
+        });
+
+        // If no valid completion found, it's a miss (0)
+        data.push(hasValidCompletion ? 100 : 0);
+      } else if (isAfter(monthStart, sixMonthsAgo)) {
+        // If we're in the window but no target, show as a gap (-1)
+        data.push(-1);
+      }
+    }
+
+    return data;
+  } else if (pattern === 'daily' || pattern === 'every-other-day' || pattern === 'weekly' || pattern === 'biweekly') {
     // Aggregate by week
     const weeksAscending = eachWeekOfInterval({ start: sixMonthsAgo, end: today });
     const weeklyDataAscending: number[] = [];
@@ -64,7 +96,7 @@ export function getTrendData(
   else if (pattern === 'months' || pattern === 'monthly' || pattern === 'monthly-last') {
     // For all monthly patterns, use a consistent approach
     const data: number[] = [];
-    
+
     // Iterate from newest to oldest (now to 6 months ago)
     for (let i = 0; i < 6; i++) {
       const monthStart = startOfMonth(subMonths(today, i));
@@ -93,7 +125,7 @@ export function getTrendData(
         data.push(0);
       }
     }
-    
+
     // Data is now ordered from newest (left) to oldest (right), matching the UI labels
     return data;
   }
