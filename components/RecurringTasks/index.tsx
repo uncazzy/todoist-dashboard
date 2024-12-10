@@ -1,5 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { BsCalendar3, BsCalendarWeek, BsCalendarMonth, BsThreeDots } from 'react-icons/bs';
+import { BsQuestionCircle } from 'react-icons/bs';
+import { Tooltip } from 'react-tooltip';
 import { Virtuoso } from 'react-virtuoso';
 import { ActiveTask, ProjectData } from '../../types';
 import { TaskCalendar } from './TaskCalendar';
@@ -133,8 +135,70 @@ const RecurringTasksCard: React.FC<Props> = ({ activeTasks, allCompletedTasks, p
 
   return (
     <div className="h-full flex flex-col">
+      {/* Stats Overview */}
+      <div className="flex-none mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="bg-gradient-to-br from-blue-900/20 to-indigo-900/20 backdrop-blur-sm rounded-xl p-5 shadow-lg hover:shadow-xl transition-shadow duration-300 group relative">
+            <div className="flex flex-col items-start">
+              <div className="text-sm text-gray-400 mb-1 w-full flex justify-between items-center">
+                <span>Recurring Tasks</span>
+                <BsQuestionCircle 
+                  className="text-gray-400 hover:text-blue-300 cursor-help ml-2"
+                  data-tooltip-id="recurring-tasks-tooltip"
+                  data-tooltip-content="Total number of recurring tasks in your Todoist"
+                />
+              </div>
+              <div className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-indigo-600 group-hover:from-blue-400 group-hover:to-indigo-500 transition-all">
+                {recurringTasksData.length}
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-gradient-to-br from-purple-900/20 to-violet-900/20 backdrop-blur-sm rounded-xl p-5 shadow-lg hover:shadow-xl transition-shadow duration-300 group relative">
+            <div className="flex flex-col items-start">
+              <div className="text-sm text-gray-400 mb-1 w-full flex justify-between items-center">
+                <span>Total Completions</span>
+                <BsQuestionCircle 
+                  className="text-gray-400 hover:text-purple-300 cursor-help ml-2"
+                  data-tooltip-id="total-completions-tooltip"
+                  data-tooltip-content="Number of times recurring tasks have been completed"
+                />
+              </div>
+              <div className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-violet-600 group-hover:from-purple-400 group-hover:to-violet-500 transition-all">
+                {allCompletedTasks.filter(task => 
+                  recurringTasksData.some(rt => rt.taskId === task.task_id)
+                ).length}
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-gradient-to-br from-cyan-900/20 to-teal-900/20 backdrop-blur-sm rounded-xl p-5 shadow-lg hover:shadow-xl transition-shadow duration-300 group relative">
+            <div className="flex flex-col items-start">
+              <div className="text-sm text-gray-400 mb-1 w-full flex justify-between items-center">
+                <span>Avg. Completion</span>
+                <BsQuestionCircle 
+                  className="text-gray-400 hover:text-cyan-300 cursor-help ml-2"
+                  data-tooltip-id="avg-completion-tooltip"
+                  data-tooltip-content="Average completion rate across all recurring tasks"
+                />
+              </div>
+              <div className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-500 to-teal-600 group-hover:from-cyan-400 group-hover:to-teal-500 transition-all">
+                {Math.round(
+                  recurringTasksData.reduce((sum, task) => sum + task.completionRate, 0) / 
+                  (recurringTasksData.length || 1)
+                )}%
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <Tooltip id="recurring-tasks-tooltip" />
+      <Tooltip id="total-completions-tooltip" />
+      <Tooltip id="avg-completion-tooltip" />
+
       {/* Frequency Selector */}
-      <div className="flex-none bg-gray-900/30 backdrop-blur-sm">
+      <div className="flex-none bg-gray-900/30 backdrop-blur-sm rounded-lg">
         <div className="flex overflow-x-auto sm:grid sm:grid-cols-4 gap-2 sm:gap-4 p-2 sm:p-4 -mx-6 px-6 sm:mx-0 sm:px-4 hide-scrollbar">
           {frequencies.map(({ freq, icon, label }) => (
             <button

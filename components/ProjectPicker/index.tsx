@@ -42,9 +42,7 @@ const ProjectPicker: React.FC<ProjectPickerProps> = ({
     <div className="relative z-10 mr-4" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-4 py-2 text-sm bg-gray-700/50 hover:bg-gray-700/70 
-                   rounded-lg transition-colors duration-200 border border-gray-600/50 backdrop-blur-sm min-w-[160px]"
-      >
+        className="flex items-center gap-2 px-4 py-2 text-sm bg-gray-700/50 hover:bg-gray-700/70 rounded-lg transition-colors duration-200 border border-gray-600/50 backdrop-blur-sm min-w-[160px]">
         <span className="text-gray-300">
           {selectedProjects.length === 0
             ? 'All Projects'
@@ -66,7 +64,7 @@ const ProjectPicker: React.FC<ProjectPickerProps> = ({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.2 }}
-            className="absolute right-0 mt-2 w-72 py-2 bg-gray-800 rounded-lg shadow-lg border border-gray-700/50 backdrop-blur-sm"
+            className="absolute left:0 sm:right-0 mt-2 w-72 py-2 bg-gray-800 rounded-lg shadow-lg border border-gray-700/50 backdrop-blur-sm"
           >
             <div className="max-h-[300px] overflow-y-auto custom-scrollbar">
               {projects.map((project) => (

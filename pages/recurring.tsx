@@ -14,6 +14,7 @@ const RecurringTasksPage = () => {
   const { data: session, status } = useSession();
   const { data, isLoading, loadingProgress, isLoadingFromCache, refreshData } = useDashboardData();
   const [selectedProjectIds, setSelectedProjectIds] = useState<string[]>([]);
+  const [showBetaTooltip, setShowBetaTooltip] = useState(false);
 
   // Handle loading state
   if (status === "loading") {
@@ -44,9 +45,37 @@ const RecurringTasksPage = () => {
           </div>
           <div className="flex flex-col gap-4 mb-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500 mb-0 flex items-center gap-3 leading-normal">
-                Recurring Tasks
-              </h1>
+              <div>
+                <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500 mb-2 flex items-center gap-3 leading-normal">
+                  Recurring Tasks
+                </h1>
+                <div className="relative inline-block">
+                  <span
+                    className="ml-0 px-2 py-1 text-xs font-semibold text-blue-100 bg-blue-500/30 rounded-full border border-blue-400/50 hover:bg-blue-500/40 transition-colors cursor-pointer"
+                    onClick={() => setShowBetaTooltip(!showBetaTooltip)}
+                  >
+                    Beta
+                  </span>
+                  {showBetaTooltip && (
+                    <div className="absolute z-20 mt-2 p-3 w-64 bg-gray-700 text-white text-sm rounded-lg shadow-lg border border-gray-600">
+                      <p className="mb-2">
+                        Handling complex recurring task patterns can be challenging, so some variations might not render correctly. Performance may also vary with extensive recurring tasks.
+                      </p>
+                      <p className="mb-2">
+                        Please report any issues you encounter.
+                      </p>
+                      <a
+                        href="mailto:todoist-dashboard@azzy.cloud?subject=Todoist%20Dashboard%20Feedback"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-2 block text-blue-300 hover:text-blue-200 underline"
+                      >
+                        Report Issues or Suggest Features
+                      </a>
+                    </div>
+                  )}
+                </div>
+              </div>
               {data?.projectData && (
                 <ProjectPicker
                   projects={data.projectData}
