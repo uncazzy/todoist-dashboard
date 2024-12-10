@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/router';
 import RecurringTasksCard from '../components/RecurringTasks';
 import { useDashboardData } from '../hooks/useDashboardData';
 import Layout from '../components/layout/Layout';
@@ -9,16 +10,30 @@ import LoadingIndicator from '../components/LoadingIndicator';
 import ProjectPicker from '../components/ProjectPicker';
 
 const RecurringTasksPage = () => {
-  const { data: session } = useSession();
+  const router = useRouter();
+  const { data: session, status } = useSession();
   const { data, isLoading, loadingProgress, isLoadingFromCache, refreshData } = useDashboardData();
   const [selectedProjectIds, setSelectedProjectIds] = useState<string[]>([]);
 
+  // Handle loading state
+  if (status === "loading") {
+    return (
+      <Layout>
+        <div className="flex justify-center items-center min-h-screen">
+          <div className="text-xl">Loading...</div>
+        </div>
+      </Layout>
+    );
+  }
+
+  // Redirect if not authenticated
   if (!session) {
+    router.push('/sign-in');
     return null;
   }
 
   return (
-    <Layout>
+    <Layout title="Recurring Tasks | Todoist Dashboard" description="Track and manage your recurring tasks and habits">
       <div className="overflow-hidden bg-gray-800 p-2 sm:p-6 rounded-lg min-h-[80vh] h-full flex flex-col">
         <header className="flex-none mb-8">
           <div className="flex items-center gap-2 mb-4">

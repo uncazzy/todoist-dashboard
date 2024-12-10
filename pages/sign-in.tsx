@@ -5,6 +5,11 @@ import type { NextPage } from 'next';
 import { FaChartLine, FaRegClock, FaProjectDiagram, FaCheckCircle } from 'react-icons/fa';
 import { BiTrendingUp } from 'react-icons/bi';
 
+export const metadata = {
+  title: "Sign In | Todoist Dashboard",
+  description: "Sign in with your Todoist account to continue"
+};
+
 const FeatureCard = ({ icon: Icon, title, description }: { icon: any; title: string; description: string }) => (
   <div className="flex items-start space-x-3 p-3">
     <div className="flex-shrink-0">
@@ -23,11 +28,12 @@ const SignIn: NextPage = () => {
   const { data: session, status } = useSession();
 
   React.useEffect(() => {
-    if (router.query.error) {
+    if (session) {
+      router.replace('/');
+    } else if (router.query.error) {
       console.error('Auth error:', router.query.error);
       setIsLoading(false);
-    }
-    if (router.query.code && !session && !isLoading) {
+    } else if (router.query.code && !isLoading) {
       console.log('Got code, attempting sign in...');
       handleSignIn();
     }
@@ -53,14 +59,14 @@ const SignIn: NextPage = () => {
 
   if (status === 'loading') {
     return (
-      <div className="flex items-center justify-center bg-gray-900 h-screen">
+      <div className="flex items-center justify-center min-h-[50vh]">
         <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-400"></div>
       </div>
     );
   }
 
   return (
-    <div className="max-h-fit flex flex-col md:flex-row mt-6 mb-12">
+    <div className="container mx-auto max-h-fit flex flex-col md:flex-row mt-6 mb-12">
       {/* Right side - Sign in */}
       <div className="w-full md:w-1/2 flex flex-col items-center justify-center p-12 bg-gray-900 my-6 sm:my-0 sm:order-2 rounded-e-xl sm:border-s border-gray-700">
         <div className="w-full max-w-sm space-y-6">
@@ -101,7 +107,7 @@ const SignIn: NextPage = () => {
               Transform your Todoist experience with powerful analytics and insights. Track your productivity, visualize patterns, and optimize your task management workflow.
             </p>
           </div>
-          
+
           <div className="space-y-3">
             <FeatureCard
               icon={FaChartLine}

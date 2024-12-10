@@ -24,8 +24,6 @@ export function getTrendData(
     completionDates
   );
 
-  console.log("Pattern detected for task", task.content, "is", pattern);
-
   const filteredTargets = targetDates.filter(d =>
     !isBefore(d, sixMonthsAgo) &&
     !isAfter(d, today)

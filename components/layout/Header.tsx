@@ -8,7 +8,7 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ user }) => {
   return (
-    <div className="items-center py-8">
+    <div className="container mx-auto flex justify-end py-8 px-4">
       <nav>
         <section className="flex justify-end items-center">
           <div className="flex items-center gap-4">

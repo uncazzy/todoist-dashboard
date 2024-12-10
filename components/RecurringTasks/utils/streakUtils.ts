@@ -189,8 +189,6 @@ function calculateRegularStreaks(
       .map(date => format(date, 'yyyy-MM-dd'))
       .sort((a, b) => compareDesc(parseISO(a), parseISO(b)));
 
-    console.log('Sorted completions:', sortedCompletions);
-
     // Start counting current streak from the most recent completion
     if (sortedCompletions.length > 0) {
       // Check each pair of consecutive completions
@@ -200,22 +198,17 @@ function calculateRegularStreaks(
 
         // Skip if either date is undefined
         if (!currentDate || !nextDate) {
-          console.log('Skipping undefined date comparison');
           continue;
         }
 
         const diff = differenceInDays(parseISO(currentDate), parseISO(nextDate));
-
-        console.log(`Comparing ${currentDate} with ${nextDate}, diff: ${diff} days`);
 
         if (diff === 2) {
           if (lastBreak === -1) {
             currentStreak++;
           }
           longestStreak = Math.max(longestStreak, currentStreak);
-          console.log(`Correct interval, current streak: ${currentStreak}, longest: ${longestStreak}`);
         } else {
-          console.log(`Incorrect interval (${diff} days)`);
           if (lastBreak === -1) {
             lastBreak = i;
             longestStreak = Math.max(longestStreak, currentStreak);
@@ -231,7 +224,6 @@ function calculateRegularStreaks(
       
       const lastCompletionDate = parseISO(sortedCompletions[0]!);
       const daysSinceLastCompletion = differenceInDays(today, lastCompletionDate);
-      console.log(`Days since last completion: ${daysSinceLastCompletion}`);
 
       // Get the next target date after the last completion
       const nextTargetDate = targetDates.find(date => 
@@ -244,19 +236,14 @@ function calculateRegularStreaks(
         isSameDay(date, lastCompletionDate)
       );
 
-      console.log(`Today (${format(today, 'yyyy-MM-dd')}) is target: ${todayIsTarget}, Last completion (${format(lastCompletionDate, 'yyyy-MM-dd')}) was target: ${lastCompletionWasTarget}`);
-
       // If today is a target date and the last completion was valid, maintain the streak
       if (todayIsTarget && lastCompletionWasTarget && daysSinceLastCompletion <= 2) {
         // Keep the current streak as is since today is just pending completion
-        console.log(`Maintaining streak of ${currentStreak} since today is a pending target date`);
       } else if (daysSinceLastCompletion > 2) {
         // Reset streak if we've gone too long without completion
-        console.log(`Resetting streak since ${daysSinceLastCompletion} days have passed since last completion`);
         currentStreak = 1;
       }
 
-      console.log(`Final streaks - current: ${currentStreak}, longest: ${longestStreak}`);
       return { currentStreak, longestStreak };
     }
 
