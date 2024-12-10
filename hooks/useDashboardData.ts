@@ -1,7 +1,52 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { CACHE_DURATION, STALE_DURATION, MAX_TASKS } from '../utils/constants';
 import { DashboardData } from '../types';
 
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+// Helper: Validate data shape
+function isValidDashboardData(data: unknown): data is DashboardData {
+  if (!data || typeof data !== 'object') return false;
+  const d = data as DashboardData;
+  return (
+    Array.isArray(d.allCompletedTasks) &&
+    Array.isArray(d.projectData) &&
+    typeof d.totalCompletedTasks === 'number' &&
+    typeof d.hasMoreTasks === 'boolean'
+  );
+}
+
+// Helper: Local Storage Operations with Try/Catch
+function loadFromCache(): { data: DashboardData | null; timestamp: number | null } {
+  try {
+    const storedData = localStorage.getItem('todoist_dashboard_data');
+    const storedTime = localStorage.getItem('todoist_dashboard_timestamp');
+    if (!storedData || !storedTime) return { data: null, timestamp: null };
+    const parsedData = JSON.parse(storedData);
+    if (!isValidDashboardData(parsedData)) return { data: null, timestamp: null };
+    return { data: parsedData, timestamp: parseInt(storedTime, 10) };
+  } catch (err) {
+    console.error('Error reading from cache:', err);
+    return { data: null, timestamp: null };
+  }
+}
+
+function saveToCache(data: DashboardData) {
+  try {
+    localStorage.setItem('todoist_dashboard_data', JSON.stringify(data));
+    localStorage.setItem('todoist_dashboard_timestamp', Date.now().toString());
+  } catch (err) {
+    // Local storage might fail in private mode, ignore gracefully.
+    console.warn('Failed to save to cache:', err);
+  }
+}
+
+function clearCache() {
+  try {
+    localStorage.removeItem('todoist_dashboard_data');
+    localStorage.removeItem('todoist_dashboard_timestamp');
+  } catch (err) {
+    console.warn('Failed to clear cache:', err);
+  }
+}
 
 export function useDashboardData() {
   const [data, setData] = useState<DashboardData | null>(null);
@@ -10,137 +55,220 @@ export function useDashboardData() {
   const [loadingProgress, setLoadingProgress] = useState<{ loaded: number; total: number } | null>(null);
   const [isLoadingFromCache, setIsLoadingFromCache] = useState(false);
 
-  // Validate stored data
-  const isValidData = useCallback((data: any): data is DashboardData => {
-    return (
-      data &&
-      data.allCompletedTasks &&
-      Array.isArray(data.allCompletedTasks) &&
-      data.projectData &&
-      Array.isArray(data.projectData) &&
-      typeof data.totalCompletedTasks === 'number' &&
-      typeof data.hasMoreTasks === 'boolean'
-    );
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const isMountedRef = useRef(true);
+
+  // Load More Tasks function
+  const loadMoreTasks = useCallback(async (currentData: DashboardData): Promise<DashboardData> => {
+    let updatedData = { ...currentData };
+    let retryCount = 0;
+    const MAX_RETRIES = 3;
+
+    while (updatedData.hasMoreTasks && updatedData.allCompletedTasks.length < MAX_TASKS) {
+      if (!isMountedRef.current) break;
+
+      try {
+        const response = await fetch(
+          `/api/getTasks?loadMore=true&offset=${updatedData.allCompletedTasks.length}&total=${updatedData.totalCompletedTasks}`,
+          { signal: abortControllerRef.current?.signal || null }
+        );
+
+        if (!response.ok) {
+          throw new Error(`Failed to fetch more tasks: ${response.status} ${response.statusText}`);
+        }
+
+        const result = await response.json();
+        if (!Array.isArray(result.newTasks)) {
+          throw new Error('Invalid response format: newTasks is not an array');
+        }
+
+        // If no new tasks, we are done
+        if (result.newTasks.length === 0) {
+          updatedData.hasMoreTasks = false;
+          break;
+        }
+
+        updatedData.allCompletedTasks = [...updatedData.allCompletedTasks, ...result.newTasks];
+        updatedData.hasMoreTasks = result.hasMoreTasks && updatedData.allCompletedTasks.length < MAX_TASKS;
+
+        // Update UI state
+        if (isMountedRef.current) {
+          setData(updatedData);
+          setLoadingProgress({
+            loaded: Math.min(result.loadedTasks, MAX_TASKS),
+            total: Math.min(result.totalTasks, MAX_TASKS),
+          });
+        }
+
+        // Reset retry count on success
+        retryCount = 0;
+
+        // Add delay if still more tasks to fetch, to avoid rate-limit issues
+        if (updatedData.hasMoreTasks) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+
+      } catch (err: unknown) {
+        if (err instanceof DOMException && err.name === 'AbortError') {
+          // Fetch aborted, just return what we have
+          return updatedData;
+        }
+
+        retryCount++;
+        if (retryCount >= MAX_RETRIES) {
+          console.error('Max retries reached while loading tasks:', err);
+          updatedData.hasMoreTasks = false;
+          break;
+        }
+
+        // Exponential backoff for transient errors
+        await new Promise(resolve => setTimeout(resolve, Math.pow(2, retryCount) * 1000));
+      }
+    }
+
+    // Ensure hasMoreTasks is false if we reached MAX_TASKS
+    if (updatedData.allCompletedTasks.length >= MAX_TASKS) {
+      updatedData.hasMoreTasks = false;
+    }
+
+    return updatedData;
   }, []);
 
-  const loadMoreTasks = useCallback(async (currentData: DashboardData) => {
-    try {
-      const response = await fetch(`/api/getTasks?loadMore=true&offset=${currentData.allCompletedTasks.length}&total=${currentData.totalCompletedTasks}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch more tasks');
-      }
+  const fetchFreshData = useCallback(async (): Promise<DashboardData> => {
+    abortControllerRef.current = new AbortController();
 
-      const result = await response.json();
-      
-      setData(prevData => {
-        if (!prevData) return currentData;
-        return {
-          ...prevData,
-          allCompletedTasks: [...prevData.allCompletedTasks, ...result.newTasks],
-          hasMoreTasks: result.hasMoreTasks
-        };
-      });
+    const response = await fetch('/api/getTasks', {
+      signal: abortControllerRef.current.signal
+    });
 
-      setLoadingProgress({
-        loaded: result.loadedTasks,
-        total: result.totalTasks
-      });
-
-      // If there are more tasks and we haven't hit rate limits, continue loading
-      if (result.hasMoreTasks) {
-        // Add a small delay to avoid rate limits
-        await new Promise(resolve => setTimeout(resolve, 100));
-        return loadMoreTasks({
-          ...currentData,
-          allCompletedTasks: [...currentData.allCompletedTasks, ...result.newTasks],
-          hasMoreTasks: result.hasMoreTasks
-        });
-      }
-
-      // Cache the final complete data
-      localStorage.setItem('todoist_dashboard_data', JSON.stringify({
-        ...currentData,
-        allCompletedTasks: [...currentData.allCompletedTasks, ...result.newTasks],
-        hasMoreTasks: result.hasMoreTasks
-      }));
-      localStorage.setItem('todoist_dashboard_timestamp', Date.now().toString());
-
-    } catch (err) {
-      console.error('Error loading more tasks:', err);
-      setError(err instanceof Error ? err.message : 'An error occurred while loading more tasks');
+    if (!response.ok) {
+      throw new Error('Failed to fetch tasks');
     }
+
+    const result = await response.json();
+    if (!isValidDashboardData(result)) {
+      throw new Error('Invalid data received from server');
+    }
+
+    // Respect MAX_TASKS limit initially
+    const initialData: DashboardData = {
+      ...result,
+      hasMoreTasks: result.hasMoreTasks && result.allCompletedTasks.length < MAX_TASKS
+    };
+
+    return initialData;
   }, []);
 
   const fetchData = useCallback(async () => {
+    if (!isMountedRef.current) return;
+
+    setError(null);
+    let freshDataNeeded = true;
+
+    // Attempt to load from cache
+    const { data: cachedData, timestamp } = loadFromCache();
+    if (cachedData && timestamp) {
+      const timeDiff = Date.now() - timestamp;
+
+      // If data is still fresh
+      if (timeDiff < CACHE_DURATION) {
+        setData(cachedData);
+        setLoadingProgress({
+          loaded: Math.min(cachedData.allCompletedTasks.length, MAX_TASKS),
+          total: Math.min(cachedData.totalCompletedTasks, MAX_TASKS)
+        });
+        setIsLoadingFromCache(true);
+        setIsLoading(false);
+        freshDataNeeded = false;
+      } 
+      // If data is stale but not too old, show it while fetching fresh data
+      else if (timeDiff < STALE_DURATION) {
+        setData(cachedData);
+        setLoadingProgress({
+          loaded: Math.min(cachedData.allCompletedTasks.length, MAX_TASKS),
+          total: Math.min(cachedData.totalCompletedTasks, MAX_TASKS)
+        });
+        setIsLoadingFromCache(true);
+      }
+    }
+
+    if (!freshDataNeeded && isMountedRef.current) {
+      // We got fresh data from cache, no fetch needed
+      return;
+    }
+
+    // Otherwise, fetch fresh data now
     try {
       setIsLoading(true);
-      setError(null);
-      setIsLoadingFromCache(false);
+      const initialData = await fetchFreshData();
+      if (!isMountedRef.current) return;
 
-      // Try to get data from localStorage
-      const storedData = localStorage.getItem('todoist_dashboard_data');
-      const storedTime = localStorage.getItem('todoist_dashboard_timestamp');
-
-      // Use cached data if valid and fresh
-      if (storedData && storedTime) {
-        const parsedData: DashboardData = JSON.parse(storedData);
-        const timeDiff = Date.now() - parseInt(storedTime);
-
-        if (isValidData(parsedData) && timeDiff < CACHE_DURATION) {
-          setData(parsedData);
-          setLoadingProgress({
-            loaded: parsedData.allCompletedTasks.length,
-            total: parsedData.totalCompletedTasks
-          });
-          setIsLoadingFromCache(true);
-          setIsLoading(false);
-          return;
-        }
-      }
-
-      const response = await fetch('/api/getTasks');
-      if (!response.ok) {
-        throw new Error('Failed to fetch tasks');
-      }
-
-      const result = await response.json();
-      if (!isValidData(result)) {
-        throw new Error('Invalid data received from server');
-      }
-
-      setData(result);
+      setData(initialData);
       setLoadingProgress({
-        loaded: result.allCompletedTasks.length,
-        total: result.totalCompletedTasks
+        loaded: Math.min(initialData.allCompletedTasks.length, MAX_TASKS),
+        total: Math.min(initialData.totalCompletedTasks, MAX_TASKS)
       });
 
-      // If there are more tasks to load, start loading them
-      if (result.hasMoreTasks) {
-        loadMoreTasks(result);
-      } else {
-        // Cache the complete data
-        localStorage.setItem('todoist_dashboard_data', JSON.stringify(result));
-        localStorage.setItem('todoist_dashboard_timestamp', Date.now().toString());
+      let finalData = initialData;
+      if (initialData.hasMoreTasks && isMountedRef.current) {
+        finalData = await loadMoreTasks(initialData);
       }
 
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
-      console.error('Error fetching dashboard data:', err);
+      // Save updated data to cache
+      if (isMountedRef.current) {
+        setData(finalData);
+        setLoadingProgress(prev => prev ? {
+          ...prev,
+          loaded: Math.min(finalData.allCompletedTasks.length, MAX_TASKS),
+          total: Math.min(finalData.totalCompletedTasks, MAX_TASKS)
+        } : null);
+        saveToCache(finalData);
+      }
+    } catch (err: unknown) {
+      if (err instanceof DOMException && err.name === 'AbortError') {
+        // Aborted, do nothing
+        return;
+      }
+      if (isMountedRef.current) {
+        const message = err instanceof Error ? err.message : 'An error occurred';
+        setError(message);
+        console.error('Error fetching dashboard data:', err);
+      }
     } finally {
-      setIsLoading(false);
+      if (isMountedRef.current) {
+        setIsLoading(false);
+      }
     }
-  }, [isValidData, loadMoreTasks]);
+  }, [fetchFreshData, loadMoreTasks]);
 
   const refreshData = useCallback(() => {
-    // Clear cache
-    localStorage.removeItem('todoist_dashboard_data');
-    localStorage.removeItem('todoist_dashboard_timestamp');
-    // Refetch data
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+
+    // Reset states
+    setIsLoadingFromCache(false);
+    setLoadingProgress(null);
+    setData(null);
+    setError(null);
+    setIsLoading(true);
+
+    clearCache();
     fetchData();
   }, [fetchData]);
 
   useEffect(() => {
+    isMountedRef.current = true;
     fetchData();
+
+    return () => {
+      isMountedRef.current = false;
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+        abortControllerRef.current = null;
+      }
+    };
   }, [fetchData]);
 
   return { data, isLoading, error, loadingProgress, isLoadingFromCache, refreshData };

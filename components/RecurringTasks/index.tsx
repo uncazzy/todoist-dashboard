@@ -14,6 +14,13 @@ interface Props {
 const RecurringTasksCard: React.FC<Props> = ({ activeTasks, allCompletedTasks, projectData }) => {
   const [selectedFrequency, setSelectedFrequency] = useState<RecurringFrequency>('daily');
 
+  const frequencies: { freq: RecurringFrequency; icon: JSX.Element; label: string }[] = [
+    { freq: 'daily', icon: <BsCalendar3 className="w-4 h-4" />, label: 'Daily Tasks' },
+    { freq: 'weekly', icon: <BsCalendarWeek className="w-4 h-4" />, label: 'Weekly Tasks' },
+    { freq: 'monthly', icon: <BsCalendarMonth className="w-4 h-4" />, label: 'Monthly Tasks' },
+    { freq: 'other', icon: <BsThreeDots className="w-4 h-4" />, label: 'Other Recurring' }
+  ];
+
   const recurringTasksData = React.useMemo(() => {
     const recurringTasks = activeTasks.filter(task => task.due?.isRecurring);
     return recurringTasks.map(task => {
@@ -36,6 +43,19 @@ const RecurringTasksCard: React.FC<Props> = ({ activeTasks, allCompletedTasks, p
     });
   }, [activeTasks, allCompletedTasks]);
 
+  const frequencyCounts = React.useMemo(() => 
+    frequencies.reduce((acc, { freq }) => ({
+      ...acc,
+      [freq]: recurringTasksData.filter(td => td.frequency === freq).length
+    }), {} as Record<RecurringFrequency, number>),
+    [recurringTasksData, frequencies]
+  );
+
+  const filteredTasks = React.useMemo(() => 
+    recurringTasksData.filter(taskData => taskData.frequency === selectedFrequency),
+    [recurringTasksData, selectedFrequency]
+  );
+
   if (!recurringTasksData || recurringTasksData.length === 0) {
     return (
       <div className="bg-gray-900/50 rounded-lg p-8 text-center">
@@ -45,24 +65,12 @@ const RecurringTasksCard: React.FC<Props> = ({ activeTasks, allCompletedTasks, p
     );
   }
 
-  const frequencies: { freq: RecurringFrequency; icon: JSX.Element; label: string }[] = [
-    { freq: 'daily', icon: <BsCalendar3 className="w-4 h-4" />, label: 'Daily Tasks' },
-    { freq: 'weekly', icon: <BsCalendarWeek className="w-4 h-4" />, label: 'Weekly Tasks' },
-    { freq: 'monthly', icon: <BsCalendarMonth className="w-4 h-4" />, label: 'Monthly Tasks' },
-    { freq: 'other', icon: <BsThreeDots className="w-4 h-4" />, label: 'Other Recurring' }
-  ];
-
-  const filteredTasks = recurringTasksData.filter(
-    taskData => taskData.frequency === selectedFrequency
-  );
-
   return (
     <div className="h-full flex flex-col">
       {/* Frequency Selector */}
       <div className="flex-none bg-gray-900/30 backdrop-blur-sm">
         <div className="flex overflow-x-auto sm:grid sm:grid-cols-4 gap-2 sm:gap-4 p-2 sm:p-4 -mx-6 px-6 sm:mx-0 sm:px-4 hide-scrollbar">
           {frequencies.map(({ freq, icon, label }) => {
-            const count = recurringTasksData.filter(td => td.frequency === freq).length;
             return (
               <button
                 key={freq}
@@ -77,7 +85,7 @@ const RecurringTasksCard: React.FC<Props> = ({ activeTasks, allCompletedTasks, p
                   <span className="text-sm font-medium whitespace-nowrap">{label}</span>
                 </div>
                 <span className="text-xs px-2 py-1 rounded-full bg-gray-800/50 ml-auto sm:ml-0">
-                  {count}
+                  {frequencyCounts[freq] || 0}
                 </span>
               </button>
             );
