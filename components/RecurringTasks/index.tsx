@@ -222,12 +222,12 @@ const RecurringTasksCard: React.FC<Props> = ({ activeTasks, allCompletedTasks, p
       </div>
 
       {/* Tasks Grid */}
-      <div className="flex-1 mt-6" style={{ minHeight: 0 }}>
+      <div className="flex-1 mt-6 pb-6" style={{ minHeight: 0 }}>
         <Virtuoso
           data={filteredTasks}
           useWindowScroll
           itemContent={(_index, taskData) => (
-            <div className="mb-6">
+            <div className="mb-6 last:mb-0">
               <TaskItem
                 taskData={taskData}
                 activeTasksMap={activeTasksMap}
@@ -235,8 +235,8 @@ const RecurringTasksCard: React.FC<Props> = ({ activeTasks, allCompletedTasks, p
               />
             </div>
           )}
-          increaseViewportBy={{ top: 300, bottom: 300 }}
-          overscan={5}
+          increaseViewportBy={{ top: 300, bottom: 600 }}
+          overscan={10}
         />
       </div>
     </div>
