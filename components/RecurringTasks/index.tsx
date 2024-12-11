@@ -161,7 +161,7 @@ const RecurringTasksCard: React.FC<Props> = ({ activeTasks, allCompletedTasks, p
                 <BsQuestionCircle 
                   className="text-gray-400 hover:text-purple-300 cursor-help ml-2"
                   data-tooltip-id="total-completions-tooltip"
-                  data-tooltip-content="Number of times recurring tasks have been completed"
+                  data-tooltip-content="Number of times recurring tasks have been completed in past 6 months"
                 />
               </div>
               <div className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-violet-600 group-hover:from-purple-400 group-hover:to-violet-500 transition-all">

@@ -1,8 +1,9 @@
 import { format, isBefore, isAfter, subMonths, startOfMonth, addDays } from 'date-fns';
 import { ActiveTask } from '../../../types';
+import { calculateStreaks } from '../streaks';
+import { DateRange } from '../streaks/types';
 import { isValidCompletion } from './validationUtils';
 import { detectPattern } from './patternUtils';
-import { calculateStreaks } from './streakUtils';
 
 interface Stats {
   currentStreak: number;
@@ -22,7 +23,6 @@ export function calculateStats(
     return { currentStreak: 0, longestStreak: 0, totalCompletions: 0, completionRate: 0 };
   }
 
-  const lower = task.due!.string.toLowerCase();
   const today = new Date();
   // Strict 6-month window
   const sixMonthsAgo = startOfMonth(subMonths(today, 5));
@@ -41,10 +41,20 @@ export function calculateStats(
     .sort((a, b) => b.getTime() - a.getTime());
 
   const totalCompletions = recentCompletions.length;
-  const latestCompletion = recentCompletions[0];
+  const range: DateRange = {
+    start: sixMonthsAgo,
+    end: today
+  };
+
+  // Calculate streaks using the new implementation
+  const { currentStreak, longestStreak } = calculateStreaks(
+    task.due.string,
+    recentCompletions,
+    range
+  );
 
   // Detect the pattern and generate target dates
-  const { pattern, interval, targetDates } = detectPattern(lower, today, sixMonthsAgo, latestCompletion, recentCompletions);
+  const { pattern, interval, targetDates } = detectPattern(task.due.string, today, sixMonthsAgo, recentCompletions[0], recentCompletions);
 
   // Filter targetDates to the last 6 months window
   const filteredTargets = targetDates.filter(d =>
@@ -52,7 +62,23 @@ export function calculateStats(
     !isAfter(d, today)
   );
 
-  // For tasks that recur less frequently than every 6 months, treat them as long-term
+  // Calculate completion rate
+  const expectedCount = filteredTargets.length;
+  let onTimeCompletions = 0;
+
+  filteredTargets.forEach(targetDate => {
+    const completed = recentCompletions.some(completionDate =>
+      isValidCompletion(targetDate, completionDate, task.due!.string)
+    );
+    if (completed) onTimeCompletions++;
+  });
+
+  let completionRate = 0;
+  if (expectedCount > 0) {
+    completionRate = Math.min(100, Math.round((onTimeCompletions / expectedCount) * 100));
+  }
+
+  // Determine if this is a long-term task (interval > 6 months)
   const isLongTermRecurring = pattern === 'months' && interval > 6;
 
   if (isLongTermRecurring) {
@@ -66,43 +92,6 @@ export function calculateStats(
       interval: interval
     };
   }
-
-  // Calculate expected occurrences and on-time completions
-  const expectedCount = filteredTargets.length;
-  let onTimeCompletions = 0;
-  
-  if (pattern === 'monthly-strict') {
-    // For monthly-strict, check each target date for an exact match
-    onTimeCompletions = filteredTargets.reduce((count, targetDate) => {
-      const hasCompletion = recentCompletions.some(cd => 
-        format(cd, 'yyyy-MM-dd') === format(targetDate, 'yyyy-MM-dd')
-      );
-      return hasCompletion ? count + 1 : count;
-    }, 0);
-  } else {
-    // For other patterns, use the existing validation
-    filteredTargets.forEach(targetDate => {
-      const completed = recentCompletions.some(completionDate =>
-        isValidCompletion(targetDate, completionDate, task.due!.string)
-      );
-      if (completed) onTimeCompletions++;
-    });
-  }
-
-  let completionRate = 0;
-  if (expectedCount > 0) {
-    // Cap at 100% since we're being strict about exact matches
-    completionRate = Math.min(100, Math.round((onTimeCompletions / expectedCount) * 100));
-  }
-
-  const { currentStreak, longestStreak } = calculateStreaks(
-    task.due!.string,
-    interval,
-    filteredTargets,
-    recentCompletions,
-    today,
-    sixMonthsAgo
-  );
 
   // Determine the next target date based on the current streak
   let nextTargetDate: Date | undefined;
@@ -131,9 +120,9 @@ export function calculateStats(
           nextTargetDate = addDays(lastValidCompletion, 30);
         }
       }
-    } else if (latestCompletion) {
+    } else if (recentCompletions[0]) {
       // If streak is broken, set next target to 30 days after the last completion
-      nextTargetDate = addDays(latestCompletion, 30);
+      nextTargetDate = addDays(recentCompletions[0], 30);
     }
   } else {
     // Existing logic for other patterns to determine nextTargetDate
@@ -146,7 +135,7 @@ export function calculateStats(
     totalCompletions,
     completionRate,
     isLongTerm: false,
-    interval,
+    interval: interval,
     nextTargetDate
   };
 }
