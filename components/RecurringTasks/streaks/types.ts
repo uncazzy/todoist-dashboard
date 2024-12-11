@@ -31,6 +31,7 @@ export interface TimePeriodConfig {
 export interface TimeOfDay {
   hours: number;
   minutes: number;
+  period?: TimePeriod;
 }
 
 export interface DateRange {
