@@ -31,7 +31,6 @@ export interface TimePeriodConfig {
 export interface TimeOfDay {
   hours: number;
   minutes: number;
-  period?: TimePeriod;
 }
 
 export interface DateRange {
@@ -47,7 +46,10 @@ export interface BaseRecurrencePattern {
 
 export interface DailyRecurrencePattern extends BaseRecurrencePattern {
   type: typeof RecurrenceTypes.DAILY;
+  interval?: number;
   isWorkday?: boolean;
+  isWeekend?: boolean;
+  timeOfDay?: TimeOfDay;
 }
 
 export interface WeekdayRecurrencePattern extends BaseRecurrencePattern {
@@ -67,6 +69,8 @@ export interface MonthlyRecurrencePattern extends BaseRecurrencePattern {
   type: typeof RecurrenceTypes.MONTHLY;
   dayOfMonth: number;
   lastDayOfMonth?: boolean;
+  weekday?: number; // 0-6 for Sunday-Saturday
+  weekdayOrdinal?: number; // 1-5 for first-fifth
 }
 
 export interface YearlyRecurrencePattern extends BaseRecurrencePattern {

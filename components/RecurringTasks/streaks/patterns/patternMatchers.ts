@@ -15,6 +15,8 @@ export function isDailyPattern(pattern: string): boolean {
   const patterns = [
     // Basic daily patterns
     /^every\s+day(?:\s+at\s+\d{1,2}(?::\d{2})?\s*(?:am|pm))?$/i,
+    /^every\s+day\s+\d{1,2}(?::\d{2})?\s*(?:am|pm)?$/i,  // Simple time format
+    /^every\s+other\s+day$/i,
     /^every\s+weekday$/i,
     /^every\s+workday$/i,
     /^every\s+weekend$/i,
@@ -91,6 +93,9 @@ export function isMonthlyPattern(pattern: string): boolean {
     return false;
   }
 
+  // Remove time part for pattern matching
+  const patternWithoutTime = normalizedPattern.replace(/\s+at\s+\d{1,2}(?::\d{2})?\s*(?:am|pm)?/i, '');
+
   // Get weekday pattern string
   const weekdaysFull = Object.keys(WEEKDAYS).map(day => day.toLowerCase());
   const weekdaysAbbr = weekdaysFull.map(day => day.substring(0, 3));
@@ -105,18 +110,18 @@ export function isMonthlyPattern(pattern: string): boolean {
     // Every other month
     /^every\s+other\s+month$/i,
     // Simple day of month: "every 1st", "every 15th", or just "every 26"
-    /^every\s+\d+(?:st|nd|rd|th)?$/i,
+    /^every\s+(?:the\s+)?\d+(?:st|nd|rd|th)?$/i,
     // Multiple days of month: "every 1, 15, 30" or "every 2nd, 15th, 27th"
-    /^every\s+\d+(?:st|nd|rd|th)?(?:\s*,\s*\d+(?:st|nd|rd|th)?)+$/i,
+    /^every\s+(?:the\s+)?\d+(?:st|nd|rd|th)?(?:\s*,\s*\d+(?:st|nd|rd|th)?)+$/i,
     // Last day patterns
     /^every\s+last\s+day(?:\s+of\s+the\s+month)?$/i,
     // Ordinal weekday: "every 2nd wednesday" or "every 2nd wed"
-    new RegExp(`^every\\s+(?:\\d+(?:st|nd|rd|th)|last)\\s+(?:${allWeekdays})$`, 'i'),
+    new RegExp(`^every\\s+(?:the\\s+)?(?:\\d+(?:st|nd|rd|th)|last)\\s+(?:${allWeekdays})$`, 'i'),
     // Workday patterns
-    /^every\s+(?:\d+(?:st|nd|rd|th)|last|first)\s+workday$/i
+    /^every\s+(?:the\s+)?(?:\d+(?:st|nd|rd|th)|last|first)\s+workday$/i
   ];
 
-  return patterns.some(regex => regex.test(normalizedPattern));
+  return patterns.some(regex => regex.test(patternWithoutTime));
 }
 
 // Helper function to check if a pattern is a yearly pattern
@@ -150,6 +155,30 @@ export function isYearlyPattern(pattern: string): boolean {
   ];
 
   return patterns.some(regex => regex.test(normalizedPattern));
+}
+
+// Helper function to check if a pattern is a holiday pattern
+export function isHolidayPattern(pattern: string): boolean {
+  if (!pattern || typeof pattern !== 'string') {
+    return false;
+  }
+
+  const normalizedPattern = pattern.trim().toLowerCase();
+  if (!normalizedPattern.startsWith('every')) {
+    return false;
+  }
+
+  // Remove time part for pattern matching
+  const patternWithoutTime = normalizedPattern.replace(/\s+at\s+\d{1,2}(?::\d{2})?\s*(?:am|pm)?/i, '');
+
+  // Check for various holiday patterns
+  const patterns = [
+    // Common holidays
+    /^every\s+(?:new\s+year(?:'s)?\s+(?:day|eve)|valentine's\s+day|halloween)$/i,
+    // Other holidays can be added here
+  ];
+
+  return patterns.some(regex => regex.test(patternWithoutTime));
 }
 
 // Helper function to check if a pattern is a relative pattern

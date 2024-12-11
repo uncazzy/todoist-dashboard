@@ -146,17 +146,43 @@ function generateWeeklyTargets(pattern: WeeklyRecurrencePattern, range: DateRang
 
 export function parseWeeklyPattern(pattern: string): WeeklyRecurrencePattern {
   if (!isWeeklyPattern(pattern)) {
+    console.log('Pattern failed isWeeklyPattern check:', pattern);
     throw new Error('Invalid weekly pattern format');
   }
 
   const normalizedPattern = pattern.trim().toLowerCase();
+  console.log('Attempting to parse pattern:', normalizedPattern);
+
+  // Handle simple "every week" pattern
+  if (normalizedPattern === 'every week') {
+    return {
+      type: RecurrenceTypes.WEEKLY,
+      interval: 1,
+      weekdays: [1] // Default to Monday
+    };
+  }
+
+  // Handle "every X weeks" pattern
+  const weekIntervalMatch = normalizedPattern.match(/^every\s+(\d+)\s+weeks?$/i);
+  if (weekIntervalMatch && weekIntervalMatch[1]) {
+    const interval = parseInt(weekIntervalMatch[1], 10);
+    if (isNaN(interval) || interval <= 0) {
+      throw new Error('Invalid week interval');
+    }
+    return {
+      type: RecurrenceTypes.WEEKLY,
+      interval,
+      weekdays: [1] // Default to Monday
+    };
+  }
+
   const weekdays: WeekDay[] = [];
 
   // Handle bi-weekly patterns (e.g., "every other monday")
   const biWeeklyRegex = /every\s+other\s+(\w+)(?:\s+at\s+(\d{1,2})(?::(\d{2}))?\s*(am|pm)?)?/i;
   const biWeeklyMatch = normalizedPattern.match(biWeeklyRegex);
 
-  if (biWeeklyMatch && biWeeklyMatch.length >= 2 && biWeeklyMatch[1]) {
+  if (biWeeklyMatch && biWeeklyMatch[1]) {
     const weekdayName = biWeeklyMatch[1].toLowerCase();
     const weekdayKey = Object.keys(WEEKDAYS).find(key => 
       key.toLowerCase() === weekdayName || 
@@ -168,11 +194,11 @@ export function parseWeeklyPattern(pattern: string): WeeklyRecurrencePattern {
     }
 
     const weekday = WEEKDAYS[weekdayKey];
-    if (weekday === undefined) {
+    if (typeof weekday !== 'number') {
       throw new Error(`Could not map weekday: ${weekdayKey}`);
     }
 
-    weekdays.push(weekday);
+    weekdays.push(weekday as WeekDay);
 
     return {
       type: RecurrenceTypes.WEEKLY,
@@ -181,40 +207,34 @@ export function parseWeeklyPattern(pattern: string): WeeklyRecurrencePattern {
     };
   }
 
-  // Handle regular weekly patterns
-  const weekdayRegex = /(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday|mon|tue|wed|thu|fri|sat|sun)/gi;
-  const weekdayMatches = normalizedPattern.match(weekdayRegex);
+  // Handle multiple weekdays (e.g., "every monday, wednesday, friday" or "every mon, wed, fri")
+  const weekdayList = normalizedPattern.replace(/^every\s+/, '').split(/,\s*|\s+and\s+/);
+  for (const weekdayName of weekdayList) {
+    const cleanWeekdayName = weekdayName.trim().toLowerCase();
+    const weekdayKey = Object.keys(WEEKDAYS).find(key => 
+      key.toLowerCase() === cleanWeekdayName || 
+      WEEKDAY_NAMES[cleanWeekdayName] === key
+    );
 
-  if (weekdayMatches && weekdayMatches.length > 0) {
-    for (const match of weekdayMatches) {
-      const weekdayName = match.toLowerCase();
-      const weekdayKey = Object.keys(WEEKDAYS).find(key => 
-        key.toLowerCase() === weekdayName || 
-        WEEKDAY_NAMES[weekdayName] === key
-      );
-
-      if (!weekdayKey || !(weekdayKey in WEEKDAYS)) {
-        throw new Error(`Invalid weekday: ${weekdayName}`);
-      }
-
-      const weekday = WEEKDAYS[weekdayKey];
-      if (weekday === undefined) {
-        throw new Error(`Could not map weekday: ${weekdayKey}`);
-      }
-
-      if (!weekdays.includes(weekday)) {
-        weekdays.push(weekday);
-      }
+    if (!weekdayKey || !(weekdayKey in WEEKDAYS)) {
+      continue; // Skip invalid weekdays
     }
 
-    // Check for interval pattern (e.g., "every 2 weeks")
-    const intervalMatch = normalizedPattern.match(/every\s+(\d+)\s+weeks?/i);
-    const interval = intervalMatch && intervalMatch[1] ? parseInt(intervalMatch[1], 10) : 1;
+    const weekday = WEEKDAYS[weekdayKey];
+    if (typeof weekday !== 'number') {
+      continue; // Skip invalid weekday numbers
+    }
 
+    if (!weekdays.includes(weekday as WeekDay)) {
+      weekdays.push(weekday as WeekDay);
+    }
+  }
+
+  if (weekdays.length > 0) {
     return {
       type: RecurrenceTypes.WEEKLY,
-      interval,
-      weekdays
+      interval: 1,
+      weekdays: weekdays.sort((a, b) => a - b) // Sort weekdays in order
     };
   }
 

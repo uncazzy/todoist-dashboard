@@ -117,7 +117,7 @@ export function isYearlyPattern(pattern: string): boolean {
 
   // Match patterns like "every year on January 1st" or "every 2 years on December 25th"
   const yearlyRegex = /^every\s+(?:(\d+)\s+)?years?\s+on\s+(?:january|february|march|april|may|june|july|august|september|october|november|december)\s+\d+(?:st|nd|rd|th)?$/;
-  return yearlyRegex.test(normalizedPattern);
+  return yearlyRegex.test(normalizedPattern) || /^every\s+(?:(\d+)\s+)?years?$/.test(normalizedPattern);
 }
 
 export function parseYearlyPattern(pattern: string): YearlyRecurrencePattern {
@@ -126,11 +126,26 @@ export function parseYearlyPattern(pattern: string): YearlyRecurrencePattern {
   }
 
   const normalizedPattern = pattern.trim().toLowerCase();
+  
+  // Handle basic yearly patterns first
+  const basicYearlyRegex = /^every\s+(?:(\d+)\s+)?years?$/;
+  const basicMatches = normalizedPattern.match(basicYearlyRegex);
+  if (basicMatches) {
+    const interval = basicMatches[1] ? parseInt(basicMatches[1], 10) : 1;
+    return {
+      type: RecurrenceTypes.YEARLY,
+      interval,
+      month: 0, // January
+      dayOfMonth: 1 // 1st
+    };
+  }
+
+  // Handle specific date patterns
   const yearlyRegex = /^every\s+(?:(\d+)\s+)?years?\s+on\s+(january|february|march|april|may|june|july|august|september|october|november|december)\s+(\d+)(?:st|nd|rd|th)?$/;
   const matches = normalizedPattern.match(yearlyRegex);
 
   if (!matches || !matches[2] || !matches[3]) {
-    throw new Error('Invalid yearly pattern format');
+    throw new Error('Unsupported pattern format: ' + pattern);
   }
 
   const interval = matches[1] ? parseInt(matches[1], 10) : 1;

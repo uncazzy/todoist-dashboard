@@ -1,8 +1,7 @@
 import { addDays, startOfDay, endOfDay } from 'date-fns';
-import { StreakResult, DailyRecurrencePattern, DateRange, RecurrenceTypes, TimePeriod } from '../types';
+import { StreakResult, DailyRecurrencePattern, DateRange, RecurrenceTypes } from '../types';
 import { isValidCompletion } from '../helpers/validation';
 import { isWorkday } from '../helpers/dateUtils';
-import { TIME_PERIODS } from '../helpers/constants';
 import { isDailyPattern } from './patternMatchers';
 
 interface DailyTarget {
@@ -84,6 +83,9 @@ function isValidTargetDay(date: Date, pattern: DailyRecurrencePattern): boolean 
   if (pattern.isWorkday) {
     return isWorkday(date);
   }
+  if (pattern.isWeekend) {
+    return !isWorkday(date);
+  }
   return true;
 }
 
@@ -93,18 +95,9 @@ function calculateAllowedRange(date: Date, pattern: DailyRecurrencePattern): Dat
 
   // For time-specific patterns, use a stricter range
   if (pattern.timeOfDay) {
-    if (pattern.timeOfDay.period) {
-      const periodRange = TIME_PERIODS[pattern.timeOfDay.period];
-      const targetStart = new Date(date);
-      const targetEnd = new Date(date);
-      targetStart.setHours(periodRange.start.hours, periodRange.start.minutes);
-      targetEnd.setHours(periodRange.end.hours, periodRange.end.minutes);
-      return { start: targetStart, end: targetEnd };
-    }
-
     const { hours, minutes } = pattern.timeOfDay;
     const targetTime = new Date(date);
-    targetTime.setHours(hours, minutes);
+    targetTime.setHours(hours || 0, minutes || 0);
     return {
       start: new Date(targetTime.getTime() - 30 * 60 * 1000), // 30 minutes before
       end: new Date(targetTime.getTime() + 30 * 60 * 1000)    // 30 minutes after
@@ -121,76 +114,131 @@ export function parseDailyPattern(pattern: string): DailyRecurrencePattern {
 
   const normalizedPattern = pattern.trim().toLowerCase();
   
-  // Different pattern formats
+  // Handle workday and weekend patterns first
+  if (normalizedPattern === 'every workday' || normalizedPattern === 'every weekday') {
+    return {
+      type: RecurrenceTypes.DAILY,
+      interval: 1,
+      isWorkday: true
+    };
+  }
+
+  if (normalizedPattern === 'every weekend') {
+    return {
+      type: RecurrenceTypes.DAILY,
+      interval: 1,
+      isWeekend: true
+    };
+  }
+
+  // Handle time of day patterns with specific hours
+  if (normalizedPattern === 'every morning') {
+    return {
+      type: RecurrenceTypes.DAILY,
+      interval: 1,
+      timeOfDay: { hours: 9, minutes: 0 }
+    };
+  }
+
+  if (normalizedPattern === 'every afternoon') {
+    return {
+      type: RecurrenceTypes.DAILY,
+      interval: 1,
+      timeOfDay: { hours: 12, minutes: 0 }
+    };
+  }
+
+  if (normalizedPattern === 'every evening') {
+    return {
+      type: RecurrenceTypes.DAILY,
+      interval: 1,
+      timeOfDay: { hours: 19, minutes: 0 }
+    };
+  }
+
+  if (normalizedPattern === 'every night') {
+    return {
+      type: RecurrenceTypes.DAILY,
+      interval: 1,
+      timeOfDay: { hours: 22, minutes: 0 }
+    };
+  }
+
+  // Handle "every day [time]" pattern
+  const timePattern = /^every\s+day\s+(\d{1,2})(?::(\d{2}))?\s*(am|pm)?$/i;
+  const timeMatches = normalizedPattern.match(timePattern);
+  if (timeMatches && timeMatches[1]) {
+    let hours = parseInt(timeMatches[1], 10);
+    const minutes = timeMatches[2] ? parseInt(timeMatches[2], 10) : 0;
+    const meridiem = timeMatches[3]?.toLowerCase();
+
+    if (meridiem === 'pm' && hours < 12) {
+      hours += 12;
+    } else if (meridiem === 'am' && hours === 12) {
+      hours = 0;
+    }
+
+    return {
+      type: RecurrenceTypes.DAILY,
+      interval: 1,
+      timeOfDay: { hours, minutes }
+    };
+  }
+
+  // Handle "every other day" pattern
+  if (normalizedPattern === 'every other day') {
+    return {
+      type: RecurrenceTypes.DAILY,
+      interval: 2
+    };
+  }
+
+  // Handle other patterns
   const patterns = [
     // Basic daily with optional time period
-    /^every\s+(?:(\d+)\s+)?(?:(work))?days?\s*(?:in\s+the\s+(morning|afternoon|evening|night))?$/,
-    // Time specific patterns
-    /^every\s+(?:(\d+)\s+)?(?:(work))?days?\s+(?:at\s+)?(\d{1,2})(?::(\d{2}))?\s*(am|pm)?$/,
-    // Simple time of day
-    /^every\s+(morning|afternoon|evening|night)$/
+    /^every\s+(?:(\d+)\s+)?(?:(work))?days?\s*(?:at\s+(\d{1,2})(?::(\d{2}))?\s*(am|pm)?)?$/
   ];
 
   let matches: RegExpMatchArray | null = null;
   for (const regex of patterns) {
     matches = normalizedPattern.match(regex);
-    if (matches) break;
+    if (matches) {
+      console.log('Pattern matched regex:', matches);
+      break;
+    }
   }
 
   if (!matches) {
+    // Handle simple "every day" pattern
+    if (normalizedPattern === 'every day') {
+      return {
+        type: RecurrenceTypes.DAILY,
+        interval: 1
+      };
+    }
+    console.log('Pattern failed to match any regex or known format:', normalizedPattern);
     throw new Error('Invalid daily pattern format');
   }
 
   const result: DailyRecurrencePattern = {
     type: RecurrenceTypes.DAILY,
-    interval: 1,
-    isWorkday: false
+    interval: matches[1] ? parseInt(matches[1], 10) : 1,
+    isWorkday: matches[2] === 'work'
   };
 
-  if (matches[0].startsWith('every morning') || matches[0].startsWith('every afternoon') || 
-      matches[0].startsWith('every evening') || matches[0].startsWith('every night')) {
-    // Simple time of day pattern
-    const period = matches[1] as TimePeriod;
-    const periodRange = TIME_PERIODS[period];
-    result.timeOfDay = {
-      ...periodRange.start,
-      period
-    };
-  } else {
-    // Regular daily pattern
-    if (matches[1]) {
-      result.interval = parseInt(matches[1], 10);
-    }
-    
-    if (matches[2] === 'work') {
-      result.isWorkday = true;
+  // Handle specific time if present
+  if (matches[3]) {
+    let hours = parseInt(matches[3], 10);
+    const minutes = matches[4] ? parseInt(matches[4], 10) : 0;
+    const meridiem = matches[5];
+
+    if (meridiem === 'pm' && hours < 12) {
+      hours += 12;
+    } else if (meridiem === 'am' && hours === 12) {
+      hours = 0;
     }
 
-    // Handle time specifications
-    if (matches[3]) {
-      if (matches[3] === 'morning' || matches[3] === 'afternoon' || matches[3] === 'evening' || matches[3] === 'night') {
-        // Time period format
-        const period = matches[3] as TimePeriod;
-        const periodRange = TIME_PERIODS[period];
-        result.timeOfDay = {
-          ...periodRange.start,
-          period
-        };
-      } else {
-        // Specific time format
-        let hours = parseInt(matches[3], 10);
-        const minutes = matches[4] ? parseInt(matches[4], 10) : 0;
-        const meridian = matches[5];
-
-        // Convert to 24-hour format
-        if (meridian) {
-          if (meridian === 'pm' && hours < 12) hours += 12;
-          if (meridian === 'am' && hours === 12) hours = 0;
-        }
-
-        result.timeOfDay = { hours, minutes };
-      }
-    }
+    result.timeOfDay = { hours, minutes };
   }
 
   return result;

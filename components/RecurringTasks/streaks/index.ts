@@ -2,11 +2,19 @@ import { StreakResult, RecurrencePattern, DailyRecurrencePattern, RecurrenceType
 import { calculateDailyStreak, parseDailyPattern } from './patterns/daily';
 import { calculateWeeklyStreak, parseWeeklyPattern } from './patterns/weekly';
 import { calculateMonthlyStreak, parseMonthlyPattern } from './patterns/monthly';
-import { calculateYearlyStreak, isYearlyPattern, parseYearlyPattern } from './patterns/yearly';
+import { calculateYearlyStreak, parseYearlyPattern } from './patterns/yearly';
 import { calculateRelativeStreak, parseRelativePattern } from './patterns/relative';
-import { calculateCompletionStreak, isCompletionPattern, parseCompletionPattern } from './patterns/completion';
-import { calculateHolidayStreak, isHolidayPattern, parseHolidayPattern } from './patterns/holiday';
-import { isDailyPattern, isMonthlyPattern, isRelativePattern, isWeeklyPattern } from './patterns/patternMatchers';
+import { calculateCompletionStreak, parseCompletionPattern } from './patterns/completion';
+import { calculateHolidayStreak, parseHolidayPattern } from './patterns/holiday';
+import {
+  isDailyPattern,
+  isWeeklyPattern,
+  isMonthlyPattern,
+  isYearlyPattern,
+  isRelativePattern,
+  isCompletionPattern,
+  isHolidayPattern
+} from './patterns/patternMatchers';
 
 export function calculateStreaks(
   pattern: string,
