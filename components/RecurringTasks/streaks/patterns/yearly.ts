@@ -117,7 +117,17 @@ export function isYearlyPattern(pattern: string): boolean {
 
   // Match patterns like "every year on January 1st" or "every 2 years on December 25th"
   const yearlyRegex = /^every\s+(?:(\d+)\s+)?years?\s+on\s+(?:january|february|march|april|may|june|july|august|september|october|november|december)\s+\d+(?:st|nd|rd|th)?$/;
-  return yearlyRegex.test(normalizedPattern) || /^every\s+(?:(\d+)\s+)?years?$/.test(normalizedPattern);
+  
+  // Add support for common holidays
+  const holidayRegex = /^every\s+(?:new\s+year(?:'s)?\s+(?:day|eve)|valentine'?s?\s+day|halloween)$/;
+  
+  // Add support for short month formats like "every jan 1"
+  const shortMonthRegex = /^every\s+(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\s+\d+$/;
+  
+  return yearlyRegex.test(normalizedPattern) || 
+         holidayRegex.test(normalizedPattern) || 
+         shortMonthRegex.test(normalizedPattern) ||
+         /^every\s+(?:(\d+)\s+)?years?$/.test(normalizedPattern);
 }
 
 export function parseYearlyPattern(pattern: string): YearlyRecurrencePattern {
@@ -127,6 +137,63 @@ export function parseYearlyPattern(pattern: string): YearlyRecurrencePattern {
 
   const normalizedPattern = pattern.trim().toLowerCase();
   
+  // Handle holidays
+  type Holiday = keyof typeof holidayMap;
+  const holidayMap = {
+    'new year day': { month: 0, day: 1 },      // January 1st
+    'new years day': { month: 0, day: 1 },     // January 1st
+    "new year's day": { month: 0, day: 1 },    // January 1st
+    'new year eve': { month: 11, day: 31 },    // December 31st
+    'new years eve': { month: 11, day: 31 },   // December 31st
+    "new year's eve": { month: 11, day: 31 },  // December 31st
+    'valentines day': { month: 1, day: 14 },   // February 14th
+    "valentine's day": { month: 1, day: 14 },  // February 14th
+    'halloween': { month: 9, day: 31 }         // October 31st
+  } as const;
+
+  // Try to match holiday patterns first
+  const holidayPattern = Object.keys(holidayMap).find(holiday => 
+    normalizedPattern === `every ${holiday}`
+  );
+
+  if (holidayPattern) {
+    if (!(holidayPattern in holidayMap)) {
+      throw new Error(`Invalid holiday pattern: ${holidayPattern}`);
+    }
+    const { month, day } = holidayMap[holidayPattern as Holiday];
+    return {
+      type: RecurrenceTypes.YEARLY,
+      interval: 1,
+      month,
+      dayOfMonth: day
+    };
+  }
+
+  // Handle short month format
+  type ShortMonth = 'jan' | 'feb' | 'mar' | 'apr' | 'may' | 'jun' | 'jul' | 'aug' | 'sep' | 'oct' | 'nov' | 'dec';
+  
+  const shortMonthMap: Record<ShortMonth, number> = {
+    'jan': 0, 'feb': 1, 'mar': 2, 'apr': 3, 'may': 4, 'jun': 5,
+    'jul': 6, 'aug': 7, 'sep': 8, 'oct': 9, 'nov': 10, 'dec': 11
+  };
+  
+  const shortMonthMatch = normalizedPattern.match(/^every\s+(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\s+(\d+)$/);
+  if (shortMonthMatch) {
+    const [_, month, day] = shortMonthMatch;
+    if (!month || !day) {
+      throw new Error('Invalid month or day in yearly pattern');
+    }
+    if (!(month in shortMonthMap)) {
+      throw new Error(`Invalid month: ${month}`);
+    }
+    return {
+      type: RecurrenceTypes.YEARLY,
+      interval: 1,
+      month: shortMonthMap[month as ShortMonth],
+      dayOfMonth: parseInt(day)
+    };
+  }
+
   // Handle basic yearly patterns first
   const basicYearlyRegex = /^every\s+(?:(\d+)\s+)?years?$/;
   const basicMatches = normalizedPattern.match(basicYearlyRegex);

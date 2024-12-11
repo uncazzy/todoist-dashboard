@@ -196,14 +196,18 @@ export function parseDailyPattern(pattern: string): DailyRecurrencePattern {
   // Handle other patterns
   const patterns = [
     // Basic daily with optional time period
-    /^every\s+(?:(\d+)\s+)?(?:(work))?days?\s*(?:at\s+(\d{1,2})(?::(\d{2}))?\s*(am|pm)?)?$/
+    /^every\s+(?:(\d+)\s+)?(?:(work))?days?\s*(?:at\s+(\d{1,2})(?::(\d{2}))?\s*(am|pm)?)?$/,
+    // ISO date ending pattern
+    /^every\s+day\s+ending\s+(\d{4})-(\d{2})-(\d{2})$/,
+    // Completion-based patterns
+    /^every!\s+(\d+)\s+days?$/,
+    /^after\s+(\d+)\s+days?$/
   ];
 
   let matches: RegExpMatchArray | null = null;
   for (const regex of patterns) {
     matches = normalizedPattern.match(regex);
     if (matches) {
-      console.log('Pattern matched regex:', matches);
       break;
     }
   }
@@ -216,8 +220,49 @@ export function parseDailyPattern(pattern: string): DailyRecurrencePattern {
         interval: 1
       };
     }
-    console.log('Pattern failed to match any regex or known format:', normalizedPattern);
     throw new Error('Invalid daily pattern format');
+  }
+
+  // Check if it's an ISO date ending pattern
+  const isoDateMatch = normalizedPattern.match(/^every\s+day\s+ending\s+(\d{4})-(\d{2})-(\d{2})$/);
+  if (isoDateMatch) {
+    const [_, year, month, day] = isoDateMatch;
+    if (!year || !month || !day) {
+      throw new Error('Invalid ISO date format in pattern');
+    }
+    return {
+      type: RecurrenceTypes.DAILY,
+      interval: 1,
+      endDate: new Date(parseInt(year), parseInt(month) - 1, parseInt(day))
+    };
+  }
+
+  // Check if it's a completion-based pattern
+  const completionMatch = normalizedPattern.match(/^every!\s+(\d+)\s+days?$/);
+  if (completionMatch) {
+    const [_, interval] = completionMatch;
+    if (!interval) {
+      throw new Error('Invalid interval in completion-based pattern');
+    }
+    return {
+      type: RecurrenceTypes.DAILY,
+      interval: parseInt(interval),
+      isCompletionBased: true
+    };
+  }
+
+  // Check if it's an "after X days" pattern
+  const afterMatch = normalizedPattern.match(/^after\s+(\d+)\s+days?$/);
+  if (afterMatch) {
+    const [_, interval] = afterMatch;
+    if (!interval) {
+      throw new Error('Invalid interval in after pattern');
+    }
+    return {
+      type: RecurrenceTypes.DAILY,
+      interval: parseInt(interval),
+      isAfterCompletion: true
+    };
   }
 
   const result: DailyRecurrencePattern = {

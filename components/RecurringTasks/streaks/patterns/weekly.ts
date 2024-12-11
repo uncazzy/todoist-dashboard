@@ -146,12 +146,10 @@ function generateWeeklyTargets(pattern: WeeklyRecurrencePattern, range: DateRang
 
 export function parseWeeklyPattern(pattern: string): WeeklyRecurrencePattern {
   if (!isWeeklyPattern(pattern)) {
-    console.log('Pattern failed isWeeklyPattern check:', pattern);
     throw new Error('Invalid weekly pattern format');
   }
 
   const normalizedPattern = pattern.trim().toLowerCase();
-  console.log('Attempting to parse pattern:', normalizedPattern);
 
   // Handle simple "every week" pattern
   if (normalizedPattern === 'every week') {
@@ -177,6 +175,37 @@ export function parseWeeklyPattern(pattern: string): WeeklyRecurrencePattern {
   }
 
   const weekdays: WeekDay[] = [];
+
+  // Match multiple weekdays pattern (e.g., "every Monday, Friday")
+  const multiWeekdayRegex = /^every\s+((?:mon(?:day)?|tue(?:s(?:day)?)?|wed(?:nesday)?|thu(?:rs(?:day)?)?|fri(?:day)?|sat(?:urday)?|sun(?:day)?)\s*(?:,\s*(?:mon(?:day)?|tue(?:s(?:day)?)?|wed(?:nesday)?|thu(?:rs(?:day)?)?|fri(?:day)?|sat(?:urday)?|sun(?:day)?)\s*)+)$/i;
+
+  const multiWeekdayMatch = normalizedPattern.match(multiWeekdayRegex);
+  if (multiWeekdayMatch && multiWeekdayMatch[1]) {
+    const weekdayNames = multiWeekdayMatch[1].split(',').map(day => day.trim().toLowerCase());
+    
+    for (const weekdayName of weekdayNames) {
+      const weekdayKey = Object.keys(WEEKDAYS).find(key => 
+        key.toLowerCase() === weekdayName || 
+        WEEKDAY_NAMES[weekdayName] === key
+      );
+
+      if (!weekdayKey || !(weekdayKey in WEEKDAYS)) {
+        throw new Error(`Invalid weekday: ${weekdayName}`);
+      }
+
+      const weekday = WEEKDAYS[weekdayKey];
+      if (typeof weekday !== 'number') {
+        throw new Error(`Could not map weekday: ${weekdayKey}`);
+      }
+
+      weekdays.push(weekday as WeekDay);
+    }
+
+    return {
+      type: RecurrenceTypes.WEEKLY,
+      weekdays: weekdays
+    };
+  }
 
   // Handle bi-weekly patterns (e.g., "every other monday")
   const biWeeklyRegex = /every\s+other\s+(\w+)(?:\s+at\s+(\d{1,2})(?::(\d{2}))?\s*(am|pm)?)?/i;

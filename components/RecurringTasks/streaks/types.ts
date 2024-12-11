@@ -51,6 +51,9 @@ export interface DailyRecurrencePattern extends BaseRecurrencePattern {
   isWorkday?: boolean;
   isWeekend?: boolean;
   timeOfDay?: TimeOfDay;
+  endDate?: Date;
+  isCompletionBased?: boolean;
+  isAfterCompletion?: boolean;
 }
 
 export interface WeekdayRecurrencePattern extends BaseRecurrencePattern {
@@ -68,10 +71,14 @@ export interface WeeklyRecurrencePattern extends BaseRecurrencePattern {
 
 export interface MonthlyRecurrencePattern extends BaseRecurrencePattern {
   type: typeof RecurrenceTypes.MONTHLY;
-  dayOfMonth: number;
-  lastDayOfMonth?: boolean;
-  weekday?: number; // 0-6 for Sunday-Saturday
-  weekdayOrdinal?: number; // 1-5 for first-fifth
+  daysOfMonth?: number[];
+  interval?: number;
+  timeOfDay?: TimeOfDay;
+  isWorkday?: boolean;
+  isWeekend?: boolean;
+  weekday?: WeekDay;
+  weekdayOrdinal?: number;
+  lastDayOfMonth?: boolean;  // Flag to indicate if the task occurs on the last day of each month
 }
 
 export interface YearlyRecurrencePattern extends BaseRecurrencePattern {

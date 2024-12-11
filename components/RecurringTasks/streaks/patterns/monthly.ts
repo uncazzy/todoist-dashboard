@@ -1,5 +1,5 @@
 import { addMonths, startOfDay, endOfDay, getDaysInMonth } from 'date-fns';
-import { StreakResult, MonthlyRecurrencePattern, DateRange, RecurrenceTypes, TimeOfDay } from '../types';
+import { StreakResult, MonthlyRecurrencePattern, DateRange, RecurrenceTypes, TimeOfDay, WeekDay } from '../types';
 import { isValidCompletion } from '../helpers/validation';
 import { isMonthlyPattern } from './patternMatchers';
 import { WEEKDAYS } from '../helpers/constants';
@@ -120,7 +120,7 @@ function generateMonthlyTargets(pattern: MonthlyRecurrencePattern, range: DateRa
   // Handle regular monthly patterns
   while (currentDate <= range.end) {
     const daysInMonth = getDaysInMonth(currentDate);
-    let targetDay = pattern.dayOfMonth;
+    let targetDay = pattern.daysOfMonth?.[0] ?? -1;  // Use first day from array or -1 as default
 
     // Handle last day of month
     if (pattern.lastDayOfMonth || targetDay === -1) {
@@ -139,6 +139,25 @@ function generateMonthlyTargets(pattern: MonthlyRecurrencePattern, range: DateRa
           allowedRange: calculateAllowedRange(targetDate, pattern),
           dayOfMonth: targetDay
         });
+      }
+    }
+
+    // Handle multiple days of month
+    if (pattern.daysOfMonth) {
+      for (const day of pattern.daysOfMonth) {
+        if (day > 0 && day <= daysInMonth) {
+          const targetDate = new Date(currentDate);
+          targetDate.setDate(day);
+          
+          // Skip if target date falls outside our range
+          if (targetDate <= range.end && targetDate >= rangeStart) {
+            targets.push({
+              date: targetDate,
+              allowedRange: calculateAllowedRange(targetDate, pattern),
+              dayOfMonth: day
+            });
+          }
+        }
       }
     }
 
@@ -223,8 +242,8 @@ export function parseMonthlyPattern(pattern: string): MonthlyRecurrencePattern {
     const result: MonthlyRecurrencePattern = {
       type: RecurrenceTypes.MONTHLY,
       interval: 1,
-      dayOfMonth: -1, // Special value for weekday patterns
-      weekday: weekdayNum,
+      daysOfMonth: [-1], // Special value for weekday patterns
+      weekday: weekdayNum as WeekDay,
       weekdayOrdinal: -1 // Special value for last occurrence
     };
     if (timeOfDay) {
@@ -257,14 +276,39 @@ export function parseMonthlyPattern(pattern: string): MonthlyRecurrencePattern {
     const result: MonthlyRecurrencePattern = {
       type: RecurrenceTypes.MONTHLY,
       interval: 1,
-      dayOfMonth: -1, // Special value for weekday patterns
-      weekday: weekdayNum,
+      daysOfMonth: [-1], // Special value for weekday patterns
+      weekday: weekdayNum as WeekDay,
       weekdayOrdinal: ordinal
     };
     if (timeOfDay) {
       result.timeOfDay = timeOfDay;
     }
     return result;
+  }
+
+  // Check for multiple days pattern (e.g., "every 1, 15, 30" or "every 2nd, 15th, 27th")
+  const multipleDaysRegex = /^every\s+(\d+(?:st|nd|rd|th)?(?:\s*,\s*\d+(?:st|nd|rd|th)?)+)$/;
+  const multipleDaysMatch = patternWithoutTime.match(multipleDaysRegex);
+  
+  if (multipleDaysMatch) {
+    // Add non-null assertion since we know it exists due to the if check
+    const daysString = multipleDaysMatch[1]!;
+    const days = daysString
+      .split(',')
+      .map(day => day.trim().replace(/(st|nd|rd|th)$/, ''))
+      .map(day => parseInt(day))
+      .filter(day => !isNaN(day) && day >= 1 && day <= 31)
+      .sort((a, b) => a - b);
+
+    if (days.length === 0) {
+      throw new Error('Invalid days in monthly pattern');
+    }
+
+    return {
+      type: RecurrenceTypes.MONTHLY,
+      daysOfMonth: days,
+      interval: 1
+    };
   }
 
   // Check for simple day number pattern (e.g., "every 26" or "every 26th")
@@ -277,7 +321,7 @@ export function parseMonthlyPattern(pattern: string): MonthlyRecurrencePattern {
     const result: MonthlyRecurrencePattern = {
       type: RecurrenceTypes.MONTHLY,
       interval: 1,
-      dayOfMonth
+      daysOfMonth: [dayOfMonth]
     };
     if (timeOfDay) {
       result.timeOfDay = timeOfDay;
@@ -290,7 +334,7 @@ export function parseMonthlyPattern(pattern: string): MonthlyRecurrencePattern {
     const result: MonthlyRecurrencePattern = {
       type: RecurrenceTypes.MONTHLY,
       interval: 1,
-      dayOfMonth: -1,
+      daysOfMonth: [-1],
       lastDayOfMonth: true
     };
     if (timeOfDay) {
@@ -312,7 +356,7 @@ export function parseMonthlyPattern(pattern: string): MonthlyRecurrencePattern {
       const result: MonthlyRecurrencePattern = {
         type: RecurrenceTypes.MONTHLY,
         interval,
-        dayOfMonth: 1
+        daysOfMonth: [1]
       };
       if (timeOfDay) {
         result.timeOfDay = timeOfDay;
@@ -325,7 +369,7 @@ export function parseMonthlyPattern(pattern: string): MonthlyRecurrencePattern {
       const result: MonthlyRecurrencePattern = {
         type: RecurrenceTypes.MONTHLY,
         interval,
-        dayOfMonth: -1,
+        daysOfMonth: [-1],
         lastDayOfMonth: true
       };
       if (timeOfDay) {
@@ -342,7 +386,7 @@ export function parseMonthlyPattern(pattern: string): MonthlyRecurrencePattern {
     const result: MonthlyRecurrencePattern = {
       type: RecurrenceTypes.MONTHLY,
       interval,
-      dayOfMonth
+      daysOfMonth: [dayOfMonth]
     };
     if (timeOfDay) {
       result.timeOfDay = timeOfDay;
@@ -355,7 +399,7 @@ export function parseMonthlyPattern(pattern: string): MonthlyRecurrencePattern {
     const result: MonthlyRecurrencePattern = {
       type: RecurrenceTypes.MONTHLY,
       interval: 2,
-      dayOfMonth: 1
+      daysOfMonth: [1]
     };
     if (timeOfDay) {
       result.timeOfDay = timeOfDay;
@@ -368,7 +412,7 @@ export function parseMonthlyPattern(pattern: string): MonthlyRecurrencePattern {
     const result: MonthlyRecurrencePattern = {
       type: RecurrenceTypes.MONTHLY,
       interval: 1,
-      dayOfMonth: 1
+      daysOfMonth: [1]
     };
     if (timeOfDay) {
       result.timeOfDay = timeOfDay;
