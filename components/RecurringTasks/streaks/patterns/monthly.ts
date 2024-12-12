@@ -29,7 +29,7 @@ export function calculateMonthlyStreak(
   }
 
   // Determine the correct day of month from the most recent on-time completion
-  if (!pattern.daysOfMonth || pattern.daysOfMonth[0] === 1) {
+  if (!pattern.daysOfMonth || pattern.daysOfMonth.length === 0) {
     const recentOnTimeCompletion = completions.find(c => {
       const day = c.getDate();
       return completions.some(other => other.getDate() === day && 
@@ -38,9 +38,16 @@ export function calculateMonthlyStreak(
     });
     
     if (recentOnTimeCompletion) {
-      pattern.daysOfMonth = [recentOnTimeCompletion.getDate()];
-      // Regenerate target dates with correct day of month
-      return calculateMonthlyStreak(pattern, completions, range);
+      pattern = {
+        ...pattern,
+        daysOfMonth: [recentOnTimeCompletion.getDate()]
+      };
+    } else {
+      // If no pattern is found, default to first day of month
+      pattern = {
+        ...pattern,
+        daysOfMonth: [1]
+      };
     }
   }
 
