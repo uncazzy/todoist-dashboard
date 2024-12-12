@@ -13,6 +13,7 @@ interface Stats {
   isLongTerm?: boolean | undefined;
   interval?: number | undefined;
   nextTargetDate?: Date | undefined;
+  isOnTrack?: boolean | undefined;
 }
 
 export function calculateStats(
@@ -82,18 +83,20 @@ export function calculateStats(
     completionRate = Math.min(100, Math.round((onTimeCompletions / expectedCount) * 100));
   }
 
-  // Determine if this is a long-term task (interval > 6 months)
-  const isLongTermRecurring = pattern === 'months' && interval > 6;
+  // Determine if this is a long-term task (interval > 6 months or yearly)
+  const isLongTermRecurring = (pattern === 'months' && interval > 6) || pattern === 'yearly';
 
   if (isLongTermRecurring) {
-    const hasCompletionInWindow = totalCompletions > 0;
+    // Check if there are any completions in the last 6 months
+    const hasRecentCompletion = recentCompletions.length > 0;
     return {
       currentStreak: 0,
       longestStreak: 0,
       totalCompletions,
-      completionRate: hasCompletionInWindow ? 100 : 0,
+      completionRate: hasRecentCompletion ? 100 : 0,
       isLongTerm: true,
-      interval: interval
+      interval: interval,
+      isOnTrack: hasRecentCompletion
     };
   }
 

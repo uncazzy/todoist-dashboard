@@ -98,6 +98,18 @@ export function detectPattern(
       generateMonthlyDates(lower, today, sixMonthsAgo, latestCompletion, targetDates);
     }
   }
+  else if (lower === 'every year' || lower.match(/every \d+ years?/)) {
+    pattern = 'yearly';
+    const yearMatch = lower.match(/every (\d+) years?/);
+    interval = yearMatch?.[1] ? parseInt(yearMatch[1], 10) : 1;
+    
+    // For yearly tasks, we'll generate one target date per year
+    let date = today;
+    while (!isBefore(date, sixMonthsAgo)) {
+      targetDates.push(new Date(date));
+      date = subMonths(date, 12); // Move back one year
+    }
+  }
   else if (lower === 'every month') {
     pattern = 'monthly-strict';
     interval = 1;
