@@ -77,7 +77,11 @@ function parsePattern(pattern: string): RecurrencePattern {
     return parseWeeklyPattern(pattern);
   }
   if (isMonthlyPattern(pattern)) {
-    return parseMonthlyPattern(pattern);
+    const monthlyPattern = parseMonthlyPattern(pattern);
+    if (!monthlyPattern) {
+      throw new Error(`Invalid monthly pattern format: ${pattern}`);
+    }
+    return monthlyPattern;
   }
   if (isYearlyPattern(pattern)) {
     return parseYearlyPattern(pattern);
@@ -99,4 +103,3 @@ function parsePattern(pattern: string): RecurrencePattern {
 export * from './types';
 export * from './helpers/constants';
 export * from './helpers/dateUtils';
-export * from './helpers/validation';

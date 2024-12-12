@@ -46,11 +46,6 @@ export function calculateStats(
     end: today
   };
 
-  console.log('========== CALCULATING STATS ==========');
-  console.log('Task:', task.content);
-  console.log('Due string:', task.due?.string);
-  console.log('Recent completions:', recentCompletions.map(d => d.toISOString()));
-
   // Calculate streaks using the new implementation
   const { currentStreak, longestStreak } = calculateStreaks(
     task.due.string,
@@ -58,21 +53,14 @@ export function calculateStats(
     range
   );
 
-  console.log('Streak calculation result:', { currentStreak, longestStreak });
-
   // Detect the pattern and generate target dates
   const { pattern, interval, targetDates } = detectPattern(task.due.string, today, sixMonthsAgo, recentCompletions[0], recentCompletions);
-
-  console.log('Detected pattern:', { pattern, interval });
-  console.log('Target dates:', targetDates.map(d => d.toISOString()));
 
   // Filter targetDates to the last 6 months window
   const filteredTargets = targetDates.filter(d =>
     !isBefore(d, sixMonthsAgo) &&
     !isAfter(d, today)
   );
-
-  console.log('Filtered targets:', filteredTargets.map(d => d.toISOString()));
 
   // Calculate completion rate
   const expectedCount = filteredTargets.length;
@@ -87,27 +75,12 @@ export function calculateStats(
     });
     if (completed) onTimeCompletions++;
 
-    console.log('Checking completion for target:', {
-      targetDate: targetDate.toISOString(),
-      completed,
-      onTimeCompletions,
-      expectedCount
-    });
   });
 
   let completionRate = 0;
   if (expectedCount > 0) {
     completionRate = Math.min(100, Math.round((onTimeCompletions / expectedCount) * 100));
   }
-
-  console.log('Final stats:', {
-    currentStreak,
-    longestStreak,
-    completionRate,
-    onTimeCompletions,
-    expectedCount
-  });
-  console.log('===========================================');
 
   // Determine if this is a long-term task (interval > 6 months)
   const isLongTermRecurring = pattern === 'months' && interval > 6;
