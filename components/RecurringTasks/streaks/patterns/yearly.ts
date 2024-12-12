@@ -1,6 +1,6 @@
 import { addYears, startOfDay, endOfDay, setMonth, setDate } from 'date-fns';
 import { StreakResult, YearlyRecurrencePattern, DateRange, RecurrenceTypes } from '../types';
-import { isValidCompletion } from '../helpers/validation';
+import { isValidCompletionWithTimeConstraint } from '../helpers/validation';
 
 interface YearlyTarget {
   date: Date;
@@ -35,7 +35,7 @@ export function calculateYearlyStreak(
   // Calculate streaks by checking each target year
   for (const target of targetDates) {
     const isCompleted = sortedCompletions.some(completion =>
-      isValidCompletion(target.date, completion, target.allowedRange, pattern.timeOfDay)
+      isValidCompletionWithTimeConstraint(target.date, completion, target.allowedRange, pattern.timeOfDay)
     );
 
     if (isCompleted) {

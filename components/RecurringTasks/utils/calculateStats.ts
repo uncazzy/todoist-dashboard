@@ -1,8 +1,8 @@
-import { format, isBefore, isAfter, subMonths, startOfMonth, addDays } from 'date-fns';
+import { format, isBefore, isAfter, subMonths, startOfMonth, addDays, addMonths } from 'date-fns';
 import { ActiveTask } from '../../../types';
 import { calculateStreaks } from '../streaks';
 import { DateRange } from '../streaks/types';
-import { isValidCompletion } from './validationUtils';
+import { isValidCompletionWithTimeConstraint } from '../streaks/helpers/validation';
 import { detectPattern } from './patternUtils';
 
 interface Stats {
@@ -46,6 +46,11 @@ export function calculateStats(
     end: today
   };
 
+  console.log('========== CALCULATING STATS ==========');
+  console.log('Task:', task.content);
+  console.log('Due string:', task.due?.string);
+  console.log('Recent completions:', recentCompletions.map(d => d.toISOString()));
+
   // Calculate streaks using the new implementation
   const { currentStreak, longestStreak } = calculateStreaks(
     task.due.string,
@@ -53,8 +58,13 @@ export function calculateStats(
     range
   );
 
+  console.log('Streak calculation result:', { currentStreak, longestStreak });
+
   // Detect the pattern and generate target dates
   const { pattern, interval, targetDates } = detectPattern(task.due.string, today, sixMonthsAgo, recentCompletions[0], recentCompletions);
+
+  console.log('Detected pattern:', { pattern, interval });
+  console.log('Target dates:', targetDates.map(d => d.toISOString()));
 
   // Filter targetDates to the last 6 months window
   const filteredTargets = targetDates.filter(d =>
@@ -62,21 +72,42 @@ export function calculateStats(
     !isAfter(d, today)
   );
 
+  console.log('Filtered targets:', filteredTargets.map(d => d.toISOString()));
+
   // Calculate completion rate
   const expectedCount = filteredTargets.length;
   let onTimeCompletions = 0;
 
   filteredTargets.forEach(targetDate => {
-    const completed = recentCompletions.some(completionDate =>
-      isValidCompletion(targetDate, completionDate, task.due!.string)
-    );
+    const completed = recentCompletions.some(completionDate => {
+      // Must be completed on the exact date (same day, month, and year)
+      return completionDate.getDate() === targetDate.getDate() &&
+             completionDate.getMonth() === targetDate.getMonth() &&
+             completionDate.getFullYear() === targetDate.getFullYear();
+    });
     if (completed) onTimeCompletions++;
+
+    console.log('Checking completion for target:', {
+      targetDate: targetDate.toISOString(),
+      completed,
+      onTimeCompletions,
+      expectedCount
+    });
   });
 
   let completionRate = 0;
   if (expectedCount > 0) {
     completionRate = Math.min(100, Math.round((onTimeCompletions / expectedCount) * 100));
   }
+
+  console.log('Final stats:', {
+    currentStreak,
+    longestStreak,
+    completionRate,
+    onTimeCompletions,
+    expectedCount
+  });
+  console.log('===========================================');
 
   // Determine if this is a long-term task (interval > 6 months)
   const isLongTermRecurring = pattern === 'months' && interval > 6;
@@ -106,7 +137,10 @@ export function calculateStats(
         const targetDate = sortedTargetDates[i];
         if (targetDate) {
           const correspondingCompletion = recentCompletions.find(completionDate =>
-            isValidCompletion(targetDate, completionDate, task.due!.string)
+            isValidCompletionWithTimeConstraint(targetDate, completionDate, {
+              start: targetDate,
+              end: addMonths(targetDate, 1)
+            })
           );
           if (correspondingCompletion) {
             lastValidCompletion = correspondingCompletion;

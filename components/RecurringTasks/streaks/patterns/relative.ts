@@ -1,6 +1,6 @@
 import { addDays, startOfDay, endOfDay } from 'date-fns';
 import { StreakResult, RelativeRecurrencePattern, DateRange, RecurrenceTypes } from '../types';
-import { isValidCompletion } from '../helpers/validation';
+import { isValidRelativeCompletion } from '../helpers/validation';
 import { isRelativePattern } from './patternMatchers';
 
 interface RelativeTarget {
@@ -43,11 +43,9 @@ export function calculateRelativeStreak(
     // and within the allowed range from the target date
     const isCompleted = sortedCompletions.some(completion => {
       const isAfterBase = completion.getTime() > target.baseCompletion.getTime();
-      const isWithinRange = isValidCompletion(
-        target.date,
+      const isWithinRange = isValidRelativeCompletion(
         completion,
-        target.allowedRange,
-        pattern.timeOfDay
+        target.allowedRange
       );
       return isAfterBase && isWithinRange;
     });

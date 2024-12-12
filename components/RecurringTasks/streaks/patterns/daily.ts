@@ -1,6 +1,6 @@
 import { addDays, startOfDay, endOfDay } from 'date-fns';
 import { StreakResult, DailyRecurrencePattern, DateRange, RecurrenceTypes } from '../types';
-import { isValidCompletion } from '../helpers/validation';
+import { isValidCompletionWithTimeConstraint } from '../helpers/validation';
 import { isWorkday } from '../helpers/dateUtils';
 import { isDailyPattern } from './patternMatchers';
 
@@ -35,7 +35,7 @@ export function calculateDailyStreak(
   // Calculate streaks by checking each target date
   for (const target of targetDates) {
     const isCompleted = sortedCompletions.some(completion =>
-      isValidCompletion(target.date, completion, target.allowedRange, pattern.timeOfDay)
+      isValidCompletionWithTimeConstraint(target.date, completion, target.allowedRange, pattern.timeOfDay)
     );
 
     if (isCompleted) {

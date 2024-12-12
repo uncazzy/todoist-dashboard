@@ -102,9 +102,50 @@ export function detectPattern(
     pattern = 'monthly-strict';
     interval = 1;
     
-    // For "every month" pattern, target dates are based on completion chain
-    if (latestCompletion) {
-      targetDates = generateStrictMonthlyDates(recentCompletions, today, sixMonthsAgo);
+    // For "every month" pattern, detect the consistent day from completions
+    const sortedCompletions = recentCompletions
+      .sort((a, b) => b.getTime() - a.getTime());
+    
+    // Find a day that appears in consecutive months
+    const consistentDay = sortedCompletions.find(c => {
+      const day = c.getDate();
+      return sortedCompletions.some(other => 
+        other.getDate() === day && 
+        other !== c && 
+        Math.abs(other.getMonth() - c.getMonth()) === 1
+      );
+    });
+
+    if (consistentDay) {
+      const targetDay = consistentDay.getDate();
+      
+      // Start from today and work backwards
+      let currentDate = new Date(today);
+      currentDate.setDate(targetDay); // Set to target day of current month
+      
+      // If we're past the target day this month, start from next month
+      if (today.getDate() > targetDay) {
+        currentDate = subMonths(currentDate, 1);
+      }
+      
+      // Generate 6 months of target dates
+      for (let i = 0; i < 6; i++) {
+        const targetDate = new Date(currentDate);
+        if (!isAfter(targetDate, today) && !isBefore(targetDate, sixMonthsAgo)) {
+          targetDates.push(targetDate);
+        }
+        currentDate = subMonths(currentDate, 1);
+      }
+    } else {
+      // Fallback to current date's day if no consistent pattern found
+      let currentDate = new Date(today);
+      for (let i = 0; i < 6; i++) {
+        const targetDate = new Date(currentDate);
+        if (!isAfter(targetDate, today) && !isBefore(targetDate, sixMonthsAgo)) {
+          targetDates.push(targetDate);
+        }
+        currentDate = subMonths(currentDate, 1);
+      }
     }
   }
   else if (lower.includes('month') || /every \d+(?:st|nd|rd|th)?(?:\s|$)/.test(lower) || lower.includes('last day')) {
@@ -122,48 +163,6 @@ export function detectPattern(
   }
 
   return { pattern, interval, targetDates };
-}
-
-function generateStrictMonthlyDates(
-  completions: Date[],
-  today: Date,
-  sixMonthsAgo: Date
-): Date[] {
-  const targetDates: Date[] = [];
-
-  // Sort completions from oldest to newest
-  const sortedCompletions = [...completions]
-    .filter(date => !isBefore(date, sixMonthsAgo))
-    .sort((a, b) => a.getTime() - b.getTime());
-
-  if (sortedCompletions.length > 0) {
-    // Find the first on-time completion (should be on the 16th)
-    const firstOnTimeCompletion = sortedCompletions.find(date => date.getDate() === 16);
-    if (firstOnTimeCompletion) {
-      // Start with this completion as our anchor
-      let currentDate = new Date(firstOnTimeCompletion);
-      targetDates.push(new Date(currentDate));
-
-      // Generate all subsequent target dates on the 16th
-      while (true) {
-        // Calculate next target date (always on the 16th)
-        const nextMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1);
-        const nextTarget = new Date(nextMonth.getFullYear(), nextMonth.getMonth(), 16);
-
-        // Stop if we've gone past today
-        if (isAfter(nextTarget, today)) {
-          break;
-        }
-
-        targetDates.push(new Date(nextTarget));
-        currentDate = nextTarget;
-      }
-    }
-  }
-
-  // Sort target dates from newest to oldest
-  targetDates.sort((a, b) => b.getTime() - a.getTime());
-  return targetDates;
 }
 
 function generateWeeklyDates(
@@ -282,7 +281,7 @@ function generateMonthlyDates(
     }
   } else if (monthlyMatch || specificDateMatch) {
     // This is a monthly pattern (e.g. "every 25th" or "every month on the 25th")
-    const targetDay = monthlyMatch ?
+    const targetDay = monthlyMatch ? 
       parseInt(monthlyMatch[2] ?? '1') :
       parseInt(specificDateMatch![1] ?? '1');
 

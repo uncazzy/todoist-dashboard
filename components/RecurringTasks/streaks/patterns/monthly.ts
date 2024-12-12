@@ -1,6 +1,5 @@
-import { addMonths, startOfDay, endOfDay, getDaysInMonth } from 'date-fns';
+import { addMonths, startOfDay, getDaysInMonth } from 'date-fns';
 import { StreakResult, MonthlyRecurrencePattern, DateRange, RecurrenceTypes, TimeOfDay, WeekDay } from '../types';
-import { isValidCompletion } from '../helpers/validation';
 import { isMonthlyPattern } from './patternMatchers';
 import { WEEKDAYS } from '../helpers/constants';
 
@@ -19,25 +18,66 @@ export function calculateMonthlyStreak(
     throw new Error('Invalid pattern type for monthly streak calculation');
   }
 
+  console.log('========== MONTHLY STREAK CALCULATION ==========');
+  console.log('Task pattern:', pattern);
+
   // Generate target dates based on pattern
-  const targetDates = generateMonthlyTargets(pattern, range);
+  const targetDates = generateMonthlyTargets(pattern, range).sort((a, b) => b.date.getTime() - a.date.getTime());
   if (!targetDates.length) {
+    console.log('No target dates found');
     return { currentStreak: 0, longestStreak: 0 };
   }
 
+  // Determine the correct day of month from the most recent on-time completion
+  if (!pattern.daysOfMonth || pattern.daysOfMonth[0] === 1) {
+    const recentOnTimeCompletion = completions.find(c => {
+      const day = c.getDate();
+      return completions.some(other => other.getDate() === day && 
+                                     other !== c && 
+                                     Math.abs(other.getMonth() - c.getMonth()) === 1);
+    });
+    
+    if (recentOnTimeCompletion) {
+      pattern.daysOfMonth = [recentOnTimeCompletion.getDate()];
+      // Regenerate target dates with correct day of month
+      return calculateMonthlyStreak(pattern, completions, range);
+    }
+  }
+
+  console.log('Target dates:', targetDates.map(t => ({ 
+    date: t.date.toISOString(),
+    allowedRange: {
+      start: t.allowedRange.start.toISOString(),
+      end: t.allowedRange.end.toISOString()
+    }
+  })));
+
   // Sort completions from newest to oldest for optimal performance
   const sortedCompletions = [...completions].sort((a, b) => b.getTime() - a.getTime());
+  console.log('Sorted completions:', sortedCompletions.map(c => c.toISOString()));
 
   let currentStreak = 0;
   let longestStreak = 0;
   let tempStreak = 0;
   let activeStreak = true;
 
-  // Calculate streaks by checking each target month
+  // Calculate streaks by checking each target month from newest to oldest
   for (const target of targetDates) {
-    const isCompleted = sortedCompletions.some(completion =>
-      isValidCompletion(target.date, completion, target.allowedRange, pattern.timeOfDay)
-    );
+    const isCompleted = sortedCompletions.some(completion => {
+      // For monthly tasks, check if completion is exactly on the target date
+      return completion.getDate() === target.date.getDate() &&
+             completion.getMonth() === target.date.getMonth() &&
+             completion.getFullYear() === target.date.getFullYear();
+    });
+
+    console.log('Checking target:', {
+      date: target.date.toISOString(),
+      isCompleted,
+      tempStreak,
+      activeStreak,
+      currentStreak,
+      longestStreak
+    });
 
     if (isCompleted) {
       tempStreak++;
@@ -45,18 +85,31 @@ export function calculateMonthlyStreak(
       if (activeStreak) {
         currentStreak = tempStreak;
       }
+      console.log('Target completed:', {
+        tempStreak,
+        activeStreak,
+        currentStreak,
+        longestStreak
+      });
     } else {
-      // Special handling for current month's target
-      if (target === targetDates[0]) {
-        if (tempStreak > 0) {
-          currentStreak = tempStreak;
-        }
-      } else {
-        activeStreak = false;
-        tempStreak = 0;
+      // Break streak for any missed target
+      activeStreak = false;
+      if (tempStreak > 0) {
+        longestStreak = Math.max(longestStreak, tempStreak);
       }
+      tempStreak = 0;
+      currentStreak = 0;  // Reset current streak when a target is missed
+      console.log('Target missed:', {
+        tempStreak,
+        activeStreak,
+        currentStreak,
+        longestStreak
+      });
     }
   }
+
+  console.log('Final result:', { currentStreak, longestStreak });
+  console.log('===========================================');
 
   return { currentStreak, longestStreak };
 }
@@ -122,13 +175,22 @@ function generateMonthlyTargets(pattern: MonthlyRecurrencePattern, range: DateRa
     const daysInMonth = getDaysInMonth(currentDate);
     let targetDay = pattern.daysOfMonth?.[0] ?? -1;  // Use first day from array or -1 as default
 
-    // Handle last day of month
-    if (pattern.lastDayOfMonth || targetDay === -1) {
-      targetDay = daysInMonth;
+    // Handle last day of month separately
+    if (pattern.lastDayOfMonth) {
+      const targetDate = new Date(currentDate);
+      targetDate.setDate(daysInMonth);
+      
+      // Skip if target date falls outside our range
+      if (targetDate <= range.end && targetDate >= rangeStart) {
+        targets.push({
+          date: targetDate,
+          allowedRange: calculateAllowedRange(targetDate, pattern),
+          dayOfMonth: daysInMonth
+        });
+      }
     }
-
-    // Handle regular day of month
-    if (targetDay > 0 && targetDay <= daysInMonth) {
+    // Handle regular day of month - only if not handling multiple days
+    else if (!pattern.daysOfMonth && targetDay > 0 && targetDay <= daysInMonth) {
       const targetDate = new Date(currentDate);
       targetDate.setDate(targetDay);
       
@@ -143,7 +205,7 @@ function generateMonthlyTargets(pattern: MonthlyRecurrencePattern, range: DateRa
     }
 
     // Handle multiple days of month
-    if (pattern.daysOfMonth) {
+    else if (pattern.daysOfMonth) {
       for (const day of pattern.daysOfMonth) {
         if (day > 0 && day <= daysInMonth) {
           const targetDate = new Date(currentDate);
@@ -169,21 +231,28 @@ function generateMonthlyTargets(pattern: MonthlyRecurrencePattern, range: DateRa
 }
 
 function calculateAllowedRange(date: Date, pattern: MonthlyRecurrencePattern): DateRange {
-  const baseStart = startOfDay(date);
-  const baseEnd = endOfDay(date);
-
-  // For time-specific patterns, use a stricter range
+  const targetDate = new Date(date);
+  
+  // For time-specific patterns
   if (pattern.timeOfDay) {
     const { hours, minutes } = pattern.timeOfDay;
-    const targetTime = new Date(date);
-    targetTime.setHours(hours, minutes);
+    targetDate.setHours(hours, minutes, 0, 0);
+    
     return {
-      start: new Date(targetTime.getTime() - 30 * 60 * 1000), // 30 minutes before
-      end: new Date(targetTime.getTime() + 30 * 60 * 1000)    // 30 minutes after
+      start: targetDate,
+      end: new Date(targetDate.getTime() + 60 * 60 * 1000) // 1 hour window
     };
   }
-
-  return { start: baseStart, end: baseEnd };
+  
+  // For non-time-specific patterns, only allow completion on the exact day
+  targetDate.setHours(0, 0, 0, 0);
+  const endOfDay = new Date(targetDate);
+  endOfDay.setHours(23, 59, 59, 999);
+  
+  return {
+    start: targetDate,
+    end: endOfDay
+  };
 }
 
 export function parseMonthlyPattern(pattern: string): MonthlyRecurrencePattern {

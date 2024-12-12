@@ -1,7 +1,6 @@
 import { startOfDay, endOfDay, addYears } from 'date-fns';
 import { StreakResult, HolidayRecurrencePattern, DateRange, RecurrenceTypes, TimePeriod } from '../types';
-import { isValidCompletion } from '../helpers/validation';
-import { isValidHoliday } from '../helpers/validation';
+import { isValidHoliday, isValidHolidayCompletion } from '../helpers/validation';
 import { TIME_PERIODS, HOLIDAY_MAP } from '../helpers/constants';
 
 interface HolidayTarget {
@@ -36,7 +35,7 @@ export function calculateHolidayStreak(
   // Calculate streaks by checking each target holiday
   for (const target of targetDates) {
     const isCompleted = sortedCompletions.some(completion =>
-      isValidCompletion(target.date, completion, target.allowedRange, pattern.timeOfDay)
+      isValidHolidayCompletion(completion, target.allowedRange)
     );
 
     if (isCompleted) {
