@@ -14,7 +14,7 @@ export function calculateYearlyStreak(
   // Generate target dates based on pattern
   const targetDates = generateYearlyTargets(pattern, range);
   if (!targetDates.length) {
-    return { currentStreak: 0, longestStreak: 0 };
+    return { currentStreak: 0, longestStreak: 0, nextDue: null, overdue: false };
   }
 
   // Sort completions from newest to oldest for optimal performance
@@ -50,5 +50,9 @@ export function calculateYearlyStreak(
     }
   }
 
-  return { currentStreak, longestStreak };
+  // Calculate the next due date
+  const nextDue = targetDates[0]?.date || null;
+  const overdue = nextDue ? new Date() > nextDue : false;
+
+  return { currentStreak, longestStreak, nextDue, overdue };
 }

@@ -25,7 +25,7 @@ export function calculateWeeklyStreak(
   });
 
   if (!targetDates.length) {
-    return { currentStreak: 0, longestStreak: 0 };
+    return { currentStreak: 0, longestStreak: 0, nextDue: null, overdue: false };
   }
 
   const now = startOfDay(new Date());
@@ -74,5 +74,9 @@ export function calculateWeeklyStreak(
     }
   }
 
-  return { currentStreak, longestStreak };
+  // Calculate the next due date
+  const nextDue = targetDates[0]?.date || null;
+  const overdue = nextDue ? new Date() > nextDue : false;
+
+  return { currentStreak, longestStreak, nextDue, overdue };
 }
