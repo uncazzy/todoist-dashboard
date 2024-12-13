@@ -111,15 +111,35 @@ export function calculateStreaks(
 export function parsePattern(pattern: string): RecurrencePattern {
   // Try each pattern parser in sequence
   if (isDailyPattern(pattern)) {
-    return parseDailyPattern(pattern);
+    const dailyPattern = parseDailyPattern(pattern);
+    if (!dailyPattern) {
+      return {
+        type: RecurrenceTypes.UNSUPPORTED,
+        pattern: pattern,
+        originalPattern: pattern
+      };
+    }
+    return dailyPattern;
   }
   if (isWeeklyPattern(pattern)) {
-    return parseWeeklyPattern(pattern);
+    const weeklyPattern = parseWeeklyPattern(pattern);
+    if (!weeklyPattern) {
+      return {
+        type: RecurrenceTypes.UNSUPPORTED,
+        pattern: pattern,
+        originalPattern: pattern
+      };
+    }
+    return weeklyPattern;
   }
   if (isMonthlyPattern(pattern)) {
     const monthlyPattern = parseMonthlyPattern(pattern);
     if (!monthlyPattern) {
-      throw new Error(`Invalid monthly pattern format: ${pattern}`);
+      return {
+        type: RecurrenceTypes.UNSUPPORTED,
+        pattern: pattern,
+        originalPattern: pattern
+      };
     }
     return monthlyPattern;
   }

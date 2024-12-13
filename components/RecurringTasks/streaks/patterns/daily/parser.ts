@@ -1,9 +1,9 @@
 import { DailyRecurrencePattern, RecurrenceTypes } from '../../types';
 import { isDailyPattern } from './index';
 
-export function parseDailyPattern(pattern: string): DailyRecurrencePattern {
+export function parseDailyPattern(pattern: string): DailyRecurrencePattern | null {
   if (!isDailyPattern(pattern)) {
-    throw new Error('Invalid daily pattern format');
+    return null;
   }
 
   const normalizedPattern = pattern.trim().toLowerCase();

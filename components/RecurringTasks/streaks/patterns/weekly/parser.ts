@@ -11,14 +11,14 @@ const WEEKDAY_TO_NUMBER: Record<string, WeekDay> = {
   'SATURDAY': 6
 };
 
-export function parseWeeklyPattern(pattern: string): WeeklyRecurrencePattern {
+export function parseWeeklyPattern(pattern: string): WeeklyRecurrencePattern | null {
   if (!pattern || typeof pattern !== 'string') {
-    throw new Error('Invalid weekly pattern format');
+    return null;
   }
 
   const normalizedPattern = pattern.trim().toLowerCase();
   if (!normalizedPattern.startsWith('every')) {
-    throw new Error('Invalid weekly pattern format');
+    return null;
   }
 
   // Match patterns for weekly recurrences
@@ -33,7 +33,7 @@ export function parseWeeklyPattern(pattern: string): WeeklyRecurrencePattern {
   ];
 
   if (!patterns.some(regex => regex.test(normalizedPattern))) {
-    throw new Error('Invalid weekly pattern format');
+    return null;
   }
 
   let interval = 1;
@@ -65,7 +65,7 @@ export function parseWeeklyPattern(pattern: string): WeeklyRecurrencePattern {
   }
 
   if (weekdays.length === 0) {
-    throw new Error('No valid weekdays found in pattern');
+    return null;
   }
 
   const result = {
