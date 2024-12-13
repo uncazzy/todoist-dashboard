@@ -23,39 +23,83 @@ export function calculateStreaks(
   // Calculate streaks based on the pattern type
   switch (recurrencePattern.type) {
     case RecurrenceTypes.DAILY:
-      return calculateDailyStreak(recurrencePattern as DailyRecurrencePattern, completions, range);
+      return {
+        ...calculateDailyStreak(recurrencePattern as DailyRecurrencePattern, completions, range),
+        nextDue: null,  
+        overdue: false  
+      };
 
     case RecurrenceTypes.WEEKDAY:
-      return calculateDailyStreak({
-        ...recurrencePattern,
-        type: RecurrenceTypes.DAILY,
-        isWorkday: true
-      } as DailyRecurrencePattern, completions, range);
+      return {
+        ...calculateDailyStreak({
+          ...recurrencePattern,
+          type: RecurrenceTypes.DAILY,
+          isWorkday: true
+        } as DailyRecurrencePattern, completions, range),
+        nextDue: null,
+        overdue: false
+      };
 
     case RecurrenceTypes.WEEKEND:
-      return calculateDailyStreak({
-        ...recurrencePattern,
-        type: RecurrenceTypes.DAILY,
-        isWorkday: false
-      } as DailyRecurrencePattern, completions, range);
+      return {
+        ...calculateDailyStreak({
+          ...recurrencePattern,
+          type: RecurrenceTypes.DAILY,
+          isWorkday: false
+        } as DailyRecurrencePattern, completions, range),
+        nextDue: null,
+        overdue: false
+      };
 
     case RecurrenceTypes.WEEKLY:
-      return calculateWeeklyStreak(recurrencePattern, completions, range);
+      return {
+        ...calculateWeeklyStreak(recurrencePattern, completions, range),
+        nextDue: null,
+        overdue: false
+      };
 
     case RecurrenceTypes.MONTHLY:
-      return calculateMonthlyStreak(recurrencePattern, completions, range);
+      return {
+        ...calculateMonthlyStreak(recurrencePattern, completions, range),
+        nextDue: null,
+        overdue: false
+      };
 
     case RecurrenceTypes.YEARLY:
-      return calculateYearlyStreak(recurrencePattern, completions, range);
+      return {
+        ...calculateYearlyStreak(recurrencePattern, completions, range),
+        nextDue: null,
+        overdue: false
+      };
 
     case RecurrenceTypes.RELATIVE:
-      return calculateRelativeStreak(recurrencePattern, completions, range);
+      return {
+        ...calculateRelativeStreak(recurrencePattern, completions, range),
+        nextDue: null,
+        overdue: false
+      };
 
     case RecurrenceTypes.COMPLETION:
-      return calculateCompletionStreak(recurrencePattern, completions, range);
+      return {
+        ...calculateCompletionStreak(recurrencePattern, completions, range),
+        nextDue: null,
+        overdue: false
+      };
 
     case RecurrenceTypes.HOLIDAY:
-      return calculateHolidayStreak(recurrencePattern, completions, range);
+      return {
+        ...calculateHolidayStreak(recurrencePattern, completions, range),
+        nextDue: null,
+        overdue: false
+      };
+
+    case RecurrenceTypes.UNSUPPORTED:
+      return {
+        currentStreak: 0,
+        longestStreak: 0,
+        nextDue: null,
+        overdue: false
+      };
 
     default: {
       const exhaustiveCheck: never = recurrencePattern;
@@ -64,7 +108,7 @@ export function calculateStreaks(
   }
 }
 
-function parsePattern(pattern: string): RecurrencePattern {
+export function parsePattern(pattern: string): RecurrencePattern {
   // Try each pattern parser in sequence
   if (isDailyPattern(pattern)) {
     return parseDailyPattern(pattern);
@@ -92,7 +136,11 @@ function parsePattern(pattern: string): RecurrencePattern {
     return parseHolidayPattern(pattern);
   }
 
-  throw new Error(`Unsupported pattern format: ${pattern}`);
+  return {
+    type: RecurrenceTypes.UNSUPPORTED,
+    pattern: pattern,
+    originalPattern: pattern
+  };
 }
 
 // Export types and utilities that might be needed by consumers

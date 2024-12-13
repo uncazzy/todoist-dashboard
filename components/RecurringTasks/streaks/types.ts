@@ -1,6 +1,8 @@
 export interface StreakResult {
   currentStreak: number;
   longestStreak: number;
+  nextDue: Date | null;
+  overdue: boolean;
 }
 
 export const RecurrenceTypes = {
@@ -12,7 +14,8 @@ export const RecurrenceTypes = {
   YEARLY: 'yearly',
   RELATIVE: 'relative',
   COMPLETION: 'completion',
-  HOLIDAY: 'holiday'
+  HOLIDAY: 'holiday',
+  UNSUPPORTED: 'unsupported'
 } as const;
 
 export type RecurrenceType = typeof RecurrenceTypes[keyof typeof RecurrenceTypes];
@@ -105,6 +108,12 @@ export interface HolidayRecurrencePattern extends BaseRecurrencePattern {
   dayOfMonth: number;
 }
 
+export interface UnsupportedRecurrencePattern {
+  type: typeof RecurrenceTypes.UNSUPPORTED;
+  pattern: string;
+  originalPattern: string;
+}
+
 export type RecurrencePattern =
   | DailyRecurrencePattern
   | WeekdayRecurrencePattern
@@ -114,4 +123,5 @@ export type RecurrencePattern =
   | YearlyRecurrencePattern
   | RelativeRecurrencePattern
   | CompletionRecurrencePattern
-  | HolidayRecurrencePattern;
+  | HolidayRecurrencePattern
+  | UnsupportedRecurrencePattern;

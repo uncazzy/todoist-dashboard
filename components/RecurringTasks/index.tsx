@@ -6,7 +6,9 @@ import { Virtuoso } from 'react-virtuoso';
 import { ActiveTask, ProjectData } from '../../types';
 import { TaskCalendar } from './TaskCalendar';
 import { RecurringFrequency } from './types';
+import { RecurrencePattern } from './streaks/types';
 import { getTaskFrequency, calculateStats } from './utils';
+import { parsePattern } from './streaks/index';
 
 interface TaskItemProps {
   taskData: RecurringTaskData;
@@ -33,6 +35,7 @@ interface RecurringTaskData {
   totalDueCount: number;
   currentStreak: number;
   completionRate: number;
+  pattern: RecurrencePattern | undefined;
 }
 
 const RecurringTasksCard: React.FC<Props> = ({ activeTasks, allCompletedTasks, projectData }) => {
@@ -68,6 +71,9 @@ const RecurringTasksCard: React.FC<Props> = ({ activeTasks, allCompletedTasks, p
       const completionDates = taskCompletions.map(ct => new Date(ct.completed_at));
       const stats = calculateStats(task, completionDates);
 
+      // Get the pattern directly from calculateStats since it already parses it
+      const pattern = task.due?.string ? parsePattern(task.due.string) : undefined;
+
       return {
         taskId: task.id,
         frequency,
@@ -75,7 +81,8 @@ const RecurringTasksCard: React.FC<Props> = ({ activeTasks, allCompletedTasks, p
         completedCount: stats.totalCompletions,
         totalDueCount: stats.totalCompletions || 1,
         currentStreak: stats.currentStreak,
-        completionRate: stats.completionRate
+        completionRate: stats.completionRate,
+        pattern
       };
     });
   }, [activeTasks, allCompletedTasks]);

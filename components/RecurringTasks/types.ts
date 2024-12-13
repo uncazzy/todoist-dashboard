@@ -1,3 +1,5 @@
+import { RecurrencePattern } from './streaks/types';
+
 export type RecurringFrequency = 'daily' | 'weekly' | 'monthly' | 'other';
 
 export interface TaskStats {
@@ -7,4 +9,5 @@ export interface TaskStats {
   totalDueCount: number;
   currentStreak: number;
   completionDates: Date[];
+  pattern: RecurrencePattern | undefined;
 }

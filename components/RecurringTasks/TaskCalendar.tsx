@@ -138,7 +138,7 @@ export const TaskCalendar = React.memo(({ taskData, task, project }: TaskCalenda
               </span>
             )}
           </div>
-          <div className="flex items-center gap-2 text-sm flex-wrap">
+          <div className="flex items-center gap-1 text-sm flex-wrap">
             {project && (
               <div>
                 <div
@@ -150,10 +150,13 @@ export const TaskCalendar = React.memo(({ taskData, task, project }: TaskCalenda
                 </span>
               </div>
             )}
-            <span className="text-gray-400 text-xs flex items-center gap-1">
-              <BsCalendar3 className="w-3 h-3" />
-              {task.due?.string || 'No recurrence'}
-            </span>
+            <div className="text-xs text-gray-400 flex items-center gap-1">
+              <BsCalendar3 className="w-4 h-4" />
+              <span>
+                {task.due?.string}
+                {taskData.pattern?.type === 'unsupported' && <span className="ml-2 text-yellow-500">(Pattern not supported)</span>}
+              </span>
+            </div>
           </div>
         </div>
 
