@@ -1,16 +1,12 @@
 import { StreakResult, RecurrencePattern, DailyRecurrencePattern, RecurrenceTypes, DateRange } from './types';
-import { calculateDailyStreak, parseDailyPattern } from './patterns/daily';
-import { calculateWeeklyStreak, parseWeeklyPattern } from './patterns/weekly';
-import { calculateMonthlyStreak, parseMonthlyPattern } from './patterns/monthly';
-import { calculateYearlyStreak, parseYearlyPattern } from './patterns/yearly';
+import { calculateDailyStreak, parseDailyPattern, isDailyPattern } from './patterns/daily';
+import { calculateWeeklyStreak, parseWeeklyPattern, isWeeklyPattern } from './patterns/weekly';
+import { calculateMonthlyStreak, parseMonthlyPattern, isMonthlyPattern } from './patterns/monthly';
+import { calculateYearlyStreak, parseYearlyPattern, isYearlyPattern } from './patterns/yearly';
 import { calculateRelativeStreak, parseRelativePattern } from './patterns/relative';
 import { calculateCompletionStreak, parseCompletionPattern } from './patterns/completion';
 import { calculateHolidayStreak, parseHolidayPattern } from './patterns/holiday';
 import {
-  isDailyPattern,
-  isWeeklyPattern,
-  isMonthlyPattern,
-  isYearlyPattern,
   isRelativePattern,
   isCompletionPattern,
   isHolidayPattern

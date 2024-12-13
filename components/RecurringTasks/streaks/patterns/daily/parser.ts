@@ -1,5 +1,5 @@
 import { DailyRecurrencePattern, RecurrenceTypes } from '../../types';
-import { isDailyPattern } from '../patternMatchers';
+import { isDailyPattern } from './index';
 
 export function parseDailyPattern(pattern: string): DailyRecurrencePattern {
   if (!isDailyPattern(pattern)) {

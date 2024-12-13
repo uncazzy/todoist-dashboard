@@ -15,12 +15,12 @@ import {
 import { WEEKDAYS } from '../helpers/constants';
 import {
   isCompletionPattern,
-  isRelativePattern,
-  isDailyPattern,
-  isWeeklyPattern,
-  isYearlyPattern,
-  isMonthlyPattern
+  isRelativePattern
 } from './patternMatchers';
+import { isDailyPattern } from './daily/index'; 
+import { isYearlyPattern } from './yearly/index';
+import { isWeeklyPattern } from './weekly/index';
+import { isMonthlyPattern } from './monthly/index';
 
 type Pattern = DailyPattern | WeeklyPattern | MonthlyPattern | YearlyPattern | RelativePattern | CompletionPattern;
 
