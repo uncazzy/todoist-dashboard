@@ -1,5 +1,6 @@
 import { StreakResult, RecurrencePattern, DailyRecurrencePattern, RecurrenceTypes, DateRange } from './types';
 import { calculateDailyStreak, parseDailyPattern, isDailyPattern } from './patterns/daily';
+import { calculateEveryOtherDayStreak } from './patterns/daily/everyOtherDayCalculator';
 import { calculateWeeklyStreak, parseWeeklyPattern, isWeeklyPattern } from './patterns/weekly';
 import { calculateMonthlyStreak, parseMonthlyPattern, isMonthlyPattern } from './patterns/monthly';
 import { calculateYearlyStreak, parseYearlyPattern, isYearlyPattern } from './patterns/yearly';
@@ -23,6 +24,10 @@ export function calculateStreaks(
   // Calculate streaks based on the pattern type
   switch (recurrencePattern.type) {
     case RecurrenceTypes.DAILY:
+      // Check if it's an "every other day" pattern
+      if (recurrencePattern.interval === 2) {
+        return calculateEveryOtherDayStreak(recurrencePattern as DailyRecurrencePattern, completions, range);
+      }
       return {
         ...calculateDailyStreak(recurrencePattern as DailyRecurrencePattern, completions, range),
         nextDue: null,  
