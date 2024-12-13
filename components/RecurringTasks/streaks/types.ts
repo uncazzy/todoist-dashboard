@@ -88,17 +88,23 @@ export interface YearlyRecurrencePattern extends BaseRecurrencePattern {
   type: typeof RecurrenceTypes.YEARLY;
   month: number;
   dayOfMonth: number;
+  pattern: string;
+  originalPattern: string;
 }
 
 export interface RelativeRecurrencePattern extends BaseRecurrencePattern {
   type: typeof RecurrenceTypes.RELATIVE;
   daysFromCompletion: number;
+  pattern: string;
+  originalPattern: string;
 }
 
 export interface CompletionRecurrencePattern extends BaseRecurrencePattern {
   type: typeof RecurrenceTypes.COMPLETION;
   completionsRequired: number;
   periodDays: number;
+  pattern: string;
+  originalPattern: string;
 }
 
 export interface HolidayRecurrencePattern extends BaseRecurrencePattern {
@@ -106,6 +112,8 @@ export interface HolidayRecurrencePattern extends BaseRecurrencePattern {
   holidayName: string;
   month: number;
   dayOfMonth: number;
+  pattern: string;
+  originalPattern: string;
 }
 
 export interface UnsupportedRecurrencePattern {

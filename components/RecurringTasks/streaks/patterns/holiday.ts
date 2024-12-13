@@ -21,7 +21,12 @@ export function calculateHolidayStreak(
   // Generate target dates based on pattern
   const targetDates = generateHolidayTargets(pattern, range);
   if (!targetDates.length) {
-    return { currentStreak: 0, longestStreak: 0 };
+    return { 
+      currentStreak: 0, 
+      longestStreak: 0,
+      nextDue: null,
+      overdue: false
+    };
   }
 
   // Sort completions from newest to oldest for optimal performance
@@ -61,7 +66,12 @@ export function calculateHolidayStreak(
     }
   }
 
-  return { currentStreak, longestStreak };
+  return { 
+    currentStreak, 
+    longestStreak,
+    nextDue: null,
+    overdue: false
+  };
 }
 
 function generateHolidayTargets(pattern: HolidayRecurrencePattern, range: DateRange): HolidayTarget[] {
@@ -127,9 +137,13 @@ export function isHolidayPattern(pattern: string): boolean {
   return holidayRegex.test(normalizedPattern);
 }
 
-export function parseHolidayPattern(patternStr: string): HolidayRecurrencePattern {
+export function parseHolidayPattern(patternStr: string): HolidayRecurrencePattern | null {
+  if (!patternStr || typeof patternStr !== 'string') {
+    return null;
+  }
+
   if (!isHolidayPattern(patternStr)) {
-    throw new Error('Invalid holiday pattern format');
+    return null;
   }
 
   const normalizedPattern = patternStr.trim().toLowerCase();
@@ -137,32 +151,34 @@ export function parseHolidayPattern(patternStr: string): HolidayRecurrencePatter
   const matches = normalizedPattern.match(holidayRegex);
 
   if (!matches || !matches[1]) {
-    throw new Error('Invalid holiday pattern format');
+    return null;
   }
 
   const holidayName = matches[1].trim();
   const period = matches[2] as TimePeriod | undefined;
 
   if (!isValidHoliday(holidayName)) {
-    throw new Error(`Unknown holiday: ${holidayName}`);
+    return null;
   }
 
   const holidayDate = HOLIDAY_MAP[holidayName];
   if (!holidayDate) {
-    throw new Error(`Holiday date not found for: ${holidayName}`);
+    return null;
   }
 
   const result: HolidayRecurrencePattern = {
     type: RecurrenceTypes.HOLIDAY,
     holidayName,
     month: holidayDate.month,
-    dayOfMonth: holidayDate.day
+    dayOfMonth: holidayDate.day,
+    pattern: patternStr,
+    originalPattern: patternStr
   };
 
   if (period) {
     const periodRange = TIME_PERIODS[period];
     if (!periodRange) {
-      throw new Error(`Invalid time period: ${period}`);
+      return null;
     }
     result.timeOfDay = {
       ...periodRange.start,

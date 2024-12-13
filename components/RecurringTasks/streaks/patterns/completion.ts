@@ -23,7 +23,12 @@ export function calculateCompletionStreak(
   // Generate target dates based on pattern
   const targetDates = generateCompletionTargets(pattern, range, sortedCompletions);
   if (!targetDates.length) {
-    return { currentStreak: 0, longestStreak: 0 };
+    return { 
+      currentStreak: 0, 
+      longestStreak: 0,
+      nextDue: null,
+      overdue: false
+    };
   }
 
   let currentStreak = 0;
@@ -59,7 +64,7 @@ export function calculateCompletionStreak(
     }
   }
 
-  return { currentStreak, longestStreak };
+  return { currentStreak, longestStreak, nextDue: null, overdue: false };
 }
 
 function generateCompletionTargets(
@@ -114,34 +119,40 @@ export function isCompletionPattern(pattern: string): boolean {
   return completionRegex.test(normalizedPattern);
 }
 
-export function parseCompletionPattern(pattern: string): CompletionRecurrencePattern {
+export function parseCompletionPattern(pattern: string): CompletionRecurrencePattern | null {
+  if (!pattern || typeof pattern !== 'string') {
+    return null;
+  }
+
   const normalizedPattern = pattern.trim().toLowerCase();
 
   // Match patterns like "X times in Y days"
   const matches = normalizedPattern.match(/(\d+)\s+times?\s+(?:in|every)\s+(\d+)\s+days?/i);
 
   if (!matches || matches.length < 3 || !matches[1] || !matches[2]) {
-    throw new Error('Invalid completion pattern format. Expected format: "X times in Y days"');
+    return null;
   }
 
   const completionsRequired = parseInt(matches[1], 10);
   const periodDays = parseInt(matches[2], 10);
 
   if (isNaN(completionsRequired) || isNaN(periodDays)) {
-    throw new Error('Invalid numbers in completion pattern');
+    return null;
   }
 
   if (completionsRequired <= 0 || periodDays <= 0) {
-    throw new Error('Numbers in completion pattern must be positive');
+    return null;
   }
 
   if (completionsRequired > periodDays) {
-    throw new Error('Cannot require more completions than days in the period');
+    return null;
   }
 
   return {
     type: RecurrenceTypes.COMPLETION,
     completionsRequired,
-    periodDays
+    periodDays,
+    pattern: pattern,
+    originalPattern: pattern
   };
 }

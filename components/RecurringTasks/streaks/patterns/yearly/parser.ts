@@ -1,13 +1,13 @@
 import { YearlyRecurrencePattern, RecurrenceTypes } from '../../types';
 
-export function parseYearlyPattern(pattern: string): YearlyRecurrencePattern {
+export function parseYearlyPattern(pattern: string): YearlyRecurrencePattern | null {
   if (!pattern || typeof pattern !== 'string') {
-    throw new Error('Invalid yearly pattern format');
+    return null;
   }
 
   const normalizedPattern = pattern.trim().toLowerCase();
   if (!normalizedPattern.startsWith('every')) {
-    throw new Error('Invalid yearly pattern format');
+    return null;
   }
 
   // Match patterns for yearly recurrences
@@ -24,7 +24,7 @@ export function parseYearlyPattern(pattern: string): YearlyRecurrencePattern {
   ];
 
   if (!patterns.some(regex => regex.test(normalizedPattern))) {
-    throw new Error('Invalid yearly pattern format');
+    return null;
   }
 
   let interval = 1;
@@ -35,7 +35,11 @@ export function parseYearlyPattern(pattern: string): YearlyRecurrencePattern {
   if (normalizedPattern.includes('years')) {
     const intervalMatch = normalizedPattern.match(/every\s+(\d+)\s+years/);
     if (intervalMatch?.[1]) {
-      interval = parseInt(intervalMatch[1], 10);
+      const parsedInterval = parseInt(intervalMatch[1], 10);
+      if (isNaN(parsedInterval) || parsedInterval <= 0) {
+        return null;
+      }
+      interval = parsedInterval;
     }
   }
 
@@ -57,28 +61,29 @@ export function parseYearlyPattern(pattern: string): YearlyRecurrencePattern {
       'november': 10, 'nov': 10,
       'december': 11, 'dec': 11
     };
-    const mappedMonth = monthMap[monthStr];
-    if (mappedMonth === undefined) {
-      throw new Error(`Invalid month: ${monthStr}`);
+    const parsedMonth = monthMap[monthStr];
+    if (parsedMonth === undefined) {
+      return null;
     }
-    month = mappedMonth;
-  }
+    month = parsedMonth;
 
-  // Extract day of month
-  const dayMatch = normalizedPattern.match(/\d{1,2}(?:st|nd|rd|th)?/);
-  if (dayMatch) {
-    dayOfMonth = parseInt(dayMatch[0], 10);
-  }
-
-  // Validate day of month
-  if (dayOfMonth < 1 || dayOfMonth > 31) {
-    throw new Error('Invalid day of month');
+    // Extract day of month
+    const dayMatch = normalizedPattern.match(/\d{1,2}(?=(?:st|nd|rd|th)?(?:\s+|$))/);
+    if (dayMatch) {
+      const parsedDay = parseInt(dayMatch[0], 10);
+      if (isNaN(parsedDay) || parsedDay < 1 || parsedDay > 31) {
+        return null;
+      }
+      dayOfMonth = parsedDay;
+    }
   }
 
   return {
     type: RecurrenceTypes.YEARLY,
     interval,
     month,
-    dayOfMonth
+    dayOfMonth,
+    pattern,
+    originalPattern: pattern
   };
 }

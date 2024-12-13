@@ -1,7 +1,6 @@
 import { addDays, startOfDay, endOfDay } from 'date-fns';
 import { StreakResult, RelativeRecurrencePattern, DateRange, RecurrenceTypes } from '../types';
 import { isValidRelativeCompletion } from '../helpers/validation';
-import { isRelativePattern } from './patternMatchers';
 
 interface RelativeTarget {
   date: Date;
@@ -20,7 +19,12 @@ export function calculateRelativeStreak(
   }
 
   if (!completions.length) {
-    return { currentStreak: 0, longestStreak: 0 };
+    return { 
+      currentStreak: 0, 
+      longestStreak: 0,
+      nextDue: null,
+      overdue: false
+    };
   }
 
   // Sort completions from newest to oldest for optimal performance
@@ -29,7 +33,12 @@ export function calculateRelativeStreak(
   // Generate target dates based on pattern
   const targetDates = generateRelativeTargets(pattern, sortedCompletions, range);
   if (!targetDates.length) {
-    return { currentStreak: 0, longestStreak: 0 };
+    return { 
+      currentStreak: 0, 
+      longestStreak: 0,
+      nextDue: null,
+      overdue: false
+    };
   }
 
   let currentStreak = 0;
@@ -73,7 +82,12 @@ export function calculateRelativeStreak(
     }
   }
 
-  return { currentStreak, longestStreak };
+  return { 
+    currentStreak, 
+    longestStreak,
+    nextDue: null,
+    overdue: false
+  };
 }
 
 function generateRelativeTargets(
@@ -123,64 +137,30 @@ function calculateAllowedRange(date: Date, pattern: RelativeRecurrencePattern): 
   return { start: baseStart, end: baseEnd };
 }
 
-export function parseRelativePattern(patternStr: string): RelativeRecurrencePattern {
-  if (!isRelativePattern(patternStr)) {
-    throw new Error('Invalid relative pattern format');
+export function parseRelativePattern(pattern: string): RelativeRecurrencePattern | null {
+  if (!pattern || typeof pattern !== 'string') {
+    return null;
   }
 
-  const normalizedPattern = patternStr.trim().toLowerCase();
+  const normalizedPattern = pattern.trim().toLowerCase();
 
-  // Handle "every other day" pattern
-  const everyOtherRegex = /^every\s+other\s+day(?:\s+at\s+(\d{1,2}):(\d{2}))?$/;
-  const everyOtherMatches = normalizedPattern.match(everyOtherRegex);
-  if (everyOtherMatches) {
-    const result: RelativeRecurrencePattern = {
-      type: RecurrenceTypes.RELATIVE,
-      daysFromCompletion: 2 // "every other day" means 2 days between completions
-    };
-
-    // Handle optional time specification
-    if (everyOtherMatches[1] && everyOtherMatches[2]) {
-      const hours = parseInt(everyOtherMatches[1], 10);
-      const minutes = parseInt(everyOtherMatches[2], 10);
-      if (hours >= 0 && hours < 24 && minutes >= 0 && minutes < 60) {
-        result.timeOfDay = { hours, minutes };
-      } else {
-        throw new Error('Invalid time format');
-      }
-    }
-
-    return result;
-  }
-
-  // Handle "after X days" pattern
-  const relativeRegex = /^after\s+(\d+)\s+days?(?:\s+at\s+(\d{1,2}):(\d{2}))?$/;
-  const matches = normalizedPattern.match(relativeRegex);
+  // Match "after X days" pattern
+  const afterPattern = /^after\s+(\d+)\s+days?$/i;
+  const matches = normalizedPattern.match(afterPattern);
 
   if (!matches || !matches[1]) {
-    throw new Error('Invalid relative pattern format');
+    return null;
   }
 
   const daysFromCompletion = parseInt(matches[1], 10);
-  if (daysFromCompletion < 1) {
-    throw new Error('Days must be a positive number');
+  if (isNaN(daysFromCompletion) || daysFromCompletion <= 0) {
+    return null;
   }
 
-  const result: RelativeRecurrencePattern = {
+  return {
     type: RecurrenceTypes.RELATIVE,
-    daysFromCompletion
+    daysFromCompletion,
+    pattern: pattern,
+    originalPattern: pattern
   };
-
-  // Handle optional time specification
-  if (matches[2] && matches[3]) {
-    const hours = parseInt(matches[2], 10);
-    const minutes = parseInt(matches[3], 10);
-    if (hours >= 0 && hours < 24 && minutes >= 0 && minutes < 60) {
-      result.timeOfDay = { hours, minutes };
-    } else {
-      throw new Error('Invalid time format');
-    }
-  }
-
-  return result;
 }

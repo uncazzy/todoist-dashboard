@@ -144,16 +144,48 @@ export function parsePattern(pattern: string): RecurrencePattern {
     return monthlyPattern;
   }
   if (isYearlyPattern(pattern)) {
-    return parseYearlyPattern(pattern);
+    const yearlyPattern = parseYearlyPattern(pattern);
+    if (!yearlyPattern) {
+      return {
+        type: RecurrenceTypes.UNSUPPORTED,
+        pattern: pattern,
+        originalPattern: pattern
+      };
+    }
+    return yearlyPattern;
   }
   if (isRelativePattern(pattern)) {
-    return parseRelativePattern(pattern);
+    const relativePattern = parseRelativePattern(pattern);
+    if (!relativePattern) {
+      return {
+        type: RecurrenceTypes.UNSUPPORTED,
+        pattern: pattern,
+        originalPattern: pattern
+      };
+    }
+    return relativePattern;
   }
   if (isCompletionPattern(pattern)) {
-    return parseCompletionPattern(pattern);
+    const completionPattern = parseCompletionPattern(pattern);
+    if (!completionPattern) {
+      return {
+        type: RecurrenceTypes.UNSUPPORTED,
+        pattern: pattern,
+        originalPattern: pattern
+      };
+    }
+    return completionPattern;
   }
   if (isHolidayPattern(pattern)) {
-    return parseHolidayPattern(pattern);
+    const holidayPattern = parseHolidayPattern(pattern);
+    if (!holidayPattern) {
+      return {
+        type: RecurrenceTypes.UNSUPPORTED,
+        pattern: pattern,
+        originalPattern: pattern
+      };
+    }
+    return holidayPattern;
   }
 
   return {
