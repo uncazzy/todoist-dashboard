@@ -6,7 +6,7 @@ import { useDashboardData } from '../hooks/useDashboardData';
 import Layout from '../components/layout/Layout';
 import Link from 'next/link';
 import { FaArrowLeft } from 'react-icons/fa';
-import LoadingIndicator from '../components/LoadingIndicator';
+import LoadingIndicator from '../components/shared/LoadingIndicator';
 import ProjectPicker from '../components/ProjectPicker';
 
 const RecurringTasksPage = () => {
@@ -15,6 +15,7 @@ const RecurringTasksPage = () => {
   const { data, isLoading, loadingProgress, isLoadingFromCache, refreshData } = useDashboardData();
   const [selectedProjectIds, setSelectedProjectIds] = useState<string[]>([]);
   const [showBetaTooltip, setShowBetaTooltip] = useState(false);
+  const needsFullData = data && data.hasMoreTasks;
 
   // Handle loading state
   if (status === "loading") {
@@ -49,6 +50,8 @@ const RecurringTasksPage = () => {
                 <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500 mb-2 flex items-center gap-3 leading-normal">
                   Recurring Tasks
                 </h1>
+
+                {/* Beta indicator */}
                 <div className="relative inline-block">
                   <span
                     className="ml-0 px-2 py-1 text-xs font-semibold text-blue-100 bg-blue-500/30 rounded-full border border-blue-400/50 hover:bg-blue-500/40 transition-colors cursor-pointer"
@@ -62,7 +65,7 @@ const RecurringTasksPage = () => {
                         Handling complex recurring task patterns can be challenging, so some variations might not render correctly. Performance may also vary with extensive recurring tasks.
                       </p>
                       <p className="mb-2">
-                        Please report any issues you encounter.
+                        Please report any inconsistencies or issues you encounter.
                       </p>
                       <a
                         href="mailto:todoist-dashboard@azzy.cloud?subject=Todoist%20Dashboard%20Feedback"
@@ -75,6 +78,7 @@ const RecurringTasksPage = () => {
                     </div>
                   )}
                 </div>
+
               </div>
               {data?.projectData && (
                 <ProjectPicker
@@ -92,10 +96,9 @@ const RecurringTasksPage = () => {
 
         {loadingProgress && (
           <LoadingIndicator
-            loadingProgress={loadingProgress}
-            isLoadingFromCache={isLoadingFromCache}
-            onRefresh={refreshData}
-          />
+          loadingProgress={loadingProgress}
+          isLoadingFromCache={isLoadingFromCache}
+          onRefresh={refreshData} loading={isLoading} loadingMore={false} isFullyLoaded={!needsFullData} />
         )}
 
         {isLoading || !data ? (
