@@ -40,7 +40,7 @@ export function parseWeeklyPattern(pattern: string): WeeklyRecurrencePattern {
   const weekdays: WeekDay[] = [];
 
   // Handle interval if specified
-  if (normalizedPattern.includes('other week')) {
+  if (normalizedPattern.includes('other')) {
     interval = 2;
   } else if (normalizedPattern.includes('weeks')) {
     const intervalMatch = normalizedPattern.match(/every\s+(\d+)\s+weeks/);
@@ -68,9 +68,10 @@ export function parseWeeklyPattern(pattern: string): WeeklyRecurrencePattern {
     throw new Error('No valid weekdays found in pattern');
   }
 
-  return {
+  const result = {
     type: RecurrenceTypes.WEEKLY,
     interval,
     weekdays
   };
+  return result;
 }
