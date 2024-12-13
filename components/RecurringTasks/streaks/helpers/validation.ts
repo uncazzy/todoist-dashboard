@@ -22,10 +22,10 @@ export function isValidCompletionWithTimeConstraint(
     return false;
   }
 
-  // For time-constrained tasks, check exact time
+  // For time-constrained tasks, check time with a flexible window
   if (timeConstraint) {
-    const completionHours = completionDate.getHours();
-    const completionMinutes = completionDate.getMinutes();
+    const completionTime = completionDate.getHours() * 60 + completionDate.getMinutes();
+    const targetTime = timeConstraint.hours * 60 + timeConstraint.minutes;
 
     if (timeConstraint.period) {
       const periodConfig = TIME_PERIODS[timeConstraint.period];
@@ -41,9 +41,19 @@ export function isValidCompletionWithTimeConstraint(
         end: endTime
       });
     } else {
-      // Check specific time
-      return completionHours === timeConstraint.hours && 
-             completionMinutes === timeConstraint.minutes;
+      // Allow a 60-minute window around the target time (30 minutes before and after)
+      const WINDOW_SIZE = 30; // minutes
+      const isWithinWindow = Math.abs(completionTime - targetTime) <= WINDOW_SIZE;
+      
+      // Also handle edge cases around midnight
+      const isNearMidnight = targetTime < WINDOW_SIZE || targetTime > (24 * 60 - WINDOW_SIZE);
+      if (isNearMidnight) {
+        const normalizedCompletionTime = completionTime < 12 * 60 ? completionTime + 24 * 60 : completionTime;
+        const normalizedTargetTime = targetTime < 12 * 60 ? targetTime + 24 * 60 : targetTime;
+        return Math.abs(normalizedCompletionTime - normalizedTargetTime) <= WINDOW_SIZE;
+      }
+
+      return isWithinWindow;
     }
   }
 
