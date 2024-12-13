@@ -4,6 +4,7 @@ export interface MonthlyTarget {
   date: Date;
   allowedRange: DateRange;
   dayOfMonth: number;
+  isLastDayOfShorterMonth?: boolean;  // Flag to indicate if this target falls on the last day of a month with fewer days than the original target
 }
 
 export interface MonthlyRecurrencePattern {

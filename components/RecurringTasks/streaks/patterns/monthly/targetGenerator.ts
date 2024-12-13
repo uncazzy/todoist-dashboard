@@ -37,7 +37,7 @@ export function generateMonthlyTargets(
 
     while (currentDate <= range.end) {
       const daysInMonth = getDaysInMonth(currentDate);
-      // Ensure we don't exceed the days in the month
+      // For months with fewer days, use the last day of that month
       const actualTargetDay = Math.min(targetDay, daysInMonth);
 
       // Create target date in local timezone then convert to UTC
@@ -53,7 +53,9 @@ export function generateMonthlyTargets(
         targets.push({
           date: targetDate,
           allowedRange: calculateAllowedRange(targetDate, pattern),
-          dayOfMonth: localTargetDate.getDate()
+          dayOfMonth: localTargetDate.getDate(),
+          // Add a flag to indicate if this target is using the last day of a shorter month
+          isLastDayOfShorterMonth: actualTargetDay !== targetDay && actualTargetDay === daysInMonth
         });
       }
 

@@ -58,11 +58,25 @@ export function calculateAllowedRange(date: Date, pattern: MonthlyRecurrencePatt
     };
   }
   
-  // For non-time-specific patterns, only allow completion on the exact day
+  // For non-time-specific patterns
   targetDate.setHours(0, 0, 0, 0);
   const endOfDay = new Date(targetDate);
   endOfDay.setHours(23, 59, 59, 999);
+
+  // For "every month" pattern, allow completion up to 3 days early
+  // but still require it to be completed by end of the target day
+  if (pattern.everyMonth) {
+    const startDate = new Date(targetDate);
+    startDate.setDate(startDate.getDate() - 3);
+    startDate.setHours(0, 0, 0, 0);
+    
+    return {
+      start: startDate,
+      end: endOfDay
+    };
+  }
   
+  // For all other patterns, only allow completion on the exact day
   return {
     start: targetDate,
     end: endOfDay

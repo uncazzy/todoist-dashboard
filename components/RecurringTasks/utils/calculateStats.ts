@@ -67,15 +67,46 @@ export function calculateStats(
   const expectedCount = filteredTargets.length;
   let onTimeCompletions = 0;
 
+  // Sort completions by date
+  const sortedCompletions = [...recentCompletions].sort((a, b) => a.getTime() - b.getTime());
+
+  // For monthly tasks, get the target day from the first completion
+  let monthlyTargetDay: number | undefined = undefined;
+  if ((pattern === 'monthly' || pattern === 'monthly-strict') && sortedCompletions.length > 0) {
+    monthlyTargetDay = sortedCompletions[0]?.getDate();
+  }
+
   filteredTargets.forEach(targetDate => {
     const completed = recentCompletions.some(completionDate => {
-      // Must be completed on the exact date (same day, month, and year)
+      // Only apply flexible windows to "every month" tasks
+      // For specific day tasks (e.g. "every 27th"), require exact day matching
+      if (pattern === 'monthly' && task.due?.string && !task.due.string.match(/every \d+(?:st|nd|rd|th)?/i)) {
+        // Allow early completions (up to 3 days early)
+        const allowedStart = new Date(targetDate);
+        allowedStart.setDate(allowedStart.getDate() - 3);
+        allowedStart.setHours(0, 0, 0, 0);
+        
+        const allowedEnd = new Date(targetDate);
+        allowedEnd.setHours(23, 59, 59, 999);
+
+        // For months with fewer days, be more lenient
+        const lastDayOfMonth = new Date(targetDate.getFullYear(), targetDate.getMonth() + 1, 0).getDate();
+        const isLastDayOfMonth = targetDate.getDate() === lastDayOfMonth;
+        const isTargetDayTooLarge = monthlyTargetDay && monthlyTargetDay > lastDayOfMonth;
+        
+        if ((isLastDayOfMonth && targetDate.getDate() <= 30) || isTargetDayTooLarge) {
+          allowedStart.setDate(allowedStart.getDate() - 2); // Allow up to 5 days early for shorter months
+        }
+
+        return completionDate >= allowedStart && completionDate <= allowedEnd;
+      }
+
+      // For specific days and all other patterns, require exact day matching
       return completionDate.getDate() === targetDate.getDate() &&
              completionDate.getMonth() === targetDate.getMonth() &&
              completionDate.getFullYear() === targetDate.getFullYear();
     });
     if (completed) onTimeCompletions++;
-
   });
 
   let completionRate = 0;

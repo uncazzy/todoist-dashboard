@@ -72,11 +72,26 @@ export function calculateMonthlyStreak(
     if (pattern.lastDayOfMonth) {
       // For last day of month, any completion on the last day counts
       isCompleted = monthCompletions.some(cd => isLastDayOfMonthLocal(cd));
-    } else if (pattern.everyMonth) {
-      // For "every month", any completion in the month counts
-      isCompleted = monthCompletions.length > 0;
+    } else if (pattern.everyMonth && !pattern.daysOfMonth) {
+      // Only apply flexible windows to pure "every month" tasks
+      const allowedRange = target.allowedRange;
+      
+      // If this target is on the last day of a shorter month, be more lenient
+      if (target.isLastDayOfShorterMonth) {
+        const earlyStart = new Date(target.date);
+        earlyStart.setDate(earlyStart.getDate() - 5);
+        earlyStart.setHours(0, 0, 0, 0);
+        allowedRange.start = earlyStart;
+      }
+      
+      isCompleted = monthCompletions.some(cd => 
+        isWithinInterval(cd, { 
+          start: allowedRange.start,
+          end: allowedRange.end 
+        })
+      );
     } else {
-      // For specific days, need completion on the exact day
+      // For specific days (e.g. "every 27th"), need completion on the exact day
       isCompleted = monthCompletions.some(cd => isSameDayLocal(cd, target.date));
     }
 
