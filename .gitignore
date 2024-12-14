@@ -16,6 +16,7 @@
 /build
 
 /test/data
+*__pycache__
 
 # misc
 .DS_Store

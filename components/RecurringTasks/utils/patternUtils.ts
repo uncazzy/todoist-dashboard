@@ -88,7 +88,34 @@ export function detectPattern(
   else if (lower.includes('every other')) {
     pattern = 'biweekly';
     interval = 14;
-    generateWeeklyDates(lower, today, sixMonthsAgo, targetDates);
+    
+    const weekdayMatch = lower.match(/every other (monday|tuesday|wednesday|thursday|friday|saturday|sunday|sun|mon|tue|wed|thu|fri|sat)/i);
+    if (weekdayMatch && weekdayMatch[1] && recentCompletions.length > 0) {
+      
+      // Sort completions ascending and find first one in our window
+      const firstCompletion = recentCompletions
+        .filter(c => !isBefore(c, sixMonthsAgo) && !isAfter(c, today))
+        .sort((a, b) => a.getTime() - b.getTime())[0];
+      
+      if (firstCompletion) {
+        let date = new Date(firstCompletion);
+        // Generate forward
+        while (date <= today) {
+          targetDates.push(new Date(date));
+          date = addDays(date, 14);
+        }
+        // Generate backward
+        date = new Date(firstCompletion);
+        while (date >= sixMonthsAgo) {
+          targetDates.push(new Date(date));
+          date = subDays(date, 14);
+        }
+        targetDates.sort((a, b) => b.getTime() - a.getTime());
+      }
+    }
+    if (targetDates.length === 0) {
+      generateWeeklyDates(lower, today, sixMonthsAgo, targetDates);
+    }
   }
   else if (lower.match(/every (\d+) months?/)) {
     const monthMatch = lower.match(/every (\d+) months?/);

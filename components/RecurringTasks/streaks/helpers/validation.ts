@@ -103,7 +103,30 @@ export function isValidCompletion(targetDate: Date, completionDate: Date, dueStr
     if (lower === 'every other day') {
       return format(targetDate, 'yyyy-MM-dd') === format(completionDate, 'yyyy-MM-dd');
     }
-    // For other biweekly tasks (e.g., "every other Monday"), require exact date match
+
+    // For biweekly tasks (e.g., "every other Monday"), check if:
+    // 1. The completion is on the correct day of the week
+    // 2. The completion is within a reasonable window of the target date
+    const dayMatch = lower.match(/every other (monday|tuesday|wednesday|thursday|friday|saturday|sunday|sun|mon|tue|wed|thu|fri|sat)/i);
+    if (dayMatch && dayMatch[1]) {
+      // Map short day names to full day names
+      const dayMap: { [key: string]: string } = {
+        sun: 'sunday', mon: 'monday', tue: 'tuesday', wed: 'wednesday',
+        thu: 'thursday', fri: 'friday', sat: 'saturday'
+      };
+      const targetDay = dayMap[dayMatch[1].toLowerCase()] || dayMatch[1].toLowerCase();
+
+      // Check if completion is on the correct day of the week
+      const isCorrectDay = format(completionDate, 'EEEE').toLowerCase() === targetDay;
+      if (!isCorrectDay) return false;
+
+      // Calculate the difference in days between target and completion
+      const diffInDays = Math.abs(completionDate.getTime() - targetDate.getTime()) / (1000 * 60 * 60 * 24);
+
+      // For biweekly tasks, allow completions within 1 day of any valid target date
+      // This ensures we accept completions on the correct weekday even if they don't exactly match our generated target
+      return diffInDays <= 1 || Math.abs(diffInDays - 14) <= 1;
+    }
     return format(targetDate, 'yyyy-MM-dd') === format(completionDate, 'yyyy-MM-dd');
   }
 
