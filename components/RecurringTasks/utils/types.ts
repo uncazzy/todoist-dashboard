@@ -11,3 +11,16 @@ export interface StreakResult {
   currentStreak: number;
   longestStreak: number;
 }
+
+export interface PatternInfo {
+  pattern: string;  // 'daily', 'every-other-day', 'weekly', 'biweekly', 'months', 'monthly', 'monthly-last'
+  interval: number;
+  targetDates: Date[];
+}
+
+export interface PatternContext {
+  today: Date;
+  sixMonthsAgo: Date;
+  latestCompletion?: Date;
+  recentCompletions: Date[];
+}
