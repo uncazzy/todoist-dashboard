@@ -1,49 +1,58 @@
-import { endOfDay, startOfDay } from 'date-fns';
+import { endOfDay, startOfDay, subDays, isAfter, isEqual, isBefore } from 'date-fns';
 import { WeeklyRecurrencePattern, DateRange, WeekDay } from '../../types';
 import { WeeklyTarget } from './types';
 
-export function generateWeeklyTargets(pattern: WeeklyRecurrencePattern, range: DateRange): WeeklyTarget[] {
+export interface DateGenerationOptions {
+  latestCompletion?: Date;
+  useCompletionAsAnchor?: boolean;
+}
+
+/**
+ * Generates target dates for weekly recurring tasks.
+ * This is a consolidated function that handles both regular weekly and bi-weekly patterns.
+ * 
+ * @param pattern The weekly recurrence pattern
+ * @param range The date range to generate targets for
+ * @param options Optional settings for target generation
+ * @returns Array of target dates sorted from newest to oldest
+ */
+export function generateWeeklyTargets(
+  pattern: WeeklyRecurrencePattern,
+  range: DateRange,
+  options: DateGenerationOptions = {}
+): WeeklyTarget[] {
   const targets: WeeklyTarget[] = [];
   const weekdays = pattern.weekdays;
   const interval = pattern.interval || 1;
-  let currentDate = startOfDay(range.end);
 
-  console.log('Generating targets with pattern:', {
-    weekdays,
-    interval,
-    rangeStart: range.start,
-    rangeEnd: range.end
-  });
+  // Start from the latest completion or range end
+  let currentDate = options.useCompletionAsAnchor && options.latestCompletion
+    ? options.latestCompletion
+    : range.end;
 
-  // For bi-weekly patterns, we need to find the first target date
-  // by aligning with the actual completion schedule
-  if (interval === 2) {
-    // Start from range.start and move forward to find first target
-    let date = startOfDay(range.start);
+  currentDate = startOfDay(currentDate);
 
-    // Move to the first matching weekday
-    while (date <= range.end) {
-      const dayNumber = date.getDay() as WeekDay;
-      if (weekdays.includes(dayNumber)) {
-        // Found first target date
-        currentDate = date;
-        break;
-      }
-      date = new Date(date);
-      date.setDate(date.getDate() + 1);
+  // For interval > 1, ensure we're on the correct schedule
+  if (interval > 1 && options.latestCompletion) {
+    // Start from the latest completion and find the correct weekday
+    while (!weekdays.includes(currentDate.getDay() as WeekDay)) {
+      currentDate = subDays(currentDate, 1);
+    }
+  } else {
+    // For weekly tasks, just find the first matching weekday
+    while (!weekdays.includes(currentDate.getDay() as WeekDay)) {
+      currentDate = subDays(currentDate, 1);
     }
   }
 
-  // Generate target dates
-  while (currentDate >= range.start && currentDate <= range.end) {
+  // Generate target dates backwards from our starting point
+  while (
+    (isAfter(currentDate, range.start) || isEqual(currentDate, range.start)) &&
+    (isBefore(currentDate, range.end) || isEqual(currentDate, range.end))
+  ) {
     const dayNumber = currentDate.getDay() as WeekDay;
 
     if (weekdays.includes(dayNumber)) {
-      console.log('Found matching weekday:', {
-        date: currentDate,
-        dayNumber
-      });
-
       targets.push({
         date: currentDate,
         allowedRange: {
@@ -52,21 +61,17 @@ export function generateWeeklyTargets(pattern: WeeklyRecurrencePattern, range: D
         },
         weekday: dayNumber
       });
-      console.log('Added target date:', currentDate);
 
       // Move to next target date based on interval
-      currentDate = new Date(currentDate);
-      currentDate.setDate(currentDate.getDate() + (interval * 7));
+      currentDate = subDays(currentDate, 7 * interval);
     } else {
-      // Move to next day
-      currentDate = new Date(currentDate);
-      currentDate.setDate(currentDate.getDate() + 1);
+      // Move to previous day
+      currentDate = subDays(currentDate, 1);
     }
   }
 
   // Sort targets from newest to oldest to match the expected order
   targets.sort((a, b) => b.date.getTime() - a.date.getTime());
 
-  console.log('Final targets generated:', targets.map(t => t.date));
   return targets;
 }

@@ -1,6 +1,6 @@
 import { startOfDay } from 'date-fns';
 import { StreakResult, WeeklyRecurrencePattern, DateRange, RecurrenceTypes } from '../../types';
-import { generateWeeklyTargetDates } from '../../../utils/dateUtils';
+import { generateWeeklyTargets } from './targetGenerator';
 
 export function calculateWeeklyStreak(
   pattern: WeeklyRecurrencePattern,
@@ -17,7 +17,7 @@ export function calculateWeeklyStreak(
     .sort((a, b) => b.getTime() - a.getTime());
 
   // Generate target dates based on pattern, using latest completion as anchor if available
-  const targetDates = generateWeeklyTargetDates(pattern, range, {
+  const targetDates = generateWeeklyTargets(pattern, range, {
     ...(sortedCompletions.length > 0 && {
       latestCompletion: sortedCompletions[0],
       useCompletionAsAnchor: true
