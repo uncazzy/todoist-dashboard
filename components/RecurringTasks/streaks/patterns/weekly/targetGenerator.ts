@@ -2,9 +2,8 @@ import { endOfDay, startOfDay, subDays, isAfter, isEqual, isBefore } from 'date-
 import { WeeklyRecurrencePattern, DateRange, WeekDay } from '../../types';
 import { WeeklyTarget } from './types';
 
-export interface DateGenerationOptions {
+interface DateGenerationOptions {
   latestCompletion?: Date;
-  useCompletionAsAnchor?: boolean;
 }
 
 /**
@@ -25,19 +24,22 @@ export function generateWeeklyTargets(
   const weekdays = pattern.weekdays;
   const interval = pattern.interval || 1;
 
-  // Always start from range.end to include all relevant targets
-  let currentDate = range.end;
 
-  currentDate = startOfDay(currentDate);
+  // Always start from range.end to include all relevant targets
+  let currentDate = startOfDay(range.end);
 
   // For interval > 1, adjust the starting point based on the latestCompletion
   if (interval > 1 && options.latestCompletion) {
-    // Find the most recent target date based on interval
     const latestCompletionDay = startOfDay(options.latestCompletion);
     // Calculate the number of weeks between latestCompletion and range.end
-    const weeksDifference = Math.floor((currentDate.getTime() - latestCompletionDay.getTime()) / (7 * 24 * 60 * 60 * 1000));
+    const weeksDifference = Math.floor(
+      (currentDate.getTime() - latestCompletionDay.getTime()) / (7 * 24 * 60 * 60 * 1000)
+    );
+
     // Adjust currentDate to align with the interval
-    currentDate = subDays(currentDate, weeksDifference * 7 * interval);
+    // For biweekly tasks, we want to ensure we're on the same schedule as the latest completion
+    const daysToSubtract = weeksDifference % interval === 0 ? 0 : 7 * (interval - (weeksDifference % interval));
+    currentDate = subDays(currentDate, daysToSubtract);
   }
 
   // Move currentDate back to the first matching weekday
@@ -54,7 +56,7 @@ export function generateWeeklyTargets(
 
     if (weekdays.includes(dayNumber)) {
       targets.push({
-        date: currentDate,
+        date: new Date(currentDate),
         allowedRange: {
           start: startOfDay(currentDate),
           end: endOfDay(currentDate)

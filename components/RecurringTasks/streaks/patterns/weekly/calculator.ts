@@ -11,18 +11,16 @@ export function calculateWeeklyStreak(
     throw new Error('Invalid pattern type for weekly streak calculation');
   }
 
-  // Sort completions from newest to oldest
+  // Sort completions from newest to oldest and normalize to start of day
   const sortedCompletions = [...completions]
     .map(date => startOfDay(date))
     .sort((a, b) => b.getTime() - a.getTime());
 
-  // **Modification Starts Here**
-  // Generate target dates without using latestCompletion as an anchor to include all targets up to range.end
-  const targetDates = generateWeeklyTargets(pattern, range, {
-    // Do not use latestCompletion as an anchor
-    // This ensures all targets within the range are generated
-  });
-  // **Modification Ends Here**
+  // Generate target dates using the latest completion as an anchor if available
+  const latestCompletion = sortedCompletions[0];
+  const targetDates = generateWeeklyTargets(pattern, range, latestCompletion ? {
+    latestCompletion
+  } : {});
 
   if (!targetDates.length) {
     return { currentStreak: 0, longestStreak: 0, nextDue: null, overdue: false };
