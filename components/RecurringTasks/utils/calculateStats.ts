@@ -101,6 +101,18 @@ export function calculateStats(
         return completionDate >= allowedStart && completionDate <= allowedEnd;
       }
 
+      // For daily tasks with intervals, allow completion within the interval window
+      if (pattern === 'daily' && interval > 1) {
+        const allowedStart = new Date(targetDate);
+        allowedStart.setHours(0, 0, 0, 0);
+        
+        const allowedEnd = new Date(targetDate);
+        allowedEnd.setDate(allowedEnd.getDate() + (interval - 1));
+        allowedEnd.setHours(23, 59, 59, 999);
+
+        return completionDate >= allowedStart && completionDate <= allowedEnd;
+      }
+
       // For specific days and all other patterns, require exact day matching
       return completionDate.getDate() === targetDate.getDate() &&
              completionDate.getMonth() === targetDate.getMonth() &&

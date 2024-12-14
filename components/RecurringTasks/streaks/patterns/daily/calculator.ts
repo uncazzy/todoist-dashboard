@@ -26,7 +26,10 @@ export function calculateDailyStreak(
   let activeStreak = true;
 
   // Calculate streaks by checking each target date
-  for (const target of targetDates) {
+  for (let i = 0; i < targetDates.length; i++) {
+    const target = targetDates[i];
+    if (!target) continue;
+
     const isCompleted = sortedCompletions.some(completion =>
       isValidCompletionWithTimeConstraint(target.date, completion, target.allowedRange, pattern.timeOfDay)
     );
@@ -39,16 +42,22 @@ export function calculateDailyStreak(
       }
     } else {
       // Special handling for today's target
-      if (target === targetDates[0]) {
+      if (i === 0) {
         if (tempStreak > 0) {
           currentStreak = tempStreak;
         }
       } else {
+        // Only break the streak if we miss a target that's not today
         activeStreak = false;
         tempStreak = 0;
       }
     }
   }
+
+  // Adjust streak counts based on interval
+  const interval = pattern.interval || 1;
+  currentStreak = Math.floor(currentStreak / interval) * interval;
+  longestStreak = Math.floor(longestStreak / interval) * interval;
 
   // Calculate the next due date
   const nextDue = targetDates[0]?.date || null;

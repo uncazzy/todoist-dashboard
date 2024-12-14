@@ -4,8 +4,16 @@ export function getTaskFrequency(dueString: string | undefined): RecurringFreque
   if (!dueString) return 'other';
   const lower = dueString.toLowerCase();
   
+  // Check for daily patterns first, including those with intervals
+  if (
+    lower.includes('every day') || 
+    lower.includes('daily') ||
+    lower === 'every other day' ||
+    /every \d+ days?/.test(lower)
+  ) return 'daily';
+
   if (lower.includes('every other')) return 'other';
-  if (lower.includes('every day') || lower.includes('daily')) return 'daily';
+  
   if (
     lower.includes('every') && lower.includes('month') ||
     lower.includes('monthly') ||

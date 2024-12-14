@@ -180,7 +180,7 @@ def format_recurrence_string(args) -> str:
             if args.interval == 2:
                 parts = ["every other day"]  # Special case for every other day
             elif args.interval > 2:
-                parts.append(f"days")
+                parts = [f"every {args.interval} days"]  # Changed to use correct format
             else:
                 parts.append("day")
     elif args.frequency == "workday":
@@ -290,7 +290,12 @@ def get_next_occurrence(current: datetime, recurrence: str) -> datetime:
             while current.weekday() >= 5:  # Skip weekends
                 current += timedelta(days=1)
         else:  # regular day
-            current += timedelta(days=interval)
+            # For daily patterns, we need to find the next occurrence that matches the interval pattern
+            days_since_start = (current.date() - current.replace(year=2024, month=1, day=1).date()).days
+            days_until_next = interval - (days_since_start % interval)
+            if days_until_next == interval:
+                days_until_next = 0
+            current += timedelta(days=days_until_next + 1)
     
     elif parts[0] == "weekend":  # Handle weekend pattern
         current += timedelta(days=1)
@@ -521,7 +526,29 @@ def generate_completion_dates(
     
     # If no weekly pattern found, check other patterns
     if not dates:
-        if any(month.lower() in recurrence.lower() for month in MONTHS):
+        # Check if it's a daily task first
+        if ('day' in recurrence.lower() and not any(day in recurrence.lower() for day in ['workday', 'weekend'])) or \
+           ('every' in recurrence.lower() and any(str(i) in recurrence.lower().split() for i in range(2, 31))):
+            # Extract interval from recurrence string
+            interval = 1
+            parts = recurrence.lower().split()
+            if 'other' in recurrence.lower():
+                interval = 2
+            else:
+                # Look for "every X days" pattern
+                for i, part in enumerate(parts):
+                    if part.isdigit():
+                        interval = int(part)
+                        break
+            
+            # Generate dates for every day with the specified interval
+            while current <= end_date:
+                if current >= start_date:
+                    dates.append(current)
+                current += timedelta(days=interval)
+        
+        # Check for yearly patterns with specific months
+        elif any(month.lower() in recurrence.lower() for month in MONTHS):
             # Extract month and day from recurrence string
             month_map = {month.lower(): i+1 for i, month in enumerate(MONTHS[:12])}  # Only use full month names
             # Also add abbreviated month names
@@ -624,12 +651,17 @@ def generate_completion_dates(
             parts = recurrence.lower().split()
             if 'other' in recurrence.lower():
                 interval = 2
-            elif len(parts) > 1 and parts[1].isdigit():
-                interval = int(parts[1])
+            else:
+                # Look for "every X days" pattern
+                for i, part in enumerate(parts):
+                    if part.isdigit():
+                        interval = int(part)
+                        break
             
             # Generate dates for every day with the specified interval
             while current <= end_date:
-                dates.append(current)
+                if current >= start_date:
+                    dates.append(current)
                 current += timedelta(days=interval)
         else:
             # Extract weekday from recurrence string
@@ -819,7 +851,7 @@ def main():
     # Create one active task
     active_task = generate_active_task(
         task_id=task_id,  # Use the same task ID
-        content="Weekly Task",
+        content="Test Task",
         project_id="2301927646",  # Use real project ID
         recurrence=recurrence,
         due_date=end_date.strftime("%Y-%m-%dT%H:%M:00-05:00")
@@ -830,7 +862,7 @@ def main():
     for i, completed_at in enumerate(completion_dates):
         completed_task = generate_completed_task(
             task_id=task_id,  # Use the same task ID for all completions
-            content="Weekly Task",
+            content="Test Task",
             project_id="2301927646",  # Use real project ID
             completed_at=completed_at
         )

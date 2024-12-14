@@ -24,68 +24,23 @@ export function detectPattern(
   let targetDates: Date[] = [];
 
   // Daily
-  if (lower.includes('every day') || lower.includes('daily')) {
+  if (lower.includes('every day') || lower.includes('daily') || /every \d+ days?/.test(lower) || lower === 'every other day') {
     pattern = 'daily';
+    // Extract interval from "every X days" pattern or handle "every other day"
+    if (lower === 'every other day') {
+      interval = 2;
+    } else {
+      const intervalMatch = lower.match(/every (\d+) days?/);
+      interval = intervalMatch?.[1] ? parseInt(intervalMatch[1], 10) : 1;
+    }
+    
     let date = today;
     while (isBefore(date, sixMonthsAgo) === false) {
       targetDates.push(date);
-      date = subDays(date, 1);
+      date = subDays(date, interval);
     }
   }
-  else if (lower === 'every other day') {
-    // Adaptive scheduling for every-other-day tasks
-    pattern = 'every-other-day';
-    interval = 2;
-    targetDates = [];
-
-    // Filter completions within the window [sixMonthsAgo, today] and sort ascending
-    const windowCompletions = recentCompletions
-      .filter(c => !isBefore(c, sixMonthsAgo) && !isAfter(c, today))
-      .sort((a, b) => a.getTime() - b.getTime());
-
-    if (windowCompletions.length === 0) {
-      // No completions in this window
-      // Create a baseline schedule starting at sixMonthsAgo going forward every 2 days
-      let anchor = new Date(sixMonthsAgo);
-      while (anchor <= today) {
-        targetDates.push(new Date(anchor));
-        anchor = addDays(anchor, interval);
-      }
-    } else {
-      // We have completions, use them to anchor the schedule
-      const firstCompletion = windowCompletions[0];
-      if (!firstCompletion) {
-        return { pattern, interval, targetDates };
-      }
-
-      let anchor: Date = firstCompletion;
-
-      // For each completion, fill in every-other-day targets from the previous anchor
-      // up to (and including) the current completion if it aligns
-      for (let i = 0; i < windowCompletions.length; i++) {
-        const currentCompletion = windowCompletions[i];
-        // Generate target dates starting from anchor + interval until you reach currentCompletion
-        if (currentCompletion) {
-          let tempDate = addDays(anchor, interval);
-          while (tempDate <= currentCompletion) {
-            targetDates.push(new Date(tempDate));
-            tempDate = addDays(tempDate, interval);
-          }
-          // Current completion becomes the new anchor
-          anchor = currentCompletion;
-        }
-      }
-
-      // After the last completion, continue generating targets every 2 days until today
-      let finalAnchor = addDays(anchor, interval);
-      while (finalAnchor <= today) {
-        targetDates.push(new Date(finalAnchor));
-        finalAnchor = addDays(finalAnchor, interval);
-      }
-    }
-
-  }
-  else if (lower.includes('every other')) {
+  else if (lower === 'every other') {
     pattern = 'biweekly';
     interval = 14;
     
@@ -260,7 +215,7 @@ function generateMonthlyDates(
     }
   } else if (monthIntervalMatch) {
     // For "every X months" pattern, generate dates based on latest completion
-    const monthInterval = monthIntervalMatch ? parseInt(monthIntervalMatch[1] || '1') : 1;
+    const monthInterval = monthIntervalMatch?.[1] ? parseInt(monthIntervalMatch[1], 10) : 1;
     let date;
 
     if (latestCompletion) {

@@ -1,4 +1,4 @@
-import { subMonths, endOfWeek, eachWeekOfInterval, startOfMonth, endOfMonth, eachDayOfInterval, isWithinInterval, format, isBefore, isAfter } from 'date-fns';
+import { subMonths, endOfWeek, eachWeekOfInterval, startOfMonth, endOfMonth, isWithinInterval, format, isBefore, isAfter } from 'date-fns';
 import { ActiveTask } from '../../../types';
 import { detectPattern } from './patternUtils';
 
@@ -16,7 +16,7 @@ export function getTrendData(
   const today = new Date();
   const sixMonthsAgo = startOfMonth(subMonths(today, 5));
 
-  const { pattern, targetDates } = detectPattern(
+  const { pattern, targetDates, interval } = detectPattern(
     task.due?.string?.toLowerCase() || '',
     today,
     sixMonthsAgo,
@@ -75,10 +75,29 @@ export function getTrendData(
       const expected = weekTargets.length;
 
       if (pattern === 'daily') {
-        // Daily: count completions in this week vs 7 days
-        const daysInWeek = eachDayOfInterval({ start: weekStart, end: weekEnd });
-        const completedDays = daysInWeek.filter(isCompletedOn).length;
-        weeklyDataAscending.push((completedDays / daysInWeek.length) * 100);
+        // For daily tasks, check each target date with its interval window
+        if (expected > 0) {
+          let completedTargets = 0;
+          for (const target of weekTargets) {
+            // Check for completion within the interval window
+            const targetDate = new Date(target);
+            const allowedStart = new Date(targetDate);
+            allowedStart.setHours(0, 0, 0, 0);
+            
+            const allowedEnd = new Date(targetDate);
+            allowedEnd.setDate(allowedEnd.getDate() + (interval - 1));
+            allowedEnd.setHours(23, 59, 59, 999);
+
+            const isCompleted = completionDates.some(cd => 
+              cd >= allowedStart && cd <= allowedEnd
+            );
+
+            if (isCompleted) completedTargets++;
+          }
+          weeklyDataAscending.push((completedTargets / expected) * 100);
+        } else {
+          // If no tasks were expected this week, skip adding a point
+        }
       } else {
         // For other weekly patterns
         if (expected > 0) {
