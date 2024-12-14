@@ -24,6 +24,14 @@ export function isValidCompletionWithTimeConstraint(
 
   // For time-constrained tasks, check time with a flexible window
   if (timeConstraint) {
+    // If it's a daily task with a specific time, we'll just check if it's completed on the right day
+    return isWithinInterval(completionDate, {
+      start: startOfDay(targetDate),
+      end: endOfDay(targetDate)
+    });
+
+    // Commented out strict time window check as per requirement to ignore time
+    /*
     const completionTime = completionDate.getHours() * 60 + completionDate.getMinutes();
     const targetTime = timeConstraint.hours * 60 + timeConstraint.minutes;
 
@@ -52,9 +60,10 @@ export function isValidCompletionWithTimeConstraint(
         const normalizedTargetTime = targetTime < 12 * 60 ? targetTime + 24 * 60 : targetTime;
         return Math.abs(normalizedCompletionTime - normalizedTargetTime) <= WINDOW_SIZE;
       }
-
+      
       return isWithinWindow;
     }
+    */
   }
 
   // For non-time-constrained tasks, completion must be on the same day

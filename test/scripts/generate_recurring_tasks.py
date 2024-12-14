@@ -647,17 +647,20 @@ def generate_project(
     return {
         "id": project_id,
         "name": name,
-        "color": random.randint(30, 49),  # Todoist color codes
+        "color": "blue",
         "parent_id": None,
         "order": 1,
-        "comment_count": 0,
-        "shared": False,
-        "favorite": False,
+        "commentCount": 0,
+        "isShared": False,
+        "isFavorite": False,
+        "isInboxProject": False,
+        "isTeamInbox": False,
+        "viewStyle": "list",
         "sync_id": None,
         "url": f"https://todoist.com/app/project/{project_id}",
         "is_deleted": 0,
         "is_archived": 0,
-        "is_favorite": 0
+        "parentId": None,
     }
 
 def write_test_data(
@@ -679,7 +682,7 @@ def write_test_data(
 
     # Write project data
     with open("test/data/test-project-data.json", "w") as f:
-        json.dump({"projectData": projects[0]}, f, indent=2)
+        json.dump({"projectData": projects}, f, indent=2)
 
 def main():
     """Generate test data for recurring tasks"""

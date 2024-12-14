@@ -58,9 +58,33 @@ export function parseDailyPattern(pattern: string): DailyRecurrencePattern | nul
     };
   }
 
+  // Handle specific time patterns (e.g., "every day at 09:00", "every day at 9am", "every day at 9:15am")
+  const timePattern = /^every day at (\d{1,2})(?::(\d{2}))?\s*(am|pm)?$/i;
+  const match = normalizedPattern.match(timePattern);
+  if (match && match[1]) {
+    let hours = parseInt(match[1], 10);
+    const minutes = match[2] ? parseInt(match[2], 10) : 0;
+    const meridiem = match[3]?.toLowerCase();
+
+    // Handle 12-hour format
+    if (meridiem) {
+      if (meridiem === 'pm' && hours < 12) {
+        hours += 12;
+      } else if (meridiem === 'am' && hours === 12) {
+        hours = 0;
+      }
+    }
+
+    return {
+      type: RecurrenceTypes.DAILY,
+      interval: 1,
+      timeOfDay: { hours, minutes }
+    };
+  }
+
   // Handle "every day [time]" pattern
-  const timePattern = /^every\s+day\s+(\d{1,2})(?::(\d{2}))?\s*(am|pm)?$/i;
-  const timeMatches = normalizedPattern.match(timePattern);
+  const timePattern2 = /^every\s+day\s+(\d{1,2})(?::(\d{2}))?\s*(am|pm)?$/i;
+  const timeMatches = normalizedPattern.match(timePattern2);
   if (timeMatches && timeMatches[1]) {
     let hours = parseInt(timeMatches[1], 10);
     const minutes = timeMatches[2] ? parseInt(timeMatches[2], 10) : 0;

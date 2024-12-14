@@ -13,7 +13,7 @@ export function generateDailyTargets(pattern: DailyRecurrencePattern, range: Dat
     if (isValidTargetDay(currentDate, pattern)) {
       targets.push({
         date: currentDate,
-        allowedRange: calculateAllowedRange(currentDate, pattern)
+        allowedRange: calculateAllowedRange(currentDate)
       });
     }
     currentDate = addDays(currentDate, -interval);

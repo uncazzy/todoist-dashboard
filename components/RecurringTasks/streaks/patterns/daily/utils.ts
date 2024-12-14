@@ -12,22 +12,12 @@ export function isValidTargetDay(date: Date, pattern: DailyRecurrencePattern): b
   return true;
 }
 
-export function calculateAllowedRange(date: Date, pattern: DailyRecurrencePattern): DateRange {
-  const baseStart = startOfDay(date);
-  const baseEnd = endOfDay(date);
-
-  // For time-specific patterns, use a stricter range
-  if (pattern.timeOfDay) {
-    const { hours, minutes } = pattern.timeOfDay;
-    const targetTime = new Date(date);
-    targetTime.setHours(hours || 0, minutes || 0);
-    return {
-      start: new Date(targetTime.getTime() - 30 * 60 * 1000), // 30 minutes before
-      end: new Date(targetTime.getTime() + 30 * 60 * 1000)    // 30 minutes after
-    };
-  }
-
-  return { start: baseStart, end: baseEnd };
+export function calculateAllowedRange(date: Date): DateRange {
+  // Always use full day range regardless of time specification
+  return {
+    start: startOfDay(date),
+    end: endOfDay(date)
+  };
 }
 
 // Helper function to check if a pattern is a daily pattern
@@ -45,7 +35,8 @@ export function isDailyPattern(pattern: string): boolean {
   const patterns = [
     // Basic daily patterns
     /^every\s+day$/i,
-    /^every\s+day\s+(?:at\s+)?\d{1,2}(?::\d{2})?\s*(?:am|pm)$/i,
+    /^every\s+day\s+(?:at\s+)?\d{1,2}(?::\d{2})?\s*(?:am|pm)?$/i,
+    /^every\s+day\s+at\s+\d{1,2}(?::\d{2})?\s*(?:am|pm)?$/i,
     /^every\s+other\s+day$/i,
     /^every\s+weekday$/i,
     /^every\s+workday$/i,
