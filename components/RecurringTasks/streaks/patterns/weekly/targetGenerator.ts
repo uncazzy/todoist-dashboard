@@ -25,24 +25,24 @@ export function generateWeeklyTargets(
   const weekdays = pattern.weekdays;
   const interval = pattern.interval || 1;
 
-  // Start from the latest completion or range end
-  let currentDate = options.useCompletionAsAnchor && options.latestCompletion
-    ? options.latestCompletion
-    : range.end;
+  // Always start from range.end to include all relevant targets
+  let currentDate = range.end;
 
   currentDate = startOfDay(currentDate);
 
-  // For interval > 1, ensure we're on the correct schedule
+  // For interval > 1, adjust the starting point based on the latestCompletion
   if (interval > 1 && options.latestCompletion) {
-    // Start from the latest completion and find the correct weekday
-    while (!weekdays.includes(currentDate.getDay() as WeekDay)) {
-      currentDate = subDays(currentDate, 1);
-    }
-  } else {
-    // For weekly tasks, just find the first matching weekday
-    while (!weekdays.includes(currentDate.getDay() as WeekDay)) {
-      currentDate = subDays(currentDate, 1);
-    }
+    // Find the most recent target date based on interval
+    const latestCompletionDay = startOfDay(options.latestCompletion);
+    // Calculate the number of weeks between latestCompletion and range.end
+    const weeksDifference = Math.floor((currentDate.getTime() - latestCompletionDay.getTime()) / (7 * 24 * 60 * 60 * 1000));
+    // Adjust currentDate to align with the interval
+    currentDate = subDays(currentDate, weeksDifference * 7 * interval);
+  }
+
+  // Move currentDate back to the first matching weekday
+  while (!weekdays.includes(currentDate.getDay() as WeekDay)) {
+    currentDate = subDays(currentDate, 1);
   }
 
   // Generate target dates backwards from our starting point

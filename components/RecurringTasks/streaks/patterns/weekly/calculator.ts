@@ -16,13 +16,13 @@ export function calculateWeeklyStreak(
     .map(date => startOfDay(date))
     .sort((a, b) => b.getTime() - a.getTime());
 
-  // Generate target dates based on pattern, using latest completion as anchor if available
+  // **Modification Starts Here**
+  // Generate target dates without using latestCompletion as an anchor to include all targets up to range.end
   const targetDates = generateWeeklyTargets(pattern, range, {
-    ...(sortedCompletions.length > 0 && {
-      latestCompletion: sortedCompletions[0],
-      useCompletionAsAnchor: true
-    })
+    // Do not use latestCompletion as an anchor
+    // This ensures all targets within the range are generated
   });
+  // **Modification Ends Here**
 
   if (!targetDates.length) {
     return { currentStreak: 0, longestStreak: 0, nextDue: null, overdue: false };
