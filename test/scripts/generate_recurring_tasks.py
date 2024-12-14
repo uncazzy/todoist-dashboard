@@ -5,109 +5,14 @@ import argparse
 from typing import List, Dict, Optional
 import os
 from patterns.weekly import WeeklyPattern
-
-# Base frequencies
-FREQUENCIES = [
-    "daily",      # every day
-    "workday",    # every workday (Mon-Fri)
-    "weekend",    # every weekend (Sat-Sun)
-    "weekly",     # every week
-    "monthly",    # every month
-    "yearly"      # every year
-]
-
-# Time modifiers
-TIME_FORMATS = [
-    None,         # no specific time
-    "09:00",      # HH:MM format
-    "09:15",
-    "10:30",
-    "14:00",      # 2pm
-    "22:30",      # 10:30pm
-    "02:00pm",    # Alternative format
-    "10:00am"     # Alternative format
-]
-
-# Day specifiers for monthly
-MONTH_DAYS = [
-    "1",          # 1st
-    "15",         # 15th
-    "last",       # last day
-    "1,15,30",    # multiple days
-    "2,15,27",    # multiple days
-    "1st",        # Alternative format
-    "15th",       # Alternative format
-    "last day"    # Full format
-]
-
-# Week day specifiers
-WEEKDAYS = [
-    "monday",
-    "tuesday",
-    "wednesday",
-    "thursday",
-    "friday",
-    "saturday",
-    "sunday",
-    "mon",        # Short forms
-    "tue",
-    "wed",
-    "thu",
-    "fri",
-    "sat",
-    "sun"
-]
-
-# Week numbers for monthly patterns
-WEEK_NUMBERS = [
-    "1st",
-    "2nd",
-    "3rd",
-    "4th",
-    "last",
-    "first",      # Alternative format
-    "second",
-    "third",
-    "fourth"
-]
-
-# Month names for yearly patterns
-MONTHS = [
-    "january",
-    "february",
-    "march",
-    "april",
-    "may",
-    "june",
-    "july",
-    "august",
-    "september",
-    "october",
-    "november",
-    "december",
-    "jan",        # Short forms
-    "feb",
-    "mar",
-    "apr",
-    "may",
-    "jun",
-    "jul",
-    "aug",
-    "sep",
-    "oct",
-    "nov",
-    "dec"
-]
-
-# Interval modifiers
-INTERVALS = [
-    1,      # every (default)
-    2,      # every other/2nd
-    3,      # every 3rd
-    6,      # every 6th
-    12,     # every 12th
-    24      # every 24 (for hours)
-]
+from patterns.monthly import MonthlyPattern
+from patterns.daily import DailyPattern
+from patterns.constants import (
+    FREQUENCIES,
+    WEEKDAYS,
+    MONTHS,
+    INTERVALS
+)
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Generate test data for recurring tasks")
@@ -184,10 +89,7 @@ def format_recurrence_string(args) -> str:
             else:
                 parts.append("day")
     elif args.frequency == "workday":
-        if args.workday_ordinal:
-            parts.append(f"{args.workday_ordinal} workday")
-        else:
-            parts.append("workday")
+        parts.append("weekday")  # Change to weekday for consistency
     elif args.frequency == "weekend":
         parts.append("weekend")  # Use 'weekend' directly for better compatibility
     elif args.frequency == "weekly":
@@ -645,24 +547,28 @@ def generate_completion_dates(
                 return [d.strftime("%Y-%m-%dT%H:%M:00-05:00") for d in dates]
         
         # Check if it's a daily task
-        elif 'day' in recurrence.lower() and not any(day in recurrence.lower() for day in ['workday', 'weekend']):
-            # Extract interval from recurrence string
-            interval = 1
-            parts = recurrence.lower().split()
-            if 'other' in recurrence.lower():
-                interval = 2
+        elif 'day' in recurrence.lower():
+            if 'workday' in recurrence.lower():
+                # Generate workday dates
+                dates = DailyPattern.generate_workdays(start_date, end_date)
+            elif 'weekend' in recurrence.lower():
+                # Generate weekend dates
+                dates = DailyPattern.generate_weekends(start_date, end_date)
             else:
-                # Look for "every X days" pattern
-                for i, part in enumerate(parts):
-                    if part.isdigit():
-                        interval = int(part)
-                        break
-            
-            # Generate dates for every day with the specified interval
-            while current <= end_date:
-                if current >= start_date:
-                    dates.append(current)
-                current += timedelta(days=interval)
+                # Extract interval from recurrence string
+                interval = 1
+                parts = recurrence.lower().split()
+                if 'other' in recurrence.lower():
+                    interval = 2
+                else:
+                    # Look for "every X days" pattern
+                    for i, part in enumerate(parts):
+                        if part.isdigit():
+                            interval = int(part)
+                            break
+                
+                # Generate dates for every day with the specified interval
+                dates = DailyPattern.generate_daily(start_date, end_date, interval)
         else:
             # Extract weekday from recurrence string
             weekday = None

@@ -60,40 +60,46 @@ class WeeklyPattern:
     ) -> List[datetime]:
         """Generate dates for every occurrence of a specific weekday"""
         dates = []
-        target_weekday = WeeklyPattern.WEEKDAY_MAP.get(weekday.lower())
+        # Handle multiple weekdays
+        weekdays = [w.strip() for w in weekday.lower().split(',')]
         
-        if target_weekday is None:
-            raise ValueError(f"Invalid weekday: {weekday}")
-        
-        print(f"\nDebug: Generating every {weekday}")
-        print(f"Start date: {start_date.strftime('%Y-%m-%d (%A)')}")
-        print(f"End date: {end_date.strftime('%Y-%m-%d (%A)')}")
-        print(f"Target weekday: {target_weekday}")
-        
-        # Start from the beginning of the week of start_date
-        current = start_date - timedelta(days=start_date.weekday())
-        print(f"Adjusted to start of week: {current.strftime('%Y-%m-%d (%A)')}")
-        
-        # Move to the first target weekday
-        while current.weekday() != target_weekday:
-            current += timedelta(days=1)
-        print(f"Moved to first target weekday: {current.strftime('%Y-%m-%d (%A)')}")
-        
-        # If we've moved past the start date, go back by one week
-        if current < start_date:
-            while current <= start_date:
+        for weekday in weekdays:
+            target_weekday = WeeklyPattern.WEEKDAY_MAP.get(weekday)
+            
+            if target_weekday is None:
+                raise ValueError(f"Invalid weekday: {weekday}")
+            
+            print(f"\nDebug: Generating every {weekday}")
+            print(f"Start date: {start_date.strftime('%Y-%m-%d (%A)')}")
+            print(f"End date: {end_date.strftime('%Y-%m-%d (%A)')}")
+            print(f"Target weekday: {target_weekday}")
+            
+            # Start from the beginning of the week of start_date
+            current = start_date - timedelta(days=start_date.weekday())
+            print(f"Adjusted to start of week: {current.strftime('%Y-%m-%d (%A)')}")
+            
+            # Move to the first target weekday
+            while current.weekday() != target_weekday:
+                current += timedelta(days=1)
+            print(f"Moved to first target weekday: {current.strftime('%Y-%m-%d (%A)')}")
+            
+            # If we've moved past the start date, go back by one week
+            if current < start_date:
+                while current <= start_date:
+                    current += timedelta(weeks=1)
+                current -= timedelta(weeks=1)
+                print(f"Adjusted for start date: {current.strftime('%Y-%m-%d (%A)')}")
+            
+            # Generate dates for every week
+            print("\nGenerating dates:")
+            while current <= end_date:
+                if current >= start_date:
+                    dates.append(current)
+                    print(f"Added: {current.strftime('%Y-%m-%d (%A)')}")
                 current += timedelta(weeks=1)
-            current -= timedelta(weeks=1)
-            print(f"Adjusted for start date: {current.strftime('%Y-%m-%d (%A)')}")
         
-        # Generate dates for every week
-        print("\nGenerating dates:")
-        while current <= end_date:
-            if current >= start_date:
-                dates.append(current)
-                print(f"Added: {current.strftime('%Y-%m-%d (%A)')}")
-            current += timedelta(weeks=1)
-        
+        # Sort dates to maintain chronological order
+        dates.sort()
         return dates
 
     @staticmethod
