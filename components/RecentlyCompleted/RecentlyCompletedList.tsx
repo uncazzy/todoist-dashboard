@@ -3,6 +3,7 @@ import TimeFrame from "./TimeFrame";
 import Pagination from "./Pagination";
 import Tasks from "./Tasks";
 import { DashboardData, CompletedTask } from "../../types";
+import { parseISO, isToday, subDays, isAfter } from "date-fns";
 
 interface TaskWithProject {
   task: CompletedTask;
@@ -22,47 +23,35 @@ export default function RecentlyCompletedList({ allData }: RecentlyCompletedList
   const [isPrinting, setIsPrinting] = useState(false);
 
   if (allCompletedTasks) {
-    const currentDate = new Date();
-    currentDate.setHours(0, 0, 0, 0);
-
-    // Calculate the date 7 days ago
-    const sevenDaysAgo: Date = new Date(currentDate);
-    sevenDaysAgo.setDate(currentDate.getDate() - 7);
-
-    // Calculate the last 30 days exactly as GoalProgress does
-    const last30Days = [...Array(30)].map((_, i) => {
-      const date = new Date(currentDate);
-      date.setDate(date.getDate() - i);
-      return date.toISOString().split('T')[0];
-    });
+    const now = new Date();
+    const sevenDaysAgo = subDays(now, 7);
+    const thirtyDaysAgo = subDays(now, 30);
 
     allCompletedTasks.forEach((task) => {
       // Skip tasks without a valid completed_at date
       if (typeof task.completed_at !== 'string') return;
       
-      const completedDateStr = task.completed_at.split('T')[0] as string;
-
-      // Today's tasks
-      if (completedDateStr === currentDate.toISOString().split('T')[0]) {
-        const projectId = task.project_id;
+      const completedDate = parseISO(task.completed_at);
+      const projectId = task.project_id;
+      
+      // Today's tasks - using isToday which handles timezone correctly
+      if (isToday(completedDate)) {
         tasksCompletedToday.push({
           task,
           projectId,
         });
       }
-
+      
       // Last 7 days tasks
-      if (completedDateStr >= (sevenDaysAgo.toISOString().split('T')[0] as string)) {
-        const projectId = task.project_id;
+      if (isAfter(completedDate, sevenDaysAgo)) {
         tasksCompletedThisWeek.push({
           task,
           projectId,
         });
       }
-
-      // Last 30 days tasks - use exact same logic as GoalProgress
-      if (last30Days.includes(completedDateStr)) {
-        const projectId = task.project_id;
+      
+      // Last 30 days tasks
+      if (isAfter(completedDate, thirtyDaysAgo)) {
         tasksCompletedThisMonth.push({
           task,
           projectId,

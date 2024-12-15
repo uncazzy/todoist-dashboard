@@ -9,8 +9,9 @@ A powerful dashboard for Todoist users that provides deep insights into task man
 
 - 📊 Comprehensive task analytics and insights
 - 📈 Productivity scoring and trends
+- 🔄 Recurring task tracking and habit analytics
 - 🎯 Focus time recommendations
-- 📅 Project distribution analysis
+- 📈 Project distribution analysis
 - 🖨️ Printable reports
 - 🌙 Dark mode interface
 - 📱 Responsive design
@@ -81,23 +82,20 @@ Contributions to Todoist Dashboard are welcome! Whether it's reporting a bug, su
 
 Please check out [Contributing Guidelines](CONTRIBUTING.md) for detailed instructions on how to get started.
 
+### Test Data
+
+For development and testing purposes, this project includes test data generators in the `/test` directory. 
+Currently available generators:
+- `generate_recurring_tasks.py`: Generate test data for recurring tasks with various patterns
+
+See [test/README.md](test/README.md) for detailed usage instructions and examples.
+
 ### Development Guidelines
 
 - Follow the existing code style and conventions
 - Keep code clean and maintainable
 - Update documentation as needed
 - Keep commits atomic and well-described
-
-## Performance Features
-
-The dashboard includes several performance optimizations:
-
-- React component memoization for efficient rendering
-- Optimized data fetching strategies
-- Error boundaries for graceful error handling
-- Local storage for persistent data
-- Efficient state management
-- Progressive loading of data
 
 ## Privacy
 

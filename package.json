@@ -1,6 +1,6 @@
 {
   "name": "todoist-dashboard",
-  "version": "0.1.0",
+  "version": "0.5.0",
   "private": false,
   "license": "MIT",
   "repository": {
@@ -20,6 +20,7 @@
     "@types/d3-cloud": "^1.2.9",
     "@types/d3-scale-chromatic": "^3.1.0",
     "@types/echarts": "^4.9.22",
+    "@types/react-sparklines": "^1.7.5",
     "d3": "^7.9.0",
     "d3-cloud": "^1.2.7",
     "d3-scale-chromatic": "^3.1.0",
@@ -27,6 +28,7 @@
     "dotenv": "^16.3.1",
     "echarts": "^5.5.1",
     "echarts-for-react": "^3.0.2",
+    "framer-motion": "^11.13.1",
     "isomorphic-unfetch": "^4.0.2",
     "next": "13.4.12",
     "next-auth": "^4.22.3",
@@ -37,7 +39,9 @@
     "react-dom": "18.2.0",
     "react-icons": "^4.10.1",
     "react-markdown": "^8.0.7",
-    "react-tooltip": "^5.28.0"
+    "react-sparklines": "^1.7.0",
+    "react-tooltip": "^5.28.0",
+    "react-virtuoso": "^4.12.3"
   },
   "devDependencies": {
     "@types/node": "^22.10.1",

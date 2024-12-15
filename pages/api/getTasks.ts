@@ -6,8 +6,7 @@ import { fetchWithRetry } from '../../utils/fetchWithRetry';
 import type { 
   CompletedTask, 
   TodoistStats, 
-  TodoistUserData, 
-  KarmaStats, 
+  TodoistUser, 
   LoadMoreResponse, 
   ErrorResponse,
   DashboardData,
@@ -123,188 +122,101 @@ async function fetchCompletedTasksBatch(
   return data.items;
 }
 
-async function getKarmaStats(token: string): Promise<KarmaStats> {
-  try {
-    const response = await fetch('https://api.todoist.com/sync/v9/sync', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        sync_token: '*',
-        resource_types: ['user']
-      })
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch karma: ${response.status}`);
-    }
-
-    const data = await response.json() as TodoistUserData;
-    const trend = data.user?.karma_trend?.toLowerCase();
-    
-    return {
-      karma: data.user?.karma || 0,
-      karmaRising: trend === 'up',
-      karmaTrend: (trend === 'up' || trend === 'down') ? trend : 'none'
-    };
-  } catch (error) {
-    console.error('Error getting karma:', error);
-    return { karma: 0, karmaRising: false, karmaTrend: 'none' };
-  }
-}
-
 export default async function handler(
   request: NextApiRequest,
   response: NextApiResponse<ApiResponse | LoadMoreResponse | ErrorResponse>
 ) {
-  // Validate request method
-  if (request.method !== 'GET') {
-    return response.status(405).json({ 
-      error: 'Method not allowed',
-      details: 'Only GET requests are supported'
-    });
-  }
-
   try {
     const token = await getToken({ req: request });
-    
-    if (!token) {
-      return response.status(401).json({ 
-        error: 'Unauthorized',
-        details: 'No token found'
-      });
-    }
-
-    if (!token.accessToken) {
-      return response.status(401).json({ 
-        error: 'Unauthorized',
-        details: 'No access token found'
-      });
+    if (!token?.accessToken) {
+      return response.status(401).json({ error: "Not authenticated" });
     }
 
     const accessToken = token.accessToken as string;
+    const api = new TodoistApi(accessToken);
 
-    const { loadMore } = request.query;
-    
-    // If loadMore is true, fetch next batch of completed tasks
-    if (loadMore === 'true') {
-      const offset = parseInt(request.query.offset as string || '0');
-      const totalTasks = parseInt(request.query.total as string || '0');
-      
-      if (isNaN(offset) || isNaN(totalTasks)) {
-        return response.status(400).json({ 
-          error: 'Invalid Parameters',
-          details: 'offset and total must be valid numbers'
-        });
-      }
-
-      // Check if we've reached the maximum task limit
-      if (offset >= MAX_TASKS || offset >= totalTasks) {
-        return response.status(200).json({
-          newTasks: [],
-          hasMoreTasks: false,
-          totalTasks: totalTasks,
-          loadedTasks: offset
-        });
-      }
+    // Handle "load more" requests
+    if (request.query.loadMore === 'true') {
+      const offset = parseInt(request.query.offset as string) || 0;
+      const total = parseInt(request.query.total as string) || 0;
 
       try {
-        // Calculate how many tasks to fetch in this batch
-        const remainingTasks = Math.min(MAX_TASKS - offset, totalTasks - offset);
-        const batchSize = Math.min(INITIAL_BATCH_SIZE, remainingTasks);
-
-        const newTasks = await fetchCompletedTasksBatch(
-          accessToken,
-          offset,
-          batchSize
-        );
-
-        // Calculate if there are more tasks to fetch
-        const nextOffset = offset + newTasks.length;
-        const hasMoreTasks = newTasks.length > 0 && nextOffset < Math.min(MAX_TASKS, totalTasks);
-
+        const newTasks = await fetchCompletedTasksBatch(accessToken, offset, INITIAL_BATCH_SIZE);
         return response.status(200).json({
           newTasks,
-          hasMoreTasks,
-          totalTasks,
-          loadedTasks: nextOffset
+          hasMoreTasks: offset + newTasks.length < total && offset + newTasks.length < MAX_TASKS,
+          totalTasks: total,
+          loadedTasks: offset + newTasks.length
         });
       } catch (error) {
-        console.error('Error fetching more tasks:', error);
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-        return response.status(500).json({
-          error: "Failed to fetch more tasks",
-          details: errorMessage
-        });
+        console.error('Error loading more tasks:', error);
+        return response.status(500).json({ error: 'Failed to load more tasks' });
       }
     }
 
-    // Initial load
-    const api = new TodoistApi(accessToken);
-    const [projects, activeTasks, totalCompletedTasks, karmaStats] = await Promise.all([
-      api.getProjects(),
-      api.getTasks(),
+    // Get user data (includes karma)
+    const userResponse = await fetchWithRetry(`https://api.todoist.com/sync/v9/user`, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+      maxRetries: 3
+    });
+
+    if (!userResponse.ok) {
+      throw new TodoistAPIError(
+        userResponse.status,
+        `Failed to fetch user data: ${userResponse.status} ${userResponse.statusText}`
+      );
+    }
+
+    const userData = await userResponse.json() as TodoistUser;
+
+    // Fetch other required data
+    const [totalCount, projects, tasks] = await Promise.all([
       getTotalTaskCount(accessToken),
-      getKarmaStats(accessToken)
+      api.getProjects(),
+      api.getTasks()
     ]);
 
-    if (totalCompletedTasks === null) {
-      return response.status(500).json({ error: "Failed to get total task count" });
-    }
+    const initialTasks = await fetchCompletedTasksBatch(accessToken, 0, INITIAL_BATCH_SIZE);
 
-    // Fetch first batch of completed tasks
-    const completedTasks = await fetchCompletedTasksBatch(
-      accessToken,
-      0,
-      INITIAL_BATCH_SIZE
-    );
+    // Map projects to our internal format
+    const projectData = projects.map(mapToProjectData);
+    
+    // Map active tasks to our internal format
+    const activeTasks = tasks.map(mapToActiveTask);
 
-    // Calculate if there are more tasks after the initial batch
-    const hasMoreTasks = completedTasks.length > 0 && 
-                        completedTasks.length < Math.min(MAX_TASKS, totalCompletedTasks);
-
-    const data: ApiResponse = {
-      projectData: projects.map(mapToProjectData),
-      activeTasks: activeTasks.map(mapToActiveTask),
-      allCompletedTasks: completedTasks,
-      totalCompletedTasks,
-      hasMoreTasks,
-      karma: karmaStats.karma,
-      karmaRising: karmaStats.karmaRising,
-      karmaTrend: karmaStats.karmaTrend
+    const responseData: ApiResponse = {
+      allCompletedTasks: initialTasks,
+      projectData,
+      activeTasks,
+      totalCompletedTasks: totalCount,
+      hasMoreTasks: initialTasks.length < Math.min(totalCount, MAX_TASKS),
+      karma: userData.karma,
+      karmaRising: userData.karma_trend === 'up',
+      karmaTrend: userData.karma_trend as 'up' | 'down' | 'none',
+      dailyGoal: userData.daily_goal,
+      weeklyGoal: userData.weekly_goal
     };
 
-    return response.status(200).json(data);
+    response.status(200).json(responseData);
   } catch (error) {
-    console.error('API Error:', error);
-    
+    console.error('Error in getTasks API:', error);
     if (error instanceof TodoistAPIError) {
-      return response.status(error.statusCode).json({
-        error: 'Todoist API Error',
-        details: error.message
+      return response.status(error.statusCode).json({ 
+        error: error.message,
+        details: 'Todoist API error'
       });
     }
-
     if (error instanceof ValidationError) {
-      return response.status(400).json({
-        error: 'Validation Error',
-        details: error.message
+      return response.status(400).json({ 
+        error: error.message,
+        details: 'Validation error'
       });
     }
-
-    // Handle JSON parsing errors
-    if (error instanceof SyntaxError) {
-      return response.status(502).json({
-        error: 'Invalid Response',
-        details: 'Failed to parse Todoist API response'
-      });
-    }
-
-    return response.status(500).json({
-      error: 'Internal Server Error',
-      details: error instanceof Error ? error.message : 'Unknown error occurred'
+    response.status(500).json({ 
+      error: 'Internal server error',
+      details: error instanceof Error ? error.message : 'Unknown error'
     });
   }
 }
