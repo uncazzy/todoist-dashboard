@@ -64,7 +64,7 @@ export function getTrendData(
     }
 
     return data;
-  } else if (pattern === 'daily' || pattern === 'every-other-day' || pattern === 'weekly' || pattern === 'biweekly') {
+  } else if (pattern === 'daily' || pattern === 'every-other-day' || pattern === 'weekly' || pattern === 'biweekly' || pattern === 'weekday') {
     // Aggregate by week
     const weeksAscending = eachWeekOfInterval({ start: sixMonthsAgo, end: today });
     const weeklyDataAscending: number[] = [];

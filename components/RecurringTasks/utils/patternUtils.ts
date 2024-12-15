@@ -1,4 +1,4 @@
-import { subMonths, isAfter } from 'date-fns';
+import { subMonths, isAfter, subDays, isBefore } from 'date-fns';
 import { PatternContext, PatternInfo } from './types';
 import { detectDailyPattern } from '../streaks/patterns/daily/dailyPatterns';
 import { detectWeeklyPattern } from '../streaks/patterns/weekly/weeklyPatterns';
@@ -24,6 +24,23 @@ export function detectPattern(
   };
 
   const lower = dueString.toLowerCase();
+
+  // Check for workday pattern first
+  if (lower === 'every workday' || lower === 'every work day') {
+    const targetDates: Date[] = [];
+    let date = today;
+    while (!isBefore(date, sixMonthsAgo)) {
+      const dayOfWeek = date.getDay();
+      // Only include Monday (1) through Friday (5)
+      if (dayOfWeek >= 1 && dayOfWeek <= 5) {
+        targetDates.push(new Date(date));
+      }
+      date = subDays(date, 1);
+    }
+    // Sort dates from oldest to newest
+    targetDates.sort((a, b) => a.getTime() - b.getTime());
+    return { pattern: 'weekday', interval: 1, targetDates };
+  }
 
   // Try each pattern detector in sequence, maintaining original order:
   // daily -> biweekly -> months -> yearly -> monthly-strict -> monthly-last -> weekly
