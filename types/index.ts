@@ -61,6 +61,8 @@ export interface DashboardData {
   karma: number;
   karmaRising: boolean;
   karmaTrend: 'up' | 'down' | 'none';
+  dailyGoal: number;
+  weeklyGoal: number;
   projectData: ProjectData[];
   totalCompletedTasks: number;
 }
@@ -111,6 +113,8 @@ export interface TodoistUser {
   join_date: string;
   karma: number;
   karma_trend: string;
+  daily_goal: number;
+  weekly_goal: number;
   premium_until?: string;
   start_page: string;
   timezone: string;
