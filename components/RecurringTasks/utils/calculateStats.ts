@@ -25,13 +25,27 @@ export function calculateStats(
   }
 
   const today = new Date();
-  // Strict 6-month window
+  // Get the oldest completion date within the last 6 months
   const sixMonthsAgo = startOfMonth(subMonths(today, 5));
   
-  // Filter completions within the last 6 months
-  const recentCompletions = completionDates
+  // Filter completions within the last 6 months and sort by date
+  const allRecentCompletions = completionDates
     .filter(date => !isBefore(date, sixMonthsAgo) && !isAfter(date, today))
-    // Deduplicate completions by day
+    .sort((a, b) => a.getTime() - b.getTime());
+
+  // Find the first completion date - this will be our starting point
+  const firstCompletion = allRecentCompletions[0];
+  
+  // If no completions exist, return zeros
+  if (!firstCompletion) {
+    return { currentStreak: 0, longestStreak: 0, totalCompletions: 0, completionRate: 0 };
+  }
+
+  // Use the first completion date as our start range instead of 6 months ago
+  const effectiveStartDate = firstCompletion;
+  
+  // Deduplicate completions by day, but only after the first completion
+  const recentCompletions = allRecentCompletions
     .reduce((acc: Date[], date) => {
       const dateStr = format(date, 'yyyy-MM-dd');
       if (!acc.some(d => format(d, 'yyyy-MM-dd') === dateStr)) {
@@ -43,7 +57,7 @@ export function calculateStats(
 
   const totalCompletions = recentCompletions.length;
   const range: DateRange = {
-    start: sixMonthsAgo,
+    start: effectiveStartDate,
     end: today
   };
 
@@ -54,12 +68,12 @@ export function calculateStats(
     range
   );
 
-  // Detect the pattern and generate target dates
-  const { pattern, interval, targetDates } = detectPattern(task.due.string, today, sixMonthsAgo, recentCompletions[0], recentCompletions);
+  // Detect the pattern and generate target dates from the first completion
+  const { pattern, interval, targetDates } = detectPattern(task.due.string, today, effectiveStartDate, recentCompletions[0], recentCompletions);
 
-  // Filter targetDates to the last 6 months window
+  // Filter targetDates to start from the first completion
   const filteredTargets = targetDates.filter(d =>
-    !isBefore(d, sixMonthsAgo) &&
+    !isBefore(d, effectiveStartDate) &&
     !isAfter(d, today)
   );
 

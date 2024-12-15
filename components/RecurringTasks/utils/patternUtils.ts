@@ -12,13 +12,13 @@ import { detectMonthlyPattern } from '../streaks/patterns/monthly/monthlyPattern
 export function detectPattern(
   dueString: string,
   today: Date,
-  sixMonthsAgo: Date,
+  startDate: Date,
   latestCompletion: Date | undefined,
   recentCompletions: Date[]
 ): PatternInfo {
   const context: PatternContext = {
     today,
-    sixMonthsAgo,
+    sixMonthsAgo: startDate,
     ...(latestCompletion && { latestCompletion }),
     recentCompletions
   };
@@ -29,7 +29,7 @@ export function detectPattern(
   if (lower === 'every workday' || lower === 'every work day') {
     const targetDates: Date[] = [];
     let date = today;
-    while (!isBefore(date, sixMonthsAgo)) {
+    while (!isBefore(date, startDate)) {
       const dayOfWeek = date.getDay();
       // Only include Monday (1) through Friday (5)
       if (dayOfWeek >= 1 && dayOfWeek <= 5) {
@@ -68,7 +68,7 @@ export function detectPattern(
     
     const targetDates: Date[] = [];
     let date = today;
-    while (!isAfter(sixMonthsAgo, date)) {
+    while (!isAfter(startDate, date)) {
       targetDates.push(new Date(date));
       date = subMonths(date, 12); // Move back one year
     }
