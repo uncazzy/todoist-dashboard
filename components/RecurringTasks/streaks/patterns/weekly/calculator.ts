@@ -1,4 +1,4 @@
-import { startOfDay } from 'date-fns';
+import { startOfDay, endOfDay, isSameDay, isAfter } from 'date-fns';
 import { StreakResult, WeeklyRecurrencePattern, DateRange, RecurrenceTypes } from '../../types';
 import { generateWeeklyTargets } from './targetGenerator';
 
@@ -37,8 +37,8 @@ export function calculateWeeklyStreak(
   for (const target of targetDates) {
     const targetDay = startOfDay(target.date);
 
-    // Skip future targets
-    if (targetDay > now) {
+    // Skip future targets and current day if it hasn't ended yet
+    if (targetDay > now || (isSameDay(targetDay, now) && !isAfter(new Date(), endOfDay(now)))) {
       continue;
     }
 

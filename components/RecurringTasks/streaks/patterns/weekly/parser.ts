@@ -1,4 +1,4 @@
-import { WeeklyRecurrencePattern, RecurrenceTypes, WeekDay } from '../../types';
+import { WeeklyRecurrencePattern, RecurrenceTypes, WeekDay, TimeOfDay } from '../../types';
 import { WEEKDAY_NAMES } from './utils';
 
 const WEEKDAY_TO_NUMBER: Record<string, WeekDay> = {
@@ -26,8 +26,8 @@ export function parseWeeklyPattern(pattern: string): WeeklyRecurrencePattern | n
     // Basic weekly patterns
     /^every\s+week$/i,
     /^every\s+(\d+)\s+weeks?$/i,
-    /^every\s+(?:mon(?:day)?|tue(?:s(?:day)?)?|wed(?:nesday)?|thu(?:rs(?:day)?)?|fri(?:day)?|sat(?:urday)?|sun(?:day)?)$/i,
-    /^every\s+other\s+(?:mon(?:day)?|tue(?:s(?:day)?)?|wed(?:nesday)?|thu(?:rs(?:day)?)?|fri(?:day)?|sat(?:urday)?|sun(?:day)?)$/i,
+    /^every\s+(?:mon(?:day)?|tue(?:s(?:day)?)?|wed(?:nesday)?|thu(?:rs(?:day)?)?|fri(?:day)?|sat(?:urday)?|sun(?:day)?)(?:\s+(?:at\s+)?(\d{1,2})(?::(\d{2}))?\s*(am|pm)?)?$/i,
+    /^every\s+other\s+(?:mon(?:day)?|tue(?:s(?:day)?)?|wed(?:nesday)?|thu(?:rs(?:day)?)?|fri(?:day)?|sat(?:urday)?|sun(?:day)?)(?:\s+(?:at\s+)?(\d{1,2})(?::(\d{2}))?\s*(am|pm)?)?$/i,
     // Multiple weekdays pattern
     /^every\s+(?:mon(?:day)?|tue(?:s(?:day)?)?|wed(?:nesday)?|thu(?:rs(?:day)?)?|fri(?:day)?|sat(?:urday)?|sun(?:day)?)\s*(?:,\s*(?:mon(?:day)?|tue(?:s(?:day)?)?|wed(?:nesday)?|thu(?:rs(?:day)?)?|fri(?:day)?|sat(?:urday)?|sun(?:day)?)\s*)+$/i
   ];
@@ -38,6 +38,7 @@ export function parseWeeklyPattern(pattern: string): WeeklyRecurrencePattern | n
 
   let interval = 1;
   const weekdays: WeekDay[] = [];
+  let timeOfDay: TimeOfDay | undefined;
 
   // Handle interval if specified
   if (normalizedPattern.includes('other')) {
@@ -47,6 +48,26 @@ export function parseWeeklyPattern(pattern: string): WeeklyRecurrencePattern | n
     if (intervalMatch?.[1]) {
       interval = parseInt(intervalMatch[1], 10);
     }
+  }
+
+  // Extract time if present
+  const timeMatch = normalizedPattern.match(/(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/i);
+  if (timeMatch && timeMatch[1]) {
+    let parsedHour = parseInt(timeMatch[1], 10);
+    const parsedMinute = timeMatch[2] ? parseInt(timeMatch[2], 10) : 0;
+    const meridiem = timeMatch[3]?.toLowerCase();
+
+    // Convert to 24-hour format
+    if (meridiem === 'pm' && parsedHour !== 12) {
+      parsedHour += 12;
+    } else if (meridiem === 'am' && parsedHour === 12) {
+      parsedHour = 0;
+    }
+
+    timeOfDay = {
+      hours: parsedHour,
+      minutes: parsedMinute
+    };
   }
 
   // Extract weekdays
@@ -59,19 +80,22 @@ export function parseWeeklyPattern(pattern: string): WeeklyRecurrencePattern | n
     }
   }
 
-  // If no specific weekdays mentioned but pattern includes "week", default to Monday
-  if (weekdays.length === 0 && normalizedPattern.includes('week')) {
-    weekdays.push(1); // Monday
-  }
-
+  // If no weekdays were found, it's not a valid weekly pattern
   if (weekdays.length === 0) {
     return null;
   }
 
-  const result = {
+  // Create the base result
+  const result: WeeklyRecurrencePattern = {
     type: RecurrenceTypes.WEEKLY,
     interval,
     weekdays
   };
+
+  // Only add timeOfDay if it was found in the pattern
+  if (timeOfDay) {
+    result.timeOfDay = timeOfDay;
+  }
+
   return result;
 }

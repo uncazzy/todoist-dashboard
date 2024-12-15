@@ -24,9 +24,23 @@ export function generateWeeklyTargets(
   const weekdays = pattern.weekdays;
   const interval = pattern.interval || 1;
 
+  // Set the time of day if specified in the pattern
+  const setTimeOfDay = (date: Date): Date => {
+    if (pattern.timeOfDay) {
+      date.setHours(pattern.timeOfDay.hours);
+      date.setMinutes(pattern.timeOfDay.minutes);
+      date.setSeconds(0);
+      date.setMilliseconds(0);
+    } else {
+      // Default to start of day if no time specified
+      date.setHours(0, 0, 0, 0);
+    }
+    return date;
+  };
 
   // Always start from range.end to include all relevant targets
-  let currentDate = startOfDay(range.end);
+  let currentDate = new Date(range.end);
+  currentDate = setTimeOfDay(currentDate);
 
   // For interval > 1, adjust the starting point based on the latestCompletion
   if (interval > 1 && options.latestCompletion) {
@@ -40,11 +54,13 @@ export function generateWeeklyTargets(
     // For biweekly tasks, we want to ensure we're on the same schedule as the latest completion
     const daysToSubtract = weeksDifference % interval === 0 ? 0 : 7 * (interval - (weeksDifference % interval));
     currentDate = subDays(currentDate, daysToSubtract);
+    currentDate = setTimeOfDay(currentDate);
   }
 
   // Move currentDate back to the first matching weekday
   while (!weekdays.includes(currentDate.getDay() as WeekDay)) {
     currentDate = subDays(currentDate, 1);
+    setTimeOfDay(currentDate);
   }
 
   // Generate target dates backwards from our starting point
@@ -64,12 +80,13 @@ export function generateWeeklyTargets(
         weekday: dayNumber
       });
 
-      // Move to next target date based on interval
-      currentDate = subDays(currentDate, 7 * interval);
-    } else {
-      // Move to previous day
-      currentDate = subDays(currentDate, 1);
+      // For interval > 1, skip the appropriate number of weeks
+      if (interval > 1) {
+        currentDate = subDays(currentDate, 7 * (interval - 1));
+      }
     }
+    currentDate = subDays(currentDate, 1);
+    setTimeOfDay(currentDate);
   }
 
   // Sort targets from newest to oldest to match the expected order
