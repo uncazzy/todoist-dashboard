@@ -15,7 +15,6 @@ const RecurringTasksPage = () => {
   const { data, isLoading, loadingProgress, isLoadingFromCache, refreshData } = useDashboardData();
   const [selectedProjectIds, setSelectedProjectIds] = useState<string[]>([]);
   const [showBetaTooltip, setShowBetaTooltip] = useState(false);
-  const needsFullData = data && data.hasMoreTasks;
 
   // Handle loading state
   if (status === "loading") {
@@ -96,9 +95,13 @@ const RecurringTasksPage = () => {
 
         {loadingProgress && (
           <LoadingIndicator
-          loadingProgress={loadingProgress}
-          isLoadingFromCache={isLoadingFromCache}
-          onRefresh={refreshData} loading={isLoading} loadingMore={false} isFullyLoaded={!needsFullData} />
+            loading={isLoading}
+            loadingMore={false}
+            loadingProgress={loadingProgress || { loaded: 0, total: 0 }}
+            isLoadingFromCache={isLoadingFromCache}
+            onRefresh={refreshData}
+            loadError={data?.loadError}
+          />
         )}
 
         {isLoading || !data ? (

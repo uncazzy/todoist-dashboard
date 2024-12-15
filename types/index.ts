@@ -65,6 +65,11 @@ export interface DashboardData {
   weeklyGoal: number;
   projectData: ProjectData[];
   totalCompletedTasks: number;
+  loadError?: {
+    message: string;
+    type: 'partial' | 'full';
+    timestamp: number;
+  };
 }
 
 export interface LoadingProgress {

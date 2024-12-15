@@ -105,8 +105,8 @@ export default function Dashboard(): JSX.Element {
           loadingMore={false}
           loadingProgress={loadingProgress || { loaded: 0, total: 0 }}
           isLoadingFromCache={isLoadingFromCache}
-          isFullyLoaded={!needsFullData}
           onRefresh={refreshData}
+          loadError={data?.loadError}
         />
 
         {/* Quick Stats */}

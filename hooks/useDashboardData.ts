@@ -63,6 +63,7 @@ export function useDashboardData() {
     let updatedData = { ...currentData };
     let retryCount = 0;
     const MAX_RETRIES = 3;
+    let lastError: Error | null = null;
 
     while (updatedData.hasMoreTasks && updatedData.allCompletedTasks.length < MAX_TASKS) {
       if (!isMountedRef.current) break;
@@ -102,6 +103,7 @@ export function useDashboardData() {
 
         // Reset retry count on success
         retryCount = 0;
+        lastError = null;
 
         // Add delay if still more tasks to fetch, to avoid rate-limit issues
         if (updatedData.hasMoreTasks) {
@@ -114,9 +116,17 @@ export function useDashboardData() {
           return updatedData;
         }
 
+        lastError = err instanceof Error ? err : new Error('Unknown error occurred');
         retryCount++;
+        
         if (retryCount >= MAX_RETRIES) {
           console.error('Max retries reached while loading tasks:', err);
+          // Store the error but continue with partial data
+          updatedData.loadError = {
+            message: lastError.message,
+            type: 'partial',
+            timestamp: Date.now()
+          };
           updatedData.hasMoreTasks = false;
           break;
         }
@@ -137,26 +147,29 @@ export function useDashboardData() {
   const fetchFreshData = useCallback(async (): Promise<DashboardData> => {
     abortControllerRef.current = new AbortController();
 
-    const response = await fetch('/api/getTasks', {
-      signal: abortControllerRef.current.signal
-    });
+    try {
+      const response = await fetch('/api/getTasks', {
+        signal: abortControllerRef.current.signal
+      });
 
-    if (!response.ok) {
-      throw new Error('Failed to fetch tasks');
+      if (!response.ok) {
+        throw new Error(`Failed to fetch tasks: ${response.status} ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      if (!isValidDashboardData(result)) {
+        throw new Error('Invalid data received from server');
+      }
+
+      // Respect MAX_TASKS limit initially
+      return {
+        ...result,
+        hasMoreTasks: result.hasMoreTasks && result.allCompletedTasks.length < MAX_TASKS
+      };
+    } catch (err) {
+      // For initial data fetch, if we fail completely, throw the error
+      throw err;
     }
-
-    const result = await response.json();
-    if (!isValidDashboardData(result)) {
-      throw new Error('Invalid data received from server');
-    }
-
-    // Respect MAX_TASKS limit initially
-    const initialData: DashboardData = {
-      ...result,
-      hasMoreTasks: result.hasMoreTasks && result.allCompletedTasks.length < MAX_TASKS
-    };
-
-    return initialData;
   }, []);
 
   const fetchData = useCallback(async () => {
@@ -164,6 +177,7 @@ export function useDashboardData() {
 
     setError(null);
     let freshDataNeeded = true;
+    let partialDataLoaded = false;
 
     // Attempt to load from cache
     const { data: cachedData, timestamp } = loadFromCache();
@@ -189,6 +203,7 @@ export function useDashboardData() {
           total: Math.min(cachedData.totalCompletedTasks, MAX_TASKS)
         });
         setIsLoadingFromCache(true);
+        partialDataLoaded = true;
       }
     }
 
@@ -201,42 +216,73 @@ export function useDashboardData() {
     try {
       setIsLoading(true);
       const initialData = await fetchFreshData();
+      
       if (!isMountedRef.current) return;
 
-      setData(initialData);
+      let finalData = initialData;
+      setData(finalData);
       setLoadingProgress({
-        loaded: Math.min(initialData.allCompletedTasks.length, MAX_TASKS),
-        total: Math.min(initialData.totalCompletedTasks, MAX_TASKS)
+        loaded: Math.min(finalData.allCompletedTasks.length, MAX_TASKS),
+        total: Math.min(finalData.totalCompletedTasks, MAX_TASKS)
       });
 
-      let finalData = initialData;
       if (initialData.hasMoreTasks && isMountedRef.current) {
-        finalData = await loadMoreTasks(initialData);
+        try {
+          finalData = await loadMoreTasks(initialData);
+          if (isMountedRef.current) {
+            setData(finalData);
+            setLoadingProgress(prev => prev ? {
+              ...prev,
+              loaded: Math.min(finalData.allCompletedTasks.length, MAX_TASKS)
+            } : null);
+          }
+        } catch (err) {
+          // If we fail loading more tasks, keep the initial data
+          console.error('Error loading more tasks:', err);
+          finalData = {
+            ...initialData,
+            loadError: {
+              message: err instanceof Error ? err.message : 'Failed to load all tasks',
+              type: 'partial',
+              timestamp: Date.now()
+            }
+          };
+          if (isMountedRef.current) {
+            setData(finalData);
+          }
+        }
       }
 
-      // Save updated data to cache
-      if (isMountedRef.current) {
-        setData(finalData);
-        setLoadingProgress(prev => prev ? {
-          ...prev,
-          loaded: Math.min(finalData.allCompletedTasks.length, MAX_TASKS),
-          total: Math.min(finalData.totalCompletedTasks, MAX_TASKS)
-        } : null);
+      // Save to cache even if we have partial data
+      if (isMountedRef.current && finalData.allCompletedTasks.length > 0) {
         saveToCache(finalData);
       }
+
     } catch (err: unknown) {
       if (err instanceof DOMException && err.name === 'AbortError') {
-        // Aborted, do nothing
         return;
       }
       if (isMountedRef.current) {
         const message = err instanceof Error ? err.message : 'An error occurred';
         setError(message);
         console.error('Error fetching dashboard data:', err);
+        
+        // If we have partial data from cache, keep it
+        if (partialDataLoaded && cachedData) {
+          setData({
+            ...cachedData,
+            loadError: {
+              message: message,
+              type: 'partial',
+              timestamp: Date.now()
+            }
+          });
+        }
       }
     } finally {
       if (isMountedRef.current) {
         setIsLoading(false);
+        setIsLoadingFromCache(false);
       }
     }
   }, [fetchFreshData, loadMoreTasks]);

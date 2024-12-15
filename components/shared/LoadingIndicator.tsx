@@ -1,5 +1,7 @@
 import React from 'react';
 import { MAX_TASKS } from '../../utils/constants';
+import { Tooltip } from 'react-tooltip';
+import { BsExclamationTriangle } from 'react-icons/bs';
 
 interface LoadingIndicatorProps {
   loading: boolean;
@@ -9,8 +11,12 @@ interface LoadingIndicatorProps {
     total: number;
   };
   isLoadingFromCache: boolean;
-  isFullyLoaded: boolean;
   onRefresh: () => void;
+  loadError?: {
+    message: string;
+    type: 'partial' | 'full';
+    timestamp: number;
+  } | undefined;
 }
 
 const LoadingIndicator: React.FC<LoadingIndicatorProps> = ({
@@ -18,8 +24,8 @@ const LoadingIndicator: React.FC<LoadingIndicatorProps> = ({
   loadingMore,
   loadingProgress,
   isLoadingFromCache,
-  isFullyLoaded,
   onRefresh,
+  loadError,
 }) => {
   const progressPercentage =
     (loadingProgress.loaded / Math.min(MAX_TASKS, loadingProgress.total)) * 100;
@@ -45,13 +51,9 @@ const LoadingIndicator: React.FC<LoadingIndicatorProps> = ({
         </div>
         <button
           onClick={onRefresh}
-          disabled={loading || loadingMore || !isFullyLoaded}
+          disabled={loading || loadingMore}
           className="flex items-center px-3 py-1 text-sm bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-          title={
-            !isFullyLoaded
-              ? 'Please wait until all tasks are loaded'
-              : 'Refresh tasks from Todoist'
-          }
+          title={loading ? 'Loading in progress' : 'Refresh tasks from Todoist'}
         >
           <svg
             className={`w-4 h-4 mr-1 ${loading || loadingMore ? 'animate-spin' : ''}`}
@@ -71,15 +73,29 @@ const LoadingIndicator: React.FC<LoadingIndicatorProps> = ({
       </div>
       <div className="bg-gray-700 rounded-full h-3">
         <div
-          className="bg-gradient-to-r from-blue-500 to-purple-500 h-3 rounded-full transition-all duration-500 max-w-full"
+          className={`h-3 rounded-full transition-all duration-500 max-w-full ${
+            loadError ? 'bg-gradient-to-r from-yellow-500 to-orange-500' : 'bg-gradient-to-r from-blue-500 to-purple-500'
+          }`}
           style={{ width: `${progressPercentage}%` }}
         />
       </div>
-      <div className="text-sm text-gray-400 mt-2 text-center">
-        {isLoadingFromCache ? 'Loaded from cache: ' : 'Loaded '}
-        {loadingProgress.loaded} out of {Math.min(MAX_TASKS, loadingProgress.total)} tasks
-        {loadingProgress.total > MAX_TASKS && (
-          <span className="text-gray-500"> ({loadingProgress.total} total available)</span>
+      <div className="text-sm mt-2 text-center flex items-center justify-center gap-2">
+        <span className={loadError ? 'text-yellow-400' : 'text-gray-400'}>
+          {isLoadingFromCache ? 'Loaded from cache: ' : 'Loaded '}
+          {loadingProgress.loaded} out of {Math.min(MAX_TASKS, loadingProgress.total)} tasks
+          {loadingProgress.total > MAX_TASKS && (
+            <span className="text-gray-500"> ({loadingProgress.total} total available)</span>
+          )}
+        </span>
+        {loadError && (
+          <>
+            <BsExclamationTriangle 
+              className="text-yellow-400 cursor-help"
+              data-tooltip-id="error-tooltip"
+              data-tooltip-content={`Only partial data loaded: ${loadError.message}`}
+            />
+            <Tooltip id="error-tooltip" />
+          </>
         )}
       </div>
     </div>
