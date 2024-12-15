@@ -19,7 +19,8 @@ export function calculateWeeklyStreak(
   // Generate target dates using the latest completion as an anchor if available
   const latestCompletion = sortedCompletions[0];
   const targetDates = generateWeeklyTargets(pattern, range, latestCompletion ? {
-    latestCompletion
+    latestCompletion,
+    sortedCompletions
   } : {});
 
   if (!targetDates.length) {

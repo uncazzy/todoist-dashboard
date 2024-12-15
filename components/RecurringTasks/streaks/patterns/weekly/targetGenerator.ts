@@ -4,6 +4,7 @@ import { WeeklyTarget } from './types';
 
 interface DateGenerationOptions {
   latestCompletion?: Date;
+  sortedCompletions?: Date[];
 }
 
 /**
@@ -24,6 +25,16 @@ export function generateWeeklyTargets(
   const weekdays = pattern.weekdays;
   const interval = pattern.interval || 1;
 
+  // Extend range start if we have completions before it
+  const earliestCompletion = options.sortedCompletions && options.sortedCompletions.length > 0 ? 
+    options.sortedCompletions[options.sortedCompletions.length - 1] : null;
+  
+  const adjustedRange = {
+    ...range,
+    start: earliestCompletion && earliestCompletion < range.start ? 
+      subDays(range.start, 7 * interval) : range.start
+  };
+
   // Set the time of day if specified in the pattern
   const setTimeOfDay = (date: Date): Date => {
     if (pattern.timeOfDay) {
@@ -39,7 +50,7 @@ export function generateWeeklyTargets(
   };
 
   // Always start from range.end to include all relevant targets
-  let currentDate = new Date(range.end);
+  let currentDate = new Date(adjustedRange.end);
   currentDate = setTimeOfDay(currentDate);
 
   // For interval > 1, adjust the starting point based on the latestCompletion
@@ -65,8 +76,8 @@ export function generateWeeklyTargets(
 
   // Generate target dates backwards from our starting point
   while (
-    (isAfter(currentDate, range.start) || isEqual(currentDate, range.start)) &&
-    (isBefore(currentDate, range.end) || isEqual(currentDate, range.end))
+    (isAfter(currentDate, adjustedRange.start) || isEqual(currentDate, adjustedRange.start)) &&
+    (isBefore(currentDate, adjustedRange.end) || isEqual(currentDate, adjustedRange.end))
   ) {
     const dayNumber = currentDate.getDay() as WeekDay;
 
