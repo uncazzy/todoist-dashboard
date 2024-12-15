@@ -17,6 +17,11 @@ This directory contains test data and scripts for the Todoist Dashboard project.
 
 The `generate_recurring_tasks.py` script helps create test data for recurring tasks with various patterns and completion rates.
 
+### ⚠️ Pattern Support Notice
+
+Not all recurrence patterns are fully supported at this time. Most of the basic ones work fine, but there are others which are not yet supported.
+
+
 ### Basic Usage
 
 ```bash

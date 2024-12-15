@@ -2,17 +2,19 @@ from datetime import datetime, timedelta
 import json
 import random
 import argparse
-from typing import List, Dict, Optional
+from typing import List, Dict
 import os
 from patterns.weekly import WeeklyPattern
 from patterns.monthly import MonthlyPattern
 from patterns.daily import DailyPattern
+from patterns.yearly import YearlyPattern
 from patterns.constants import (
     FREQUENCIES,
     WEEKDAYS,
     MONTHS,
     INTERVALS
 )
+from calendar import monthrange
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Generate test data for recurring tasks")
@@ -58,104 +60,61 @@ def parse_args():
     return args
 
 def format_recurrence_string(args) -> str:
-    """Generate Todoist-compatible recurrence string"""
-    parts = []
+    """Format recurrence string based on command line arguments"""
+    recurrence = ""
     
-    # Handle weekly patterns first
-    if args.frequency == "weekly" and args.weekdays:
-        weekday = args.weekdays.lower()
-        if args.interval == 2:
-            return f"every other {weekday}"
-        elif args.interval > 2:
-            return f"every {args.interval} weeks on {weekday}"
+    # Handle frequency
+    if args.frequency == "workday":
+        recurrence = "every workday"
+    elif args.frequency == "daily":
+        if args.interval > 1:
+            recurrence = f"every {args.interval} days"
         else:
-            return f"every {weekday}"
-    
-    # Start with interval and handle special cases
-    if args.interval_unit:
-        parts.append(f"every {args.interval} {args.interval_unit}s" if args.interval > 1 else f"every {args.interval_unit}")
-    elif args.interval > 1:
-        parts.append(f"every {args.interval}")
+            recurrence = "every day"
     else:
-        parts.append("every")
+        recurrence = f"every"
     
-    # Add frequency-specific parts
-    if args.frequency == "daily":
-        if not args.interval_unit:
-            if args.interval == 2:
-                parts = ["every other day"]  # Special case for every other day
-            elif args.interval > 2:
-                parts = [f"every {args.interval} days"]  # Changed to use correct format
-            else:
-                parts.append("day")
-    elif args.frequency == "workday":
-        parts.append("weekday")  # Change to weekday for consistency
-    elif args.frequency == "weekend":
-        parts.append("weekend")  # Use 'weekend' directly for better compatibility
-    elif args.frequency == "weekly":
-        if args.weekdays:
-            # Handle both full and abbreviated forms
-            weekdays = args.weekdays.lower().split(',')
-            formatted_weekdays = []
-            for day in weekdays:
-                day = day.strip()
-                if len(day) <= 3:  # It's abbreviated
-                    formatted_weekdays.append(day.capitalize())
-                else:
-                    formatted_weekdays.append(day.capitalize())
-            
-            # For intervals of 2, use "every other Day"
-            if args.interval == 2 and not args.interval_unit:
-                parts = ["every other"]
-            # For intervals greater than 2, use "every X weeks on Day"
-            elif args.interval > 2 and not args.interval_unit:
-                parts = [f"every {args.interval} weeks on"]
-            
-            parts.append(", ".join(formatted_weekdays))
+    # Add interval if specified
+    if args.interval > 1 and args.frequency != "daily":
+        if args.frequency == "weekly" and args.interval == 2:
+            recurrence = "every other"  # Special case for "every other"
         else:
-            parts.append(WEEKDAYS[random.randint(0, 6)].capitalize())
+            recurrence += f" {args.interval}"
+    
+    # Add frequency-specific components
+    if args.frequency == "weekly":
+        # Special case for weekends
+        if args.weekdays and args.weekdays.lower() in ["saturday,sunday", "sunday,saturday"]:
+            recurrence = "every weekend"
+        # Add weekdays for other weekly patterns
+        elif args.weekdays:
+            weekdays = [day.strip().lower() for day in args.weekdays.split(",")]
+            recurrence += f" {','.join(weekdays)}"
     elif args.frequency == "monthly":
         if args.days:
-            # Handle both numeric and ordinal forms
-            days = args.days.split(',')
-            formatted_days = []
-            for day in days:
-                day = day.strip()
-                if day.endswith('th') or day.endswith('st') or day.endswith('rd') or day.endswith('nd'):
-                    formatted_days.append(day)
-                else:
-                    formatted_days.append(day)
-            parts.append(", ".join(formatted_days))
-        elif args.week_number:
-            weekday = args.weekdays or WEEKDAYS[random.randint(0, 6)]
-            # Handle both forms (e.g., "1st" and "first")
-            week_num = args.week_number
-            parts.append(f"{week_num} {weekday.capitalize()}")
-    elif args.frequency == "yearly":
-        month = args.month.capitalize()
+            # Handle specific days of month
+            if args.days.lower() == "last":
+                recurrence += " last day"
+            else:
+                days = [day.strip() for day in args.days.split(",")]
+                recurrence += f" {','.join(days)}"
+        elif args.week_number and args.weekdays:
+            # Handle patterns like "1st monday"
+            recurrence += f" {args.week_number} {args.weekdays}"
+    elif args.frequency == "yearly" and args.month:
+        recurrence += f" {args.month}"
         if args.days:
-            # Handle both numeric and ordinal forms
-            days = args.days.split(',')
-            formatted_days = []
-            for day in days:
-                day = day.strip()
-                if day.endswith('th') or day.endswith('st') or day.endswith('rd') or day.endswith('nd'):
-                    formatted_days.append(day)
-                else:
-                    formatted_days.append(day)
-            parts.append(f"{month} {', '.join(formatted_days)}")
-        else:
-            parts.append(f"{month} {datetime.now().day}")
+            recurrence += f" {args.days}"
     
     # Add time if specified
     if args.time:
-        parts.append(f"at {args.time}")
+        recurrence += f" at {args.time}"
     
-    # Add strict marker if needed
+    # Add strict scheduling if specified
     if args.strict:
-        parts[0] = f"{parts[0]}!"
+        recurrence += "!"
     
-    return " ".join(parts)
+    return recurrence
 
 def get_next_occurrence(current: datetime, recurrence: str) -> datetime:
     """Calculate next occurrence based on recurrence pattern"""
@@ -173,16 +132,16 @@ def get_next_occurrence(current: datetime, recurrence: str) -> datetime:
     if parts[0].endswith('!'):
         parts[0] = parts[0][:-1]  # Remove the !
     
-    # Map weekday names to numbers (0 = Monday, 6 = Sunday)
+    # Map weekday names to numbers (0 = Sunday, 6 = Saturday)
     weekday_map = {
-        "monday": 0, "mon": 0,
-        "tuesday": 1, "tue": 1,
-        "wednesday": 2, "wed": 2,
-        "thursday": 3, "thu": 3,
-        "friday": 4, "fri": 4,
-        "saturday": 5, "sat": 5,
-        "sunday": 6, "sun": 6,
-        "weekend": 5  # Map weekend to Saturday as the starting day
+        "monday": 1, "mon": 1,
+        "tuesday": 2, "tue": 2,
+        "wednesday": 3, "wed": 3,
+        "thursday": 4, "thu": 4,
+        "friday": 5, "fri": 5,
+        "saturday": 6, "sat": 6,
+        "sunday": 0, "sun": 0,
+        "weekend": 6  # Map weekend to Saturday as the starting day
     }
     
     # Handle different frequencies
@@ -210,7 +169,10 @@ def get_next_occurrence(current: datetime, recurrence: str) -> datetime:
     elif parts[0] in weekday_map:  # Direct weekday reference (e.g., "every monday")
         target_weekday = weekday_map[parts[0]]
         # Calculate days until next occurrence
-        days_ahead = target_weekday - current.weekday()
+        current_weekday = current.weekday()
+        if current_weekday == 6:  # Convert Sunday from 6 to 0
+            current_weekday = 0
+        days_ahead = target_weekday - current_weekday
         if days_ahead <= 0:  # Target day already passed this week
             days_ahead += 7
         current += timedelta(days=days_ahead)
@@ -234,7 +196,10 @@ def get_next_occurrence(current: datetime, recurrence: str) -> datetime:
             current += timedelta(weeks=interval)
         else:
             # Calculate days until next occurrence
-            days_ahead = target_weekday - current.weekday()
+            current_weekday = current.weekday()
+            if current_weekday == 6:  # Convert Sunday from 6 to 0
+                current_weekday = 0
+            days_ahead = target_weekday - current_weekday
             if days_ahead <= 0:  # Target day already passed this week
                 days_ahead += 7
             current += timedelta(days=days_ahead)
@@ -285,49 +250,55 @@ def get_next_occurrence(current: datetime, recurrence: str) -> datetime:
     
     elif "year" in parts[0] or any(month.lower() in parts for month in MONTHS):
         # Get month number if specified
+        month_map = {month.lower(): i+1 for i, month in enumerate(MONTHS[:12])}  # Only use full month names
+        # Also add abbreviated month names
+        month_map.update({month.lower()[:3]: i+1 for i, month in enumerate(MONTHS[:12])})
+        
         month_num = None
+        days = []
+        
+        # Find the month
         for part in parts:
-            part = part.lower()
-            for i, month in enumerate(MONTHS[:12]):  # Only use full month names
-                if month.lower() == part:
-                    month_num = i + 1
-                    break
-            if month_num:
+            if part in month_map:
+                month_num = month_map[part]
                 break
         
-        # Get day if specified
-        day = None
+        # Find the days
         for part in parts:
             part = part.strip(',')
             if part.isdigit() or part.endswith(('st', 'nd', 'rd', 'th')):
-                day = int(''.join(filter(str.isdigit, part)))
-                break
+                days.append(int(''.join(filter(str.isdigit, part))))
         
-        # If no day specified, use current day
-        if not day:
-            day = current.day
-        
-        # If no month specified, use current month
-        if not month_num:
-            month_num = current.month
-        
-        # Check if we need to move to next year
-        if current.month > month_num or (current.month == month_num and current.day >= day):
-            current = current.replace(year=current.year + interval)
-        
-        # Set the month and day
-        try:
-            current = current.replace(month=month_num, day=day)
-        except ValueError:
-            # Handle invalid dates (e.g., February 30)
-            if month_num == 2:  # February
-                current = current.replace(month=month_num, day=28)  # Use last day of February
-            else:
-                # Get the last day of the month
-                next_month = current.replace(month=month_num + 1 if month_num < 12 else 1, 
-                                          year=current.year + (1 if month_num == 12 else 0))
-                last_day = (next_month - timedelta(days=1)).day
-                current = current.replace(month=month_num, day=last_day)
+        if month_num:
+            # If no days specified, use current day
+            if not days:
+                days = [current.day]
+            
+            # Generate dates for each year
+            current_year = current.year
+            while current_year <= current.year + interval:
+                for day in days:
+                    # Create date for this year
+                    try:
+                        task_date = datetime(year=current_year, month=month_num, day=day)
+                        if current <= task_date:
+                            current = task_date
+                    except ValueError:
+                        # Skip invalid dates (e.g., February 30)
+                        pass
+                current_year += 1
+                
+                # Sort dates in chronological order
+                # dates.sort()
+                
+                # Then randomly select based on completion rate
+                # if completion_rate < 1.0:
+                #     selected_count = max(1, int(len(dates) * completion_rate))  # At least 1 completion
+                #     dates = random.sample(dates, selected_count)
+                #     dates.sort()  # Keep dates in order
+                
+                # # Format dates as strings
+                # return [d.strftime("%Y-%m-%dT%H:%M:00-05:00") for d in dates]
     
     # Handle time if specified
     if "at" in recurrence.lower():
@@ -390,232 +361,78 @@ def generate_completion_dates(
 ) -> List[str]:
     """Generate completion dates based on recurrence pattern"""
     dates = []
-    current = start_date
+    parts = recurrence.lower().split()
     
-    # Check if it's a weekly pattern first
-    for weekday in WeeklyPattern.WEEKDAY_MAP.keys():
-        if weekday in recurrence.lower():
-            # It's a weekly pattern
-            if 'other' in recurrence.lower():
-                dates = WeeklyPattern.generate_every_other_weekday(
-                    start_date=start_date,
-                    end_date=end_date,
-                    weekday=weekday
-                )
+    # Handle daily patterns
+    if "every" in parts and (
+        "day" in parts or 
+        any(part.isdigit() and "day" in parts[parts.index(part)+1:] for part in parts)
+    ):
+        interval = 1
+        for i, part in enumerate(parts):
+            if part.isdigit():
+                interval = int(part)
+                break
+        
+        dates = DailyPattern.generate_daily(start_date, end_date, interval)
+    
+    # Handle monthly patterns
+    elif "every" in parts and (
+        any(part.endswith(("st", "nd", "rd", "th")) for part in parts) or
+        "last" in parts
+    ):
+        # Extract days from the recurrence string
+        days = []
+        for part in parts:
+            if part == "day":  # Skip the word "day"
+                continue
+            if part == "last":
+                days.append("last")
+            elif any(suffix in part for suffix in ["st", "nd", "rd", "th"]):
+                days.append(part)
+        
+        # Split days if they contain commas
+        all_days = []
+        for day in days:
+            if ',' in day:
+                all_days.extend(d.strip() for d in day.split(','))
             else:
-                # Extract interval if present
-                interval = 1
-                parts = recurrence.lower().split()
-                for i, part in enumerate(parts):
-                    if part.isdigit() and i > 0:
-                        interval = int(part)
-                        break
-                
-                if interval > 1:
-                    dates = WeeklyPattern.generate_every_n_weekday(
-                        start_date=start_date,
-                        end_date=end_date,
-                        weekday=weekday,
-                        interval=interval
-                    )
-                else:
-                    dates = WeeklyPattern.generate_every_weekday(
-                        start_date=start_date,
-                        end_date=end_date,
-                        weekday=weekday
-                    )
-            break
+                all_days.append(day)
+        
+        # Generate dates for each day
+        for day in all_days:
+            dates.extend(MonthlyPattern.generate_monthly_by_date(start_date, end_date, day))
     
-    # If no weekly pattern found, check other patterns
-    if not dates:
-        # Check if it's a daily task first
-        if ('day' in recurrence.lower() and not any(day in recurrence.lower() for day in ['workday', 'weekend'])) or \
-           ('every' in recurrence.lower() and any(str(i) in recurrence.lower().split() for i in range(2, 31))):
-            # Extract interval from recurrence string
+    # Handle yearly patterns
+    elif "every" in parts and any(month in parts for month in MONTHS):
+        month = next(month for month in parts if month in MONTHS)
+        day = next((part for part in parts if any(suffix in part for suffix in ["st", "nd", "rd", "th"])), None)
+        if day:
             interval = 1
-            parts = recurrence.lower().split()
-            if 'other' in recurrence.lower():
-                interval = 2
-            else:
-                # Look for "every X days" pattern
-                for i, part in enumerate(parts):
-                    if part.isdigit():
-                        interval = int(part)
-                        break
-            
-            # Generate dates for every day with the specified interval
-            while current <= end_date:
-                if current >= start_date:
-                    dates.append(current)
-                current += timedelta(days=interval)
-        
-        # Check for yearly patterns with specific months
-        elif any(month.lower() in recurrence.lower() for month in MONTHS):
-            # Extract month and day from recurrence string
-            month_map = {month.lower(): i+1 for i, month in enumerate(MONTHS[:12])}  # Only use full month names
-            # Also add abbreviated month names
-            month_map.update({month.lower()[:3]: i+1 for i, month in enumerate(MONTHS[:12])})
-            
-            month_num = None
-            days = []
-            
-            # Find the month
-            for part in recurrence.lower().split():
-                if part in month_map:
-                    month_num = month_map[part]
+            for i, part in enumerate(parts):
+                if part.isdigit():
+                    interval = int(part)
                     break
-            
-            # Find the days
-            for part in recurrence.lower().split():
-                part = part.strip(',')
-                if part.isdigit() or part.endswith(('st', 'nd', 'rd', 'th')):
-                    days.append(int(''.join(filter(str.isdigit, part))))
-            
-            if month_num:
-                # If no days specified, use current day
-                if not days:
-                    days = [current.day]
-                
-                # Generate dates for each year
-                current_year = current.year
-                while current_year <= end_date.year:
-                    for day in days:
-                        # Create date for this year
-                        try:
-                            task_date = datetime(year=current_year, month=month_num, day=day)
-                            if start_date <= task_date <= end_date:
-                                dates.append(task_date)
-                        except ValueError:
-                            # Skip invalid dates (e.g., February 30)
-                            pass
-                    current_year += 1
-                
-                # Sort dates in chronological order
-                dates.sort()
-                
-                # Then randomly select based on completion rate
-                if completion_rate < 1.0:
-                    selected_count = max(1, int(len(dates) * completion_rate))  # At least 1 completion
-                    dates = random.sample(dates, selected_count)
-                    dates.sort()  # Keep dates in order
-                
-                # Format dates as strings
-                return [d.strftime("%Y-%m-%dT%H:%M:00-05:00") for d in dates]
-        
-        # Check if it's a monthly task with specific days
-        elif 'month' in recurrence.lower() or any(part.strip(',').isdigit() or part.strip(',').endswith(('st', 'nd', 'rd', 'th')) for part in recurrence.lower().split()):
-            # Extract days from recurrence string
-            days = []
-            for part in recurrence.lower().split():
-                part = part.strip(',')
-                if part.isdigit() or part.endswith(('st', 'nd', 'rd', 'th')):
-                    days.append(int(''.join(filter(str.isdigit, part))))
-            
-            if days:
-                # Generate dates for each specified day
-                while current <= end_date:
-                    # Get the last day of the current month
-                    if current.month == 12:
-                        next_month = current.replace(year=current.year + 1, month=1)
-                    else:
-                        next_month = current.replace(month=current.month + 1)
-                    last_day = (next_month - timedelta(days=1)).day
-                    
-                    # Add each valid day for this month
-                    for day in days:
-                        if day <= last_day:
-                            task_date = current.replace(day=day)
-                            if start_date <= task_date <= end_date:
-                                dates.append(task_date)
-                    
-                    # Move to the first of next month
-                    if current.month == 12:
-                        current = current.replace(year=current.year + 1, month=1, day=1)
-                    else:
-                        current = current.replace(month=current.month + 1, day=1)
-                
-                # Sort dates in chronological order
-                dates.sort()
-                
-                # Then randomly select based on completion rate
-                if completion_rate < 1.0:
-                    selected_count = max(1, int(len(dates) * completion_rate))  # At least 1 completion
-                    dates = random.sample(dates, selected_count)
-                    dates.sort()  # Keep dates in order
-                
-                # Format dates as strings
-                return [d.strftime("%Y-%m-%dT%H:%M:00-05:00") for d in dates]
-        
-        # Check if it's a daily task
-        elif 'day' in recurrence.lower():
-            if 'workday' in recurrence.lower():
-                # Generate workday dates
-                dates = DailyPattern.generate_workdays(start_date, end_date)
-            elif 'weekend' in recurrence.lower():
-                # Generate weekend dates
-                dates = DailyPattern.generate_weekends(start_date, end_date)
-            else:
-                # Extract interval from recurrence string
-                interval = 1
-                parts = recurrence.lower().split()
-                if 'other' in recurrence.lower():
-                    interval = 2
-                else:
-                    # Look for "every X days" pattern
-                    for i, part in enumerate(parts):
-                        if part.isdigit():
-                            interval = int(part)
-                            break
-                
-                # Generate dates for every day with the specified interval
-                dates = DailyPattern.generate_daily(start_date, end_date, interval)
-        else:
-            # Extract weekday from recurrence string
-            weekday = None
-            for pattern in WeeklyPattern.WEEKDAY_MAP.keys():
-                if pattern in recurrence.lower():
-                    weekday = pattern
-                    break
-            
-            if weekday is None:
-                print(f"Warning: No weekday found in recurrence string: {recurrence}")
-                return []
-            
-            # Extract interval from recurrence string
-            interval = 1
-            parts = recurrence.lower().split()
-            if 'other' in recurrence.lower():
-                # Use the every other weekday pattern
-                dates = WeeklyPattern.generate_every_other_weekday(
-                    start_date=start_date,
-                    end_date=end_date,
-                    weekday=weekday
-                )
-            elif len(parts) > 1 and parts[1].isdigit():
-                # Use the every N weeks pattern
-                interval = int(parts[1])
-                dates = WeeklyPattern.generate_every_n_weekday(
-                    start_date=start_date,
-                    end_date=end_date,
-                    weekday=weekday,
-                    interval=interval
-                )
-            else:
-                # Use the every weekday pattern
-                dates = WeeklyPattern.generate_every_weekday(
-                    start_date=start_date,
-                    end_date=end_date,
-                    weekday=weekday
-                )
+            dates = YearlyPattern.generate_yearly_by_date(start_date, end_date, month, day, interval)
     
-    # Then randomly select based on completion rate
+    # Handle weekend pattern
+    elif recurrence.lower() == "every weekend":
+        # Generate dates for Saturday and Sunday
+        dates.extend(WeeklyPattern.generate_every_weekday(start_date, end_date, "saturday"))
+        dates.extend(WeeklyPattern.generate_every_weekday(start_date, end_date, "sunday"))
+    
+    # Handle weekly patterns
+    elif "every" in parts and any(day in parts for day in WEEKDAYS):
+        weekday = next(day for day in parts if day in WEEKDAYS)
+        dates = WeeklyPattern.generate_every_weekday(start_date, end_date, weekday)
+    
+    # Apply completion rate if needed
     if completion_rate < 1.0:
-        selected_count = max(1, int(len(dates) * completion_rate))  # At least 1 completion
-        dates = random.sample(dates, selected_count)
-        dates.sort()  # Keep dates in order
+        dates = random.sample(dates, int(len(dates) * completion_rate))
+        dates.sort()  # Keep dates in chronological order
     
-    # Format dates as strings
-    return [d.strftime("%Y-%m-%dT%H:%M:00-05:00") for d in dates]
+    # Convert dates to strings while preserving timezone
+    return [d.strftime("%Y-%m-%dT%H:%M:00%z") for d in dates]
 
 def generate_active_task(
     task_id: str,
@@ -624,9 +441,7 @@ def generate_active_task(
     recurrence: str,
     due_date: str
 ) -> Dict:
-    # Parse the due_date to get just the date part
-    date_only = due_date.split('T')[0]
-    
+    """Generate an active task in Todoist API format"""
     return {
         "assigneeId": None,
         "assignerId": None,
@@ -634,16 +449,16 @@ def generate_active_task(
         "content": content,
         "createdAt": datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
         "creatorId": "19621174",
-        "deadline": date_only,  # Just the date part
+        "deadline": due_date,  # Use the full due date
         "description": "",
         "due": {
-            "date": date_only,  # Just the date part
+            "date": due_date,  # Use the full due date
             "string": recurrence,  # Keep original case
             "lang": "en",
             "isRecurring": True
         },
         "duration": None,
-        "id": task_id,  # Use the same ID
+        "id": task_id,
         "isCompleted": False,
         "labels": [],
         "order": random.randint(1, 10),
@@ -660,10 +475,11 @@ def generate_completed_task(
     project_id: str,
     completed_at: str
 ) -> Dict:
+    """Generate a completed task in Todoist API format"""
     return {
         "completed_at": completed_at,
         "content": content,
-        "id": str(random.randint(1000000000, 9999999999)),  # 10-digit numeric ID
+        "id": str(random.randint(1000000000, 9999999999)),
         "item_object": None,
         "meta_data": None,
         "note_count": 0,
@@ -672,33 +488,29 @@ def generate_completed_task(
         "section_id": None,
         "task_id": task_id,
         "user_id": "19621174",
-        "v2_project_id": ''.join(random.choices('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz', k=16)),
+        "v2_project_id": ''.join(random.choices('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', k=16)),
         "v2_section_id": None,
-        "v2_task_id": ''.join(random.choices('0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz', k=16))
+        "v2_task_id": ''.join(random.choices('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', k=16))
     }
 
 def generate_project(
     project_id: str,
     name: str
 ) -> Dict:
-    """Generate a project"""
+    """Generate a project in Todoist API format"""
     return {
         "id": project_id,
         "name": name,
         "color": "blue",
-        "parent_id": None,
-        "order": 1,
         "commentCount": 0,
         "isShared": False,
         "isFavorite": False,
         "isInboxProject": False,
         "isTeamInbox": False,
-        "viewStyle": "list",
-        "sync_id": None,
-        "url": f"https://todoist.com/app/project/{project_id}",
-        "is_deleted": 0,
-        "is_archived": 0,
+        "order": 1,
         "parentId": None,
+        "url": f"https://todoist.com/showProject?id={project_id}",
+        "viewStyle": "list"
     }
 
 def write_test_data(
@@ -707,91 +519,88 @@ def write_test_data(
     projects: List[Dict]
 ) -> None:
     """Write test data to JSON files"""
-    # Create test data directory if it doesn't exist
-    os.makedirs("test/data", exist_ok=True)
-
     # Write active tasks
-    with open("test/data/test-active-tasks.json", "w") as f:
+    with open('../data/test-active-tasks.json', 'w') as f:
         json.dump({"activeTasks": active_tasks}, f, indent=2)
-
+    
     # Write completed tasks
-    with open("test/data/test-completed-tasks.json", "w") as f:
+    with open('../data/test-completed-tasks.json', 'w') as f:
         json.dump({"allCompletedTasks": completed_tasks}, f, indent=2)
-
-    # Write project data
-    with open("test/data/test-project-data.json", "w") as f:
+    
+    # Write projects
+    with open('../data/test-project-data.json', 'w') as f:
         json.dump({"projectData": projects}, f, indent=2)
 
 def main():
     """Generate test data for recurring tasks"""
     args = parse_args()
     
-    # Generate recurrence string based on arguments
+    # Format recurrence string
     recurrence = format_recurrence_string(args)
-    
-    # Calculate start and end dates
-    end_date = datetime.now()
-    if args.frequency == "yearly":
-        start_date = end_date - timedelta(days=365 * 3)  # 3 years of history for yearly tasks
-    else:
-        start_date = end_date - timedelta(days=180)  # 6 months ago for other frequencies
-    
-    # Generate completion dates with the specified completion rate
-    completion_dates = generate_completion_dates(
-        start_date=start_date,
-        end_date=end_date,
-        recurrence=recurrence,
-        completion_rate=args.completion_rate  # Use the command line argument
-    )
-    
-    # Print first few dates for debugging
-    print("\nSample completion dates (first 10):")
-    for date in completion_dates[:10]:
-        print(f"- {datetime.strptime(date, '%Y-%m-%dT%H:%M:00-05:00').strftime('%Y-%m-%d (%A)')}")
-    
-    print(f"\nTotal dates generated: {len(completion_dates)}")
-    
-    # Generate a consistent task ID
-    task_id = str(random.randint(1000000000, 9999999999))
-    
-    # Create one active task
-    active_task = generate_active_task(
-        task_id=task_id,  # Use the same task ID
-        content="Test Task",
-        project_id="2301927646",  # Use real project ID
-        recurrence=recurrence,
-        due_date=end_date.strftime("%Y-%m-%dT%H:%M:00-05:00")
-    )
-    
-    # Create completed tasks
-    completed_tasks = []
-    for i, completed_at in enumerate(completion_dates):
-        completed_task = generate_completed_task(
-            task_id=task_id,  # Use the same task ID for all completions
-            content="Test Task",
-            project_id="2301927646",  # Use real project ID
-            completed_at=completed_at
-        )
-        completed_tasks.append(completed_task)
-    
-    # Create project data
-    project = generate_project(
-        project_id="2301927646",  # Use real project ID
-        name="Test Project"
-    )
-    
-    # Write test data to files
-    write_test_data(
-        active_tasks=[active_task],
-        completed_tasks=completed_tasks,
-        projects=[project]
-    )
-    
     print("\nGenerated test data:")
     print(f"- Recurrence: {recurrence}")
     print(f"- Completion rate: {args.completion_rate * 100}%")
+    
+    # Get current time
+    now = datetime.strptime("2024-12-15T09:28:13-05:00", "%Y-%m-%dT%H:%M:%S%z")
+    
+    # Generate dates
+    start_date = now - timedelta(days=args.history_days)
+    completion_dates = generate_completion_dates(
+        start_date=start_date,
+        end_date=now,
+        recurrence=recurrence,
+        completion_rate=args.completion_rate
+    )
+    
+    # Convert string dates back to datetime objects
+    completion_dates = [datetime.strptime(date, "%Y-%m-%dT%H:%M:00%z") for date in completion_dates]
+    completion_dates.sort()
+    
     print(f"- {len(completion_dates)} completed tasks\n")
-    print("Files written to", os.path.abspath("test/data/"), "\n")
+    print("Sample completion dates (first 10):")
+    for date in completion_dates[:10]:
+        print(f"- {date.strftime('%Y-%m-%d (%A)')}")
+    
+    # Generate test data
+    project_id = "test_project_1"
+    task_id = "test_task_1"
+    
+    # Calculate next due date (tomorrow)
+    next_due_date = (now + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
+    
+    # Always generate active task for recurring tasks
+    active_tasks = [
+        generate_active_task(
+            task_id=task_id,
+            content="Test recurring task",
+            project_id=project_id,
+            recurrence=recurrence,
+            due_date=next_due_date.strftime("%Y-%m-%dT%H:%M:00%z")
+        )
+    ]
+    
+    # Generate completed tasks
+    completed_tasks = [
+        generate_completed_task(
+            task_id=task_id,
+            content="Test recurring task",
+            project_id=project_id,
+            completed_at=date.strftime("%Y-%m-%dT%H:%M:00%z")
+        )
+        for date in completion_dates
+    ]
+    
+    # Generate project
+    projects = [
+        generate_project(
+            project_id=project_id,
+            name="Test Project"
+        )
+    ]
+    
+    # Write test data
+    write_test_data(active_tasks, completed_tasks, projects)
 
 if __name__ == "__main__":
     main()

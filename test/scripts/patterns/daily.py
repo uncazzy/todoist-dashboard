@@ -17,7 +17,11 @@ class DailyPattern:
 
         while current <= end_date:
             dates.append(current)
-            current += timedelta(days=interval)
+            # Create new datetime with timezone preserved
+            next_date = current + timedelta(days=interval)
+            if current.tzinfo is not None:
+                next_date = next_date.replace(tzinfo=current.tzinfo)
+            current = next_date
 
         return dates
 

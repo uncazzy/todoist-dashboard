@@ -40,7 +40,12 @@ class MonthlyPattern:
         max_days = monthrange(next_year, next_month)[1]
         day = min(day, max_days)
         
-        return datetime(next_year, next_month, day)
+        # Preserve timezone info
+        result = datetime(next_year, next_month, day)
+        if date.tzinfo is not None:
+            result = result.replace(tzinfo=date.tzinfo)
+        
+        return result
 
     @staticmethod
     def generate_monthly_by_date(
