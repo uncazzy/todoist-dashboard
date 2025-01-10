@@ -1,7 +1,7 @@
 # Todoist Dashboard
 
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
-![Next.js](https://img.shields.io/badge/Next.js-13-black)
+![Next.js](https://img.shields.io/badge/Next.js-14-black)
 
 A powerful dashboard for Todoist users that provides deep insights into task management and productivity patterns. Visualize your most productive days and times, track task completion trends over time, and gain insights into your focus areas. Built with Next.js, React, and Tailwind CSS.
 
