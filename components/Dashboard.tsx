@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { Tooltip } from 'react-tooltip';
 import ActiveTasksByProject from './ActiveTasksByProject';
@@ -20,9 +20,11 @@ import LoadingIndicator from './shared/LoadingIndicator';
 import QuickStats from './QuickStats/QuickStats';
 import { useDashboardData } from '../hooks/useDashboardData';
 import Layout from './layout/Layout';
+import ProjectPicker from './ProjectPicker';
 
 export default function Dashboard(): JSX.Element {
   const { status } = useSession();
+  const [selectedProjectIds, setSelectedProjectIds] = useState<string[]>([]);
   const { 
     data, 
     isLoading, 
@@ -98,15 +100,26 @@ export default function Dashboard(): JSX.Element {
       <div className="min-h-screen rounded-lg bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white">
         <div className="container mx-auto p-6">
           <header className="mb-8">
-            <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500 mb-2">
-              Todoist Dashboard
-            </h1>
-            <p className="text-gray-400">
-              <span>
-                <SiTodoist className="inline text-red-500 ml-1 mr-2" />
-              </span>
-              Your productivity at a glance
-            </p>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+              <div>
+                <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500 mb-2">
+                  Todoist Dashboard
+                </h1>
+                <p className="text-gray-400">
+                  <span>
+                    <SiTodoist className="inline text-red-500 ml-1 mr-2" />
+                  </span>
+                  Your productivity at a glance
+                </p>
+              </div>
+              {data?.projectData && (
+                <ProjectPicker
+                  projects={data.projectData}
+                  selectedProjectIds={selectedProjectIds}
+                  onProjectSelect={setSelectedProjectIds}
+                />
+              )}
+            </div>
           </header>
 
           {/* Always show loading indicator */}
@@ -121,9 +134,13 @@ export default function Dashboard(): JSX.Element {
 
           {/* Quick Stats */}
           <QuickStats 
-            activeTasks={data?.activeTasks || []}
-            projectCount={data?.projectData?.length || 0}
-            totalCompletedTasks={data?.totalCompletedTasks || 0}
+            activeTasks={selectedProjectIds.length > 0 
+              ? data?.activeTasks?.filter(task => selectedProjectIds.includes(task.projectId)) || []
+              : data?.activeTasks || []}
+            projectCount={selectedProjectIds.length || data?.projectData?.length || 0}
+            totalCompletedTasks={selectedProjectIds.length > 0
+              ? data?.allCompletedTasks?.filter(task => selectedProjectIds.includes(task.project_id))?.length || 0
+              : data?.totalCompletedTasks || 0}
             karma={data?.karma || 0}
             karmaTrend={data?.karmaTrend || 'none'}
             karmaRising={data?.karmaRising || false}
@@ -134,7 +151,15 @@ export default function Dashboard(): JSX.Element {
             {/* Insights Section */}
             <div className="lg:col-span-3">
               <Insights
-                allData={data}
+                allData={{
+                  ...data,
+                  activeTasks: selectedProjectIds.length > 0 
+                    ? data?.activeTasks?.filter(task => selectedProjectIds.includes(task.projectId)) || []
+                    : data?.activeTasks || [],
+                  allCompletedTasks: selectedProjectIds.length > 0
+                    ? data?.allCompletedTasks?.filter(task => selectedProjectIds.includes(task.project_id)) || []
+                    : data?.allCompletedTasks || []
+                }}
                 isLoading={isLoading}
                 fullyLoaded={!needsFullData}
               />
@@ -145,7 +170,14 @@ export default function Dashboard(): JSX.Element {
               <h2 className="text-lg sm:text-xl font-semibold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
                 Recently Completed <span className="text-white">✅</span>
               </h2>
-              <RecentlyCompletedList allData={data} />
+              <RecentlyCompletedList 
+                allData={{
+                  ...data,
+                  allCompletedTasks: selectedProjectIds.length > 0
+                    ? data?.allCompletedTasks?.filter(task => selectedProjectIds.includes(task.project_id)) || []
+                    : data?.allCompletedTasks || []
+                }} 
+              />
             </div>
 
             {/* Neglected Tasks Section */}
@@ -154,7 +186,12 @@ export default function Dashboard(): JSX.Element {
                 Neglected Tasks
                 <QuestionMark content="Tasks that have been on your list the longest without being completed. Consider reviewing these tasks to either complete them, reschedule, or remove if no longer relevant." />
               </h2>
-              <NeglectedTasks activeTasks={activeTasks} projectData={projectData} />
+              <NeglectedTasks 
+                activeTasks={selectedProjectIds.length > 0
+                  ? activeTasks?.filter(task => selectedProjectIds.includes(task.projectId)) || []
+                  : activeTasks || []} 
+                projectData={projectData} 
+              />
             </div>
 
             {/* Recurring Tasks Section */}
@@ -170,8 +207,12 @@ export default function Dashboard(): JSX.Element {
                 </div>
               ) : (
                 <RecurringTasksPreview
-                  activeTasks={activeTasks}
-                  allCompletedTasks={allCompletedTasks}
+                  activeTasks={selectedProjectIds.length > 0
+                    ? activeTasks?.filter(task => selectedProjectIds.includes(task.projectId)) || []
+                    : activeTasks || []}
+                  allCompletedTasks={selectedProjectIds.length > 0
+                    ? allCompletedTasks?.filter(task => selectedProjectIds.includes(task.project_id)) || []
+                    : allCompletedTasks || []}
                 />
               )}
             </div>
@@ -179,25 +220,32 @@ export default function Dashboard(): JSX.Element {
             {/* Task Management Section */}
             <div className="lg:col-span-3 grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div
-                className={`lg:col-span-1 bg-gray-800 rounded-xl p-4 sm:p-6 shadow-lg ${needsFullData ? 'opacity-50' : ''
-                  }`}
+                className={`lg:col-span-1 bg-gray-800 rounded-xl p-4 sm:p-6 shadow-lg ${needsFullData ? 'opacity-50' : ''}`}
               >
                 <h2 className="text-lg sm:text-xl font-semibold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
                   Tasks by Priority
                 </h2>
-                <TaskPriority activeTasks={data?.activeTasks || []} loading={needsFullData} />
+                <TaskPriority 
+                  activeTasks={selectedProjectIds.length > 0
+                    ? data?.activeTasks?.filter(task => selectedProjectIds.includes(task.projectId)) || []
+                    : data?.activeTasks || []} 
+                  loading={needsFullData} 
+                />
               </div>
 
               <div
-                className={`lg:col-span-1 bg-gray-800 rounded-xl p-4 sm:p-6 shadow-lg ${needsFullData ? 'opacity-50' : ''
-                  }`}
+                className={`lg:col-span-1 bg-gray-800 rounded-xl p-4 sm:p-6 shadow-lg ${needsFullData ? 'opacity-50' : ''}`}
               >
                 <h2 className="text-lg sm:text-xl font-semibold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
                   Active Tasks by Project
                 </h2>
                 <ActiveTasksByProject
-                  projectData={data?.projectData || []}
-                  activeTasks={data?.activeTasks || []}
+                  projectData={selectedProjectIds.length > 0
+                    ? projectData?.filter(project => selectedProjectIds.includes(project.id)) || []
+                    : projectData || []}
+                  activeTasks={selectedProjectIds.length > 0
+                    ? activeTasks?.filter(task => selectedProjectIds.includes(task.projectId)) || []
+                    : activeTasks || []}
                   loading={needsFullData}
                 />
               </div>
@@ -206,13 +254,17 @@ export default function Dashboard(): JSX.Element {
             {/* Completed Tasks over time and by project */}
             <div className="lg:col-span-3 grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div
-                className={`bg-gray-800 rounded-xl p-4 sm:p-6 shadow-lg ${needsFullData ? 'opacity-50' : ''
-                  }`}
+                className={`bg-gray-800 rounded-xl p-4 sm:p-6 shadow-lg ${needsFullData ? 'opacity-50' : ''}`}
               >
                 <h2 className="text-lg sm:text-xl font-semibold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
                   Completed Tasks Over Time
                 </h2>
-                <CompletedTasksOverTime allData={allCompletedTasks} loading={isLoading} />
+                <CompletedTasksOverTime 
+                  allData={selectedProjectIds.length > 0
+                    ? allCompletedTasks?.filter(task => selectedProjectIds.includes(task.project_id)) || []
+                    : allCompletedTasks || []} 
+                  loading={isLoading} 
+                />
               </div>
 
               <div className={`flex flex-col bg-gray-800 rounded-xl p-4 sm:p-6 shadow-lg ${needsFullData ? 'opacity-50' : ''}`}>
@@ -220,12 +272,21 @@ export default function Dashboard(): JSX.Element {
                   Completed Tasks by Project
                 </h2>
                 <CompletedTasksByProject
-                  projectData={projectData.map((project) => ({
-                    ...project,
-                    completedTasksCount: allCompletedTasks.filter(
-                      (task) => task.project_id === project.id
-                    ).length,
-                  }))}
+                  projectData={selectedProjectIds.length > 0
+                    ? projectData
+                        .filter(project => selectedProjectIds.includes(project.id))
+                        .map(project => ({
+                          ...project,
+                          completedTasksCount: allCompletedTasks.filter(
+                            task => task.project_id === project.id
+                          ).length,
+                        })) || []
+                    : projectData.map((project) => ({
+                        ...project,
+                        completedTasksCount: allCompletedTasks.filter(
+                          (task) => task.project_id === project.id
+                        ).length,
+                      })) || []}
                   loading={needsFullData}
                 />
               </div>
@@ -233,25 +294,37 @@ export default function Dashboard(): JSX.Element {
 
             <div className="lg:col-span-3 grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div
-                className={`lg:col-span-1 bg-gray-800 rounded-xl p-4 sm:p-6 shadow-lg ${needsFullData ? 'opacity-50' : ''
-                  }`}
+                className={`lg:col-span-1 bg-gray-800 rounded-xl p-4 sm:p-6 shadow-lg ${needsFullData ? 'opacity-50' : ''}`}
               >
                 <div className="flex items-center gap-2">
                   <h2 className="text-lg sm:text-xl font-semibold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
                     Daily Streak
                   </h2>
                 </div>
-                <CompletionStreak allData={data} />
+                <CompletionStreak 
+                  allData={{
+                    allCompletedTasks: selectedProjectIds.length > 0
+                      ? data?.allCompletedTasks?.filter(task => selectedProjectIds.includes(task.project_id)) || []
+                      : data?.allCompletedTasks || []
+                  }} 
+                />
               </div>
 
               <div
-                className={`lg:col-span-1 bg-gray-800 rounded-xl p-4 sm:p-6 shadow-lg ${needsFullData ? 'opacity-50' : ''
-                  }`}
+                className={`lg:col-span-1 bg-gray-800 rounded-xl p-4 sm:p-6 shadow-lg ${needsFullData ? 'opacity-50' : ''}`}
               >
                 <h2 className="text-lg sm:text-xl font-semibold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
                   Daily Activity Pattern
                 </h2>
-                <CompletedByTimeOfDay allData={data} loading={needsFullData} />
+                <CompletedByTimeOfDay 
+                  allData={{
+                    ...data,
+                    allCompletedTasks: selectedProjectIds.length > 0
+                      ? data?.allCompletedTasks?.filter(task => selectedProjectIds.includes(task.project_id)) || []
+                      : data?.allCompletedTasks || []
+                  }} 
+                  loading={needsFullData} 
+                />
               </div>
             </div>
           </div>
@@ -273,7 +346,14 @@ export default function Dashboard(): JSX.Element {
                 <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
               </div>
             ) : (
-              <TaskWordCloud tasks={[...activeTasks, ...allCompletedTasks]} />
+              <TaskWordCloud 
+                tasks={selectedProjectIds.length > 0
+                  ? [
+                      ...(activeTasks?.filter(task => selectedProjectIds.includes(task.projectId)) || []), 
+                      ...(allCompletedTasks?.filter(task => selectedProjectIds.includes(task.project_id)) || [])
+                    ]
+                  : [...(activeTasks || []), ...(allCompletedTasks || [])]} 
+              />
             )}
           </div>
         </div>

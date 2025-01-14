@@ -24,6 +24,12 @@ interface ProjectGroup {
   tasks: CompletedTask[];
 }
 
+const extractTagsAndContent = (content: string) => {
+  const tags = content.match(/@\S+/g) || [];
+  const cleanContent = content.replace(/@\S+/g, '').trim();
+  return { tags, cleanContent };
+};
+
 export default function Tasks({ getPageItems, projectData, groupByProject }: TasksProps) {
   const tasks = getPageItems();
 
@@ -45,6 +51,8 @@ export default function Tasks({ getPageItems, projectData, groupByProject }: Tas
       }))
       .sort((a, b) => (a.project?.projectName ?? '').localeCompare(b.project?.projectName ?? ''));
 
+
+    // View for printing
     return (
       <div className="flex flex-col gap-8 print:gap-12">
         {sortedProjects.map(({ project, tasks }) => (
@@ -70,20 +78,34 @@ export default function Tasks({ getPageItems, projectData, groupByProject }: Tas
                   <div className="flex items-center space-x-3 w-full">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
-                        <div className="pr-2 text-gray-300 group-hover:text-white transition-colors duration-200 print:text-gray-900">
-                          <ReactMarkdown
-                            unwrapDisallowed
-                            allowedElements={["span", "em", "a"]}
-                            className="break-words text-sm md:text-base print:text-base"
-                          >
-                            {task.content}
-                          </ReactMarkdown>
+                        <div className="flex flex-col">
+                          <div className="pr-2 text-gray-300 group-hover:text-white transition-colors duration-200 print:text-gray-900">
+                            <ReactMarkdown
+                              unwrapDisallowed
+                              allowedElements={["span", "em", "a"]}
+                              className="break-words text-sm md:text-base print:text-base"
+                            >
+                              {extractTagsAndContent(task.content).cleanContent}
+                            </ReactMarkdown>
+                          </div>
+                          {extractTagsAndContent(task.content).tags.length > 0 && (
+                            <div className="flex flex-wrap gap-2 mt-1">
+                              {extractTagsAndContent(task.content).tags.map((tag, index) => (
+                                <span
+                                  key={index}
+                                  className="px-2 py-0.5 text-xs bg-gray-500/30 text-gray-300 rounded-md"
+                                >
+                                  {tag}
+                                </span>
+                              ))}
+                            </div>
+                          )}
                         </div>
                         <div className="flex flex-col items-end justify-center">
                           <div className="text-xs text-gray-500 whitespace-nowrap print:text-gray-600">
                             <IoIosCheckmarkCircle className="inline text-lg mr-1" title="Done" />
-                            {new Date(task.completed_at).toLocaleDateString('en-US', { 
-                              month: 'short', 
+                            {new Date(task.completed_at).toLocaleDateString('en-US', {
+                              month: 'short',
                               day: 'numeric',
                               year: 'numeric',
                               hour: 'numeric',
@@ -128,20 +150,34 @@ export default function Tasks({ getPageItems, projectData, groupByProject }: Tas
               />
               <div className="flex-1 min-w-0">
                 <div className="flex flex-col sm:flex-row justify-between gap-y-2">
-                  <div className="pr-2 text-gray-300 group-hover:text-white transition-colors duration-200 print:text-gray-900">
-                    <ReactMarkdown
-                      unwrapDisallowed
-                      allowedElements={["span", "em", "a"]}
-                      className="my-[-0.4rem] break-words text-sm md:text-base print:text-base"
-                    >
-                      {task.content}
-                    </ReactMarkdown>
+                  <div className="flex flex-col">
+                    <div className="pr-2 text-gray-300 group-hover:text-white transition-colors duration-200 print:text-gray-900">
+                      <ReactMarkdown
+                        unwrapDisallowed
+                        allowedElements={["span", "em", "a"]}
+                        className="my-[-0.4rem] break-words text-sm md:text-base print:text-base"
+                      >
+                        {extractTagsAndContent(task.content).cleanContent}
+                      </ReactMarkdown>
+                    </div>
+                    {extractTagsAndContent(task.content).tags.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mt-1">
+                        {extractTagsAndContent(task.content).tags.map((tag, index) => (
+                          <span
+                            key={index}
+                            className="px-2 py-0.5 text-xs bg-gray-500/30 text-gray-300 rounded-md"
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </div>
                   <div className="flex flex-col sm:items-end justify-center">
                     <div className="text-xs text-gray-300 whitespace-nowrap print:inline">
                       <IoIosCheckmarkCircle className="inline text-lg mr-1" title="Done" />
-                      {new Date(task.completed_at).toLocaleDateString('en-US', { 
-                        month: 'short', 
+                      {new Date(task.completed_at).toLocaleDateString('en-US', {
+                        month: 'short',
                         day: 'numeric',
                         year: 'numeric',
                         hour: 'numeric',
