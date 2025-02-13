@@ -17,7 +17,7 @@ const Legal: NextPage = () => {
           Back
         </Link>
         <h1 className="text-2xl font-bold mb-0">About & Legal Information</h1>
-        <span className="text-sm text-gray-400">Last updated: 11/30/2024</span>
+        <span className="text-sm text-gray-400">Last updated: 2/13/2025</span>
 
         <section className="my-12">
           <h2 className="text-xl font-semibold mb-4">About Todoist Dashboard</h2>
@@ -53,6 +53,30 @@ const Legal: NextPage = () => {
                 <strong>Open Source Transparency:</strong> Todoist Dashboard is an open-source project; its codebase is publicly available for transparency and trust.
               </li>
             </ul>
+          </div>
+        </section>
+
+        <section className="my-12">
+          <h2 className="text-xl font-semibold mb-4">Analytics</h2>
+          <div className="space-y-4">
+            <p>
+              I use Umami Analytics to track general user interactions on this site.
+              This data is anonymous and does not collect or store personally identifiable information of any kind.
+              The information gathered helps me understand website usage patterns to improve the user experience.
+            </p>
+            <p>
+              Umami Analytics tracks data such as:
+            </p>
+            <ul className="list-disc pl-5 space-y-2">
+              <li>Page views and visited URLs</li>
+              <li>Referring websites and search engines</li>
+              <li>Device types (e.g., mobile or desktop)</li>
+              <li>Browser and operating system information</li>
+              <li>Geographical location (at the country level)</li>
+            </ul>
+            <p>
+              Umami Analytics does not use cookies to collect personal data, and I do not, and will never, share any data collected with third parties.
+            </p>
           </div>
         </section>
 
