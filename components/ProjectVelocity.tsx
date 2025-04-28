@@ -2,9 +2,10 @@ import React from 'react';
 import ReactECharts from 'echarts-for-react';
 import { EChartsOption, BarSeriesOption } from 'echarts';
 import { format } from 'date-fns';
-import { CompletedTask, ProjectData } from '../types';
+import { CompletedTask, ProjectData, TodoistColor } from '../types';
 import { calculateProjectVelocity, VelocityData } from '../utils/calculateProjectVelocity';
 import { FiArrowUp, FiArrowDown } from 'react-icons/fi';
+import { colorNameToHex } from '../utils/projectUtils';
 
 interface ProjectVelocityProps {
   completedTasks: CompletedTask[];
@@ -65,6 +66,8 @@ export default function ProjectVelocity({
   // Prepare data for stacked bar chart
   const series: BarSeriesOption[] = limitedProjectIds.map(projectId => {
     const projectName = projectNames[projectId] || 'Unknown';
+    const projectColor = projectData.find(p => p.id === projectId)?.color as TodoistColor || 'grey' as TodoistColor;
+    const colorHex = colorNameToHex(projectColor) || '#b8b8b8';
     
     const data = velocityData.projectData.map(periodData => {
       const projectItem = periodData.find(item => item.projectId === projectId);
@@ -78,7 +81,10 @@ export default function ProjectVelocity({
       emphasis: {
         focus: 'series'
       },
-      data
+      data,
+      itemStyle: {
+        color: colorHex
+      }
     };
   });
 
