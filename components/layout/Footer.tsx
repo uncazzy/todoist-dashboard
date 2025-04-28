@@ -3,6 +3,7 @@ import Link from "next/link";
 import { CiCoffeeCup } from "react-icons/ci";
 import { MdFeedback } from "react-icons/md";
 import { FaXTwitter } from "react-icons/fa6";
+import VersionInfo from "../shared/VersionInfo";
 
 const Footer: React.FC = () => {
   return (
@@ -11,6 +12,7 @@ const Footer: React.FC = () => {
         <p className="text-sm text-gray-500 pb-0">
           &copy; {new Date().getFullYear()} Todoist Dashboard{' '}
           <Link href="/legal" className="hover:text-gray-400">Legal & About</Link>
+          {' · '}<VersionInfo />
         </p>
         <div className="flex items-center gap-4 mt-2">          
           <a href="mailto:todoist-dashboard@azzy.cloud?subject=Todoist%20Dashboard%20Feedback" target="_blank" rel="noopener noreferrer" title="Provide feedback, suggestions, or bug reports" className="text-gray-500 hover:text-gray-400">
