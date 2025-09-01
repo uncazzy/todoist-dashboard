@@ -2,10 +2,17 @@ import React, { useState } from 'react';
 import { FaTimes } from 'react-icons/fa';
 
 // Current version number
-const APP_VERSION = '0.7.0';
+const APP_VERSION = '0.8.0';
 
 // Changelog entries - newest first
 const CHANGELOG = [
+  {
+    version: '0.8.0',
+    date: 'September 2025',
+    changes: [
+      'Upgraded Next.js to v15.5.2',
+    ]
+  },
   {
     version: '0.7.0',
     date: 'April 2025',
