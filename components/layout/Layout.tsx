@@ -1,5 +1,6 @@
 import React from 'react';
 import { useSession } from 'next-auth/react';
+import Script from 'next/script';
 import Head from 'next/head';
 import Header from './Header';
 import Footer from './Footer';
@@ -29,10 +30,10 @@ const Layout: React.FC<LayoutProps> = ({
           rel="icon"
           href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📊</text></svg>"
         />
-
-        <script defer src="https://umami.azzy.cloud/cigla" data-website-id="ecce6f4d-ec1e-4e58-ac9a-2add9aa988b9"></script>
-
       </Head>
+      
+      <Script defer src="https://umami.azzy.cloud/cigla" data-website-id="ecce6f4d-ec1e-4e58-ac9a-2add9aa988b9" />
+
       <div className="min-h-screen flex flex-col text-white">
         <Header user={session?.user || null} />
         <main className="flex-1 container mx-auto px-4 pb-8">
