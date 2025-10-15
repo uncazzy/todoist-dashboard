@@ -24,10 +24,14 @@ import ProjectPicker from './ProjectPicker';
 import TaskLeadTime from './TaskLeadTime';
 import ProjectVelocity from './ProjectVelocity';
 import CompletionHeatmap from './CompletionHeatmap';
+import ExportButton from './Export/ExportButton';
+import ExportModal from './Export/ExportModal';
+import { useExportSection } from '../hooks/useExportManager';
 
 export default function Dashboard(): JSX.Element {
   const { status } = useSession();
   const [selectedProjectIds, setSelectedProjectIds] = useState<string[]>([]);
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const {
     data,
     isLoading,
@@ -36,6 +40,19 @@ export default function Dashboard(): JSX.Element {
     isLoadingFromCache,
     refreshData
   } = useDashboardData();
+
+  // Register export sections
+  const quickStatsRef = useExportSection('quick-stats', 'Quick Stats');
+  const insightsRef = useExportSection('insights', 'Insights');
+  const projectVelocityRef = useExportSection('project-velocity', 'Project Velocity & Focus Shifts');
+  const recentlyCompletedNeglectedRef = useExportSection('recently-completed-neglected', 'Recently Completed & Neglected Tasks');
+  const recurringTasksRef = useExportSection('recurring-tasks', 'Recurring Tasks');
+  const taskManagementRef = useExportSection('task-management', 'Tasks by Priority & Active Tasks by Project');
+  const completedTasksRef = useExportSection('completed-tasks', 'Completed Tasks Over Time & By Project');
+  const completionHeatmapRef = useExportSection('completion-heatmap', 'Completion Patterns Heatmap');
+  const dailyStatsRef = useExportSection('daily-stats', 'Daily Streak & Activity Pattern');
+  const taskLeadTimeRef = useExportSection('task-lead-time', 'Task Lead Time Analysis');
+  const taskTopicsRef = useExportSection('task-topics', 'Task Topics');
 
   if (status !== 'authenticated') {
     return (
@@ -127,13 +144,19 @@ export default function Dashboard(): JSX.Element {
                   Your productivity at a glance
                 </p>
               </div>
-              {data?.projectData && (
-                <ProjectPicker
-                  projects={data.projectData}
-                  selectedProjectIds={selectedProjectIds}
-                  onProjectSelect={setSelectedProjectIds}
+              <div className="flex items-center">
+                {data?.projectData && (
+                  <ProjectPicker
+                    projects={data.projectData}
+                    selectedProjectIds={selectedProjectIds}
+                    onProjectSelect={setSelectedProjectIds}
+                  />
+                )}
+                <ExportButton
+                  onClick={() => setIsExportModalOpen(true)}
+                  disabled={isLoading || !data}
                 />
-              )}
+              </div>
             </div>
           </header>
 
@@ -148,19 +171,21 @@ export default function Dashboard(): JSX.Element {
           />
 
           {/* Quick Stats */}
-          <QuickStats
-            activeTasks={filteredActiveTasks}
-            projectCount={selectedProjectIds.length || data?.projectData?.length || 0}
-            totalCompletedTasks={filteredCompletedTasks.length}
-            karma={data?.karma || 0}
-            karmaTrend={data?.karmaTrend || 'none'}
-            karmaRising={data?.karmaRising || false}
-          />
+          <div ref={quickStatsRef}>
+            <QuickStats
+              activeTasks={filteredActiveTasks}
+              projectCount={selectedProjectIds.length || data?.projectData?.length || 0}
+              totalCompletedTasks={filteredCompletedTasks.length}
+              karma={data?.karma || 0}
+              karmaTrend={data?.karmaTrend || 'none'}
+              karmaRising={data?.karmaRising || false}
+            />
+          </div>
 
           {/* Main Content Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
             {/* Insights Section */}
-            <div className="lg:col-span-3">
+            <div className="lg:col-span-3" ref={insightsRef}>
               <Insights
                 allData={{
                   ...data,
@@ -173,7 +198,7 @@ export default function Dashboard(): JSX.Element {
             </div>
 
             {/* Project Velocity & Focus Drift */}
-            <div className="lg:col-span-3 bg-gray-800 rounded-xl p-4 sm:p-6 shadow-lg">
+            <div className="lg:col-span-3 bg-gray-800 rounded-xl p-4 sm:p-6 shadow-lg" ref={projectVelocityRef}>
               <h2 className="text-lg sm:text-xl font-semibold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
                 Project Velocity & Focus Shifts
                 <QuestionMark content="Shows how your focus shifts between projects over time. Analyze your project velocity (tasks completed per period) and focus drift (percentage of total effort per project)." />
@@ -185,33 +210,34 @@ export default function Dashboard(): JSX.Element {
               />
             </div>
 
-            {/* Two Column Layout for Tasks Overview */}
-            <div className="lg:col-span-2 bg-gray-800 rounded-xl p-4 sm:p-6 shadow-lg">
-              <h2 className="text-lg sm:text-xl font-semibold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
-                Recently Completed <span className="text-white">✅</span>
-              </h2>
-              <RecentlyCompletedList
-                allData={{
-                  ...data,
-                  allCompletedTasks: filteredCompletedTasks
-                }}
-              />
-            </div>
+            {/* Recently Completed and Neglected Tasks - 2 Column Layout */}
+            <div className="lg:col-span-3 grid grid-cols-1 sm:grid-cols-2 gap-6" ref={recentlyCompletedNeglectedRef}>
+              <div className="bg-gray-800 rounded-xl p-4 sm:p-6 shadow-lg">
+                <h2 className="text-lg sm:text-xl font-semibold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
+                  Recently Completed <span className="text-white">✅</span>
+                </h2>
+                <RecentlyCompletedList
+                  allData={{
+                    ...data,
+                    allCompletedTasks: filteredCompletedTasks
+                  }}
+                />
+              </div>
 
-            {/* Neglected Tasks Section */}
-            <div className="bg-gray-800 rounded-xl p-4 sm:p-6 shadow-lg">
-              <h2 className="text-lg sm:text-xl font-semibold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500 my-2">
-                Neglected Tasks
-                <QuestionMark content="Tasks that have been on your list the longest without being completed. Consider reviewing these tasks to either complete them, reschedule, or remove if no longer relevant." />
-              </h2>
-              <NeglectedTasks
-                activeTasks={filteredActiveTasks}
-                projectData={projectData}
-              />
+              <div className="bg-gray-800 rounded-xl p-4 sm:p-6 shadow-lg">
+                <h2 className="text-lg sm:text-xl font-semibold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500 my-2">
+                  Neglected Tasks
+                  <QuestionMark content="Tasks that have been on your list the longest without being completed. Consider reviewing these tasks to either complete them, reschedule, or remove if no longer relevant." />
+                </h2>
+                <NeglectedTasks
+                  activeTasks={filteredActiveTasks}
+                  projectData={projectData}
+                />
+              </div>
             </div>
 
             {/* Recurring Tasks Section */}
-            <div className="md:col-span-3 bg-gray-800 rounded-lg">
+            <div className="md:col-span-3 bg-gray-800 rounded-lg" ref={recurringTasksRef}>
               <div className="flex items-center">
                 <Tooltip content="Track your recurring tasks and habits. View completion rates, streaks, and trends.">
                   <BsQuestionCircle className="w-5 h-5 text-gray-400" />
@@ -229,11 +255,9 @@ export default function Dashboard(): JSX.Element {
               )}
             </div>
 
-            {/* Task Management Section */}
-            <div className="lg:col-span-3 grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <div
-                className={`lg:col-span-1 bg-gray-800 rounded-xl p-4 sm:p-6 shadow-lg ${needsFullData ? 'opacity-50' : ''}`}
-              >
+            {/* Task Management Section - 2 Column Layout */}
+            <div className="lg:col-span-3 grid grid-cols-1 sm:grid-cols-2 gap-6" ref={taskManagementRef}>
+              <div className={`bg-gray-800 rounded-xl p-4 sm:p-6 shadow-lg ${needsFullData ? 'opacity-50' : ''}`}>
                 <h2 className="text-lg sm:text-xl font-semibold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
                   Tasks by Priority
                 </h2>
@@ -243,9 +267,7 @@ export default function Dashboard(): JSX.Element {
                 />
               </div>
 
-              <div
-                className={`lg:col-span-1 bg-gray-800 rounded-xl p-4 sm:p-6 shadow-lg ${needsFullData ? 'opacity-50' : ''}`}
-              >
+              <div className={`bg-gray-800 rounded-xl p-4 sm:p-6 shadow-lg ${needsFullData ? 'opacity-50' : ''}`}>
                 <h2 className="text-lg sm:text-xl font-semibold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
                   Active Tasks by Project
                 </h2>
@@ -257,11 +279,9 @@ export default function Dashboard(): JSX.Element {
               </div>
             </div>
 
-            {/* Completed Tasks over time and by project */}
-            <div className="lg:col-span-3 grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <div
-                className={`bg-gray-800 rounded-xl p-4 sm:p-6 shadow-lg ${needsFullData ? 'opacity-50' : ''}`}
-              >
+            {/* Completed Tasks over time and by project - 2 Column Layout */}
+            <div className="lg:col-span-3 grid grid-cols-1 sm:grid-cols-2 gap-6" ref={completedTasksRef}>
+              <div className={`bg-gray-800 rounded-xl p-4 sm:p-6 shadow-lg ${needsFullData ? 'opacity-50' : ''}`}>
                 <h2 className="text-lg sm:text-xl font-semibold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
                   Completed Tasks Over Time
                 </h2>
@@ -288,7 +308,7 @@ export default function Dashboard(): JSX.Element {
             </div>
 
             {/* Completion Heatmap */}
-            <div className="lg:col-span-3 bg-gray-800 rounded-xl p-4 sm:p-6 shadow-lg">
+            <div className="lg:col-span-3 bg-gray-800 rounded-xl p-4 sm:p-6 shadow-lg" ref={completionHeatmapRef}>
               <h2 className="text-lg sm:text-xl font-semibold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
                 Completion Patterns Heatmap
                 <QuestionMark content="Visualization of when you typically complete tasks by day of week and time of day. Identify your most productive times and optimize your schedule accordingly." />
@@ -299,10 +319,9 @@ export default function Dashboard(): JSX.Element {
               />
             </div>
 
-            <div className="lg:col-span-3 grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <div
-                className={`lg:col-span-1 bg-gray-800 rounded-xl p-4 sm:p-6 shadow-lg ${needsFullData ? 'opacity-50' : ''}`}
-              >
+            {/* Daily Stats - 2 Column Layout */}
+            <div className="lg:col-span-3 grid grid-cols-1 sm:grid-cols-2 gap-6" ref={dailyStatsRef}>
+              <div className={`bg-gray-800 rounded-xl p-4 sm:p-6 shadow-lg ${needsFullData ? 'opacity-50' : ''}`}>
                 <div className="flex items-center gap-2">
                   <h2 className="text-lg sm:text-xl font-semibold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
                     Daily Streak
@@ -315,9 +334,7 @@ export default function Dashboard(): JSX.Element {
                 />
               </div>
 
-              <div
-                className={`lg:col-span-1 bg-gray-800 rounded-xl p-4 sm:p-6 shadow-lg ${needsFullData ? 'opacity-50' : ''}`}
-              >
+              <div className={`bg-gray-800 rounded-xl p-4 sm:p-6 shadow-lg ${needsFullData ? 'opacity-50' : ''}`}>
                 <h2 className="text-lg sm:text-xl font-semibold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
                   Daily Activity Pattern
                 </h2>
@@ -333,7 +350,7 @@ export default function Dashboard(): JSX.Element {
           </div>
 
           {/* Task Lead Time Analysis */}
-          <div className="lg:col-span-3 bg-gray-800 rounded-xl p-4 sm:p-6 shadow-lg">
+          <div className="lg:col-span-3 bg-gray-800 rounded-xl p-4 sm:p-6 shadow-lg" ref={taskLeadTimeRef}>
             <h2 className="text-lg sm:text-xl font-semibold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
               Task Lead Time Analysis
               <QuestionMark content="Cycle time analysis showing how long tasks take from creation to completion. This helps identify bottlenecks in your workflow and set expectations for different types of tasks." />
@@ -346,7 +363,7 @@ export default function Dashboard(): JSX.Element {
           </div>
 
           {/* Task Topics Section */}
-          <div className="bg-gray-800 rounded-lg p-6 my-6">
+          <div className="bg-gray-800 rounded-lg p-6 my-6" ref={taskTopicsRef}>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg sm:text-xl font-semibold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
                 Task Topics
@@ -372,6 +389,12 @@ export default function Dashboard(): JSX.Element {
           id="dashboard-tooltip"
           place="top"
           className="max-w-xs text-center"
+        />
+
+        {/* Export Modal */}
+        <ExportModal
+          isOpen={isExportModalOpen}
+          onClose={() => setIsExportModalOpen(false)}
         />
       </div>
     </Layout>

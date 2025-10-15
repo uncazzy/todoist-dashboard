@@ -52,7 +52,6 @@ const SignIn: NextPage = () => {
       console.error('Auth error:', router.query.error);
       setIsLoading(false);
     } else if (router.query.code && !isLoading) {
-      console.log('Got code, attempting sign in...');
       handleSignIn();
     }
   }, [router, session, isLoading]);
@@ -64,7 +63,6 @@ const SignIn: NextPage = () => {
         redirect: false,
         callbackUrl: "/",
       });
-      console.log('Sign in result:', result);
       if (result?.error) {
         // Handle sign-in error
         setIsLoading(false);

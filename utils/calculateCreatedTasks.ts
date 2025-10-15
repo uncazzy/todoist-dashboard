@@ -6,7 +6,6 @@ interface CreatedTasks {
 
 export function calculateCreatedTasks(tasks: CompletedTask[] | null): CreatedTasks {
   if (!tasks || tasks.length === 0) {
-    console.log('No tasks provided');
     return { weeklyTasks: new Array(7).fill(0) };
   }
 
