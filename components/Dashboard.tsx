@@ -45,16 +45,12 @@ export default function Dashboard(): JSX.Element {
   const quickStatsRef = useExportSection('quick-stats', 'Quick Stats');
   const insightsRef = useExportSection('insights', 'Insights');
   const projectVelocityRef = useExportSection('project-velocity', 'Project Velocity & Focus Shifts');
-  const recentlyCompletedRef = useExportSection('recently-completed', 'Recently Completed Tasks');
-  const neglectedTasksRef = useExportSection('neglected-tasks', 'Neglected Tasks');
+  const recentlyCompletedNeglectedRef = useExportSection('recently-completed-neglected', 'Recently Completed & Neglected Tasks');
   const recurringTasksRef = useExportSection('recurring-tasks', 'Recurring Tasks');
-  const taskPriorityRef = useExportSection('task-priority', 'Tasks by Priority');
-  const activeTasksRef = useExportSection('active-tasks', 'Active Tasks by Project');
-  const completedOverTimeRef = useExportSection('completed-over-time', 'Completed Tasks Over Time');
-  const completedByProjectRef = useExportSection('completed-by-project', 'Completed Tasks by Project');
+  const taskManagementRef = useExportSection('task-management', 'Tasks by Priority & Active Tasks by Project');
+  const completedTasksRef = useExportSection('completed-tasks', 'Completed Tasks Over Time & By Project');
   const completionHeatmapRef = useExportSection('completion-heatmap', 'Completion Patterns Heatmap');
-  const dailyStreakRef = useExportSection('daily-streak', 'Daily Streak');
-  const dailyActivityRef = useExportSection('daily-activity', 'Daily Activity Pattern');
+  const dailyStatsRef = useExportSection('daily-stats', 'Daily Streak & Activity Pattern');
   const taskLeadTimeRef = useExportSection('task-lead-time', 'Task Lead Time Analysis');
   const taskTopicsRef = useExportSection('task-topics', 'Task Topics');
 
@@ -148,7 +144,7 @@ export default function Dashboard(): JSX.Element {
                   Your productivity at a glance
                 </p>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center">
                 {data?.projectData && (
                   <ProjectPicker
                     projects={data.projectData}
@@ -214,29 +210,30 @@ export default function Dashboard(): JSX.Element {
               />
             </div>
 
-            {/* Two Column Layout for Tasks Overview */}
-            <div className="lg:col-span-2 bg-gray-800 rounded-xl p-4 sm:p-6 shadow-lg" ref={recentlyCompletedRef}>
-              <h2 className="text-lg sm:text-xl font-semibold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
-                Recently Completed <span className="text-white">✅</span>
-              </h2>
-              <RecentlyCompletedList
-                allData={{
-                  ...data,
-                  allCompletedTasks: filteredCompletedTasks
-                }}
-              />
-            </div>
+            {/* Recently Completed and Neglected Tasks - 2 Column Layout */}
+            <div className="lg:col-span-3 grid grid-cols-1 sm:grid-cols-2 gap-6" ref={recentlyCompletedNeglectedRef}>
+              <div className="bg-gray-800 rounded-xl p-4 sm:p-6 shadow-lg">
+                <h2 className="text-lg sm:text-xl font-semibold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
+                  Recently Completed <span className="text-white">✅</span>
+                </h2>
+                <RecentlyCompletedList
+                  allData={{
+                    ...data,
+                    allCompletedTasks: filteredCompletedTasks
+                  }}
+                />
+              </div>
 
-            {/* Neglected Tasks Section */}
-            <div className="bg-gray-800 rounded-xl p-4 sm:p-6 shadow-lg" ref={neglectedTasksRef}>
-              <h2 className="text-lg sm:text-xl font-semibold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500 my-2">
-                Neglected Tasks
-                <QuestionMark content="Tasks that have been on your list the longest without being completed. Consider reviewing these tasks to either complete them, reschedule, or remove if no longer relevant." />
-              </h2>
-              <NeglectedTasks
-                activeTasks={filteredActiveTasks}
-                projectData={projectData}
-              />
+              <div className="bg-gray-800 rounded-xl p-4 sm:p-6 shadow-lg">
+                <h2 className="text-lg sm:text-xl font-semibold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500 my-2">
+                  Neglected Tasks
+                  <QuestionMark content="Tasks that have been on your list the longest without being completed. Consider reviewing these tasks to either complete them, reschedule, or remove if no longer relevant." />
+                </h2>
+                <NeglectedTasks
+                  activeTasks={filteredActiveTasks}
+                  projectData={projectData}
+                />
+              </div>
             </div>
 
             {/* Recurring Tasks Section */}
@@ -258,12 +255,9 @@ export default function Dashboard(): JSX.Element {
               )}
             </div>
 
-            {/* Task Management Section */}
-            <div className="lg:col-span-3 grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <div
-                className={`lg:col-span-1 bg-gray-800 rounded-xl p-4 sm:p-6 shadow-lg ${needsFullData ? 'opacity-50' : ''}`}
-                ref={taskPriorityRef}
-              >
+            {/* Task Management Section - 2 Column Layout */}
+            <div className="lg:col-span-3 grid grid-cols-1 sm:grid-cols-2 gap-6" ref={taskManagementRef}>
+              <div className={`bg-gray-800 rounded-xl p-4 sm:p-6 shadow-lg ${needsFullData ? 'opacity-50' : ''}`}>
                 <h2 className="text-lg sm:text-xl font-semibold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
                   Tasks by Priority
                 </h2>
@@ -273,10 +267,7 @@ export default function Dashboard(): JSX.Element {
                 />
               </div>
 
-              <div
-                className={`lg:col-span-1 bg-gray-800 rounded-xl p-4 sm:p-6 shadow-lg ${needsFullData ? 'opacity-50' : ''}`}
-                ref={activeTasksRef}
-              >
+              <div className={`bg-gray-800 rounded-xl p-4 sm:p-6 shadow-lg ${needsFullData ? 'opacity-50' : ''}`}>
                 <h2 className="text-lg sm:text-xl font-semibold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
                   Active Tasks by Project
                 </h2>
@@ -288,12 +279,9 @@ export default function Dashboard(): JSX.Element {
               </div>
             </div>
 
-            {/* Completed Tasks over time and by project */}
-            <div className="lg:col-span-3 grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <div
-                className={`bg-gray-800 rounded-xl p-4 sm:p-6 shadow-lg ${needsFullData ? 'opacity-50' : ''}`}
-                ref={completedOverTimeRef}
-              >
+            {/* Completed Tasks over time and by project - 2 Column Layout */}
+            <div className="lg:col-span-3 grid grid-cols-1 sm:grid-cols-2 gap-6" ref={completedTasksRef}>
+              <div className={`bg-gray-800 rounded-xl p-4 sm:p-6 shadow-lg ${needsFullData ? 'opacity-50' : ''}`}>
                 <h2 className="text-lg sm:text-xl font-semibold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
                   Completed Tasks Over Time
                 </h2>
@@ -303,7 +291,7 @@ export default function Dashboard(): JSX.Element {
                 />
               </div>
 
-              <div className={`flex flex-col bg-gray-800 rounded-xl p-4 sm:p-6 shadow-lg ${needsFullData ? 'opacity-50' : ''}`} ref={completedByProjectRef}>
+              <div className={`flex flex-col bg-gray-800 rounded-xl p-4 sm:p-6 shadow-lg ${needsFullData ? 'opacity-50' : ''}`}>
                 <h2 className="text-lg sm:text-xl font-semibold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
                   Completed Tasks by Project
                 </h2>
@@ -331,11 +319,9 @@ export default function Dashboard(): JSX.Element {
               />
             </div>
 
-            <div className="lg:col-span-3 grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <div
-                className={`lg:col-span-1 bg-gray-800 rounded-xl p-4 sm:p-6 shadow-lg ${needsFullData ? 'opacity-50' : ''}`}
-                ref={dailyStreakRef}
-              >
+            {/* Daily Stats - 2 Column Layout */}
+            <div className="lg:col-span-3 grid grid-cols-1 sm:grid-cols-2 gap-6" ref={dailyStatsRef}>
+              <div className={`bg-gray-800 rounded-xl p-4 sm:p-6 shadow-lg ${needsFullData ? 'opacity-50' : ''}`}>
                 <div className="flex items-center gap-2">
                   <h2 className="text-lg sm:text-xl font-semibold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
                     Daily Streak
@@ -348,10 +334,7 @@ export default function Dashboard(): JSX.Element {
                 />
               </div>
 
-              <div
-                className={`lg:col-span-1 bg-gray-800 rounded-xl p-4 sm:p-6 shadow-lg ${needsFullData ? 'opacity-50' : ''}`}
-                ref={dailyActivityRef}
-              >
+              <div className={`bg-gray-800 rounded-xl p-4 sm:p-6 shadow-lg ${needsFullData ? 'opacity-50' : ''}`}>
                 <h2 className="text-lg sm:text-xl font-semibold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
                   Daily Activity Pattern
                 </h2>

@@ -1,8 +1,6 @@
 import React from 'react';
-import Link from 'next/link';
 import { BsCalendar3 } from 'react-icons/bs';
 import { IoIosCheckmarkCircle, IoMdTrendingUp } from 'react-icons/io';
-import { FaArrowRight } from 'react-icons/fa';
 import { ActiveTask } from '../../types';
 import { calculateStats } from './utils/index';
 
@@ -61,22 +59,13 @@ const RecurringTasksPreview: React.FC<RecurringTasksPreviewProps> = ({
           <div className="mt-2 text-2xl font-semibold">{completedRecurringTasks}</div>
         </div>
 
-        <Link
-          href="/recurring"
-          className="group bg-gray-900/50 p-4 rounded-lg transition-all duration-200 no-underline hover:bg-gray-900/70 hover:-translate-y-0.5 hover:shadow-md"
-        >
+        <div className="bg-gray-900/50 p-4 rounded-lg">
           <div className="flex items-center gap-2 text-gray-400">
             <IoMdTrendingUp className="text-lg" />
             <span>Avg. Completion Rate</span>
           </div>
-          <div className="flex items-center justify-between">
-            <span className="text-2xl font-semibold">{averageCompletionRate}%</span>
-            <span className="text-sm text-blue-400/80 group-hover:text-blue-400 flex items-center gap-1">
-              More
-              <FaArrowRight className="w-3 h-3 transform group-hover:translate-x-0.5 transition-transform duration-200" />
-            </span>
-          </div>
-        </Link>
+          <div className="mt-2 text-2xl font-semibold">{averageCompletionRate}%</div>
+        </div>
       </div>
     </div>
   );
