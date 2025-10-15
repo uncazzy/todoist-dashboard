@@ -8,9 +8,11 @@ const APP_VERSION = '0.8.0';
 const CHANGELOG = [
   {
     version: '0.8.0',
-    date: 'September 2025',
+    date: 'October 2025',
     changes: [
+      'Added HTML export feature with section selection',
       'Upgraded Next.js to v15.5.2',
+      'Upgraded Axios to v1.12.2',
     ]
   },
   {
