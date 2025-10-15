@@ -25,6 +25,7 @@ export function ExportProvider({ children }: { children: React.ReactNode }) {
   const [exportProgress, setExportProgress] = useState<ExportProgress | null>(null);
   const [isExporting, setIsExporting] = useState(false);
   const sectionsRef = useRef<Map<string, ExportSection>>(new Map());
+  const resetTimeoutRef = useRef<number | null>(null);
 
   /**
    * Register a section for export
@@ -89,14 +90,25 @@ export function ExportProvider({ children }: { children: React.ReactNode }) {
         });
       } finally {
         // Reset after a delay to show completion message
-        setTimeout(() => {
+        resetTimeoutRef.current = window.setTimeout(() => {
           setIsExporting(false);
           setExportProgress(null);
+          resetTimeoutRef.current = null;
         }, 2000);
       }
     },
     []
   );
+
+  // Cleanup timeout on unmount
+  React.useEffect(() => {
+    return () => {
+      if (resetTimeoutRef.current) {
+        clearTimeout(resetTimeoutRef.current);
+        resetTimeoutRef.current = null;
+      }
+    };
+  }, []);
 
   const value: ExportManagerContextType = {
     sections,
