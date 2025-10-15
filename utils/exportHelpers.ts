@@ -526,6 +526,18 @@ export function removeInteractiveElements(element: HTMLElement): void {
 
   // Remove inputs
   element.querySelectorAll('input').forEach(input => input.remove());
+
+  // Convert links to non-interactive spans (preserves content and styling)
+  element.querySelectorAll('a').forEach(link => {
+    const div = document.createElement('div');
+    div.className = link.className;
+    div.innerHTML = link.innerHTML;
+    // Copy inline styles if any
+    if (link.hasAttribute('style')) {
+      div.setAttribute('style', link.getAttribute('style') || '');
+    }
+    link.parentNode?.replaceChild(div, link);
+  });
 }
 
 /**
