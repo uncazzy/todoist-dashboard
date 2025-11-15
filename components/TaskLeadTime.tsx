@@ -15,7 +15,7 @@ export default function TaskLeadTime({ completedTasks, activeTasks, loading = fa
   if (loading || !completedTasks || completedTasks.length === 0) {
     return (
       <div className="flex items-center justify-center h-[300px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-400"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-warm-peach"></div>
       </div>
     );
   }
@@ -104,31 +104,11 @@ export default function TaskLeadTime({ completedTasks, activeTasks, loading = fa
         data: stats.buckets.map(bucket => bucket.count),
         itemStyle: {
           borderRadius: [4, 4, 0, 0],
-          color: {
-            type: 'linear',
-            x: 0,
-            y: 0,
-            x2: 0,
-            y2: 1,
-            colorStops: [
-              { offset: 0, color: '#7c3aed' },  // purple-600
-              { offset: 1, color: '#8b5cf6' }   // purple-500
-            ]
-          }
+          color: '#FF9B71'  // warm-peach
         },
         emphasis: {
           itemStyle: {
-            color: {
-              type: 'linear',
-              x: 0,
-              y: 0,
-              x2: 0,
-              y2: 1,
-              colorStops: [
-                { offset: 0, color: '#8b5cf6' },  // purple-500
-                { offset: 1, color: '#a78bfa' }   // purple-400
-              ]
-            }
+            color: '#FFB599'  // lighter warm-peach
           }
         }
       }
@@ -138,13 +118,13 @@ export default function TaskLeadTime({ completedTasks, activeTasks, loading = fa
   return (
     <div className="flex flex-col">
       <div className="mb-4 grid grid-cols-2 gap-4">
-        <div className="bg-gray-700/30 rounded-lg p-4 text-center">
-          <div className="text-xs text-gray-400 mb-1">Average Lead Time</div>
-          <div className="text-2xl font-bold text-purple-400">{formattedAvg} days</div>
+        <div className="bg-warm-card/50 border border-warm-border rounded-2xl p-4 text-center">
+          <div className="text-xs text-warm-gray mb-1">Average Lead Time</div>
+          <div className="text-2xl font-bold text-warm-peach">{formattedAvg} days</div>
         </div>
-        <div className="bg-gray-700/30 rounded-lg p-4 text-center">
-          <div className="text-xs text-gray-400 mb-1">Median Lead Time</div>
-          <div className="text-2xl font-bold text-purple-400">{formattedMedian} days</div>
+        <div className="bg-warm-card/50 border border-warm-border rounded-2xl p-4 text-center">
+          <div className="text-xs text-warm-gray mb-1">Median Lead Time</div>
+          <div className="text-2xl font-bold text-warm-sage">{formattedMedian} days</div>
         </div>
       </div>
       
@@ -156,7 +136,7 @@ export default function TaskLeadTime({ completedTasks, activeTasks, loading = fa
         />
       </div>
       
-      <div className="mt-2 text-xs text-gray-400 text-center">
+      <div className="mt-2 text-xs text-warm-gray text-center">
         Based on {stats.totalTasks} tasks with valid creation and completion data
       </div>
     </div>

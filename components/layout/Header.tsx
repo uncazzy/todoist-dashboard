@@ -8,24 +8,20 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ user }) => {
   return (
-    <div className="container mx-auto flex justify-end py-8 px-4">
-      <nav>
-        <section className="flex justify-end items-center">
+    <div className="border-b border-warm-border bg-warm-black">
+      <div className="container mx-auto flex justify-end items-center py-4 px-6">
+        {user && (
           <div className="flex items-center gap-4">
-            {user && (
-              <>
-                <span className="text-gray-700">{user.email}</span>
-                <button
-                  onClick={() => signOut()}
-                  className="px-4 py-2 text-sm text-white bg-red-500 rounded hover:bg-red-600"
-                >
-                  Sign Out
-                </button>
-              </>
-            )}
+            <span className="text-sm text-warm-gray">{user.email}</span>
+            <button
+              onClick={() => signOut()}
+              className="px-4 py-2 text-sm text-white bg-warm-peach rounded-xl hover:opacity-90 transition-opacity font-medium"
+            >
+              Sign Out
+            </button>
           </div>
-        </section>
-      </nav>
+        )}
+      </div>
     </div>
   );
 };

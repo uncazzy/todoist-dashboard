@@ -68,7 +68,7 @@ type QuestionMarkProps = {
 
 const QuestionMark: React.FC<QuestionMarkProps> = memo(({ content }) => (
   <BsQuestionCircle
-    className="inline-block ml-2 text-gray-400 hover:text-gray-300 cursor-help"
+    className="inline-block ml-2 text-warm-gray hover:text-white cursor-help"
     data-tooltip-id="insights-tooltip"
     data-tooltip-content={content}
   />
@@ -87,15 +87,15 @@ type MetricCardProps = {
 const MetricCard: React.FC<MetricCardProps> = memo(
   ({ icon, title, value, subtext, tooltipContent }) => (
     <div
-      className="flex flex-col items-center p-4 bg-gray-800 rounded-lg cursor-help"
+      className="flex flex-col items-center p-4 bg-warm-hover border border-warm-border rounded-2xl cursor-help hover:bg-warm-card transition-colors"
       data-tooltip-id="insights-tooltip"
       data-tooltip-content={tooltipContent}
     >
       <span className="text-4xl mb-2">{icon}</span>
-      <span className="text-sm text-gray-400">{title}</span>
-      <span className="text-lg text-blue-500 font-semibold">{value}</span>
+      <span className="text-sm text-warm-gray">{title}</span>
+      <span className="text-lg text-warm-peach font-semibold">{value}</span>
       {subtext && (
-        <span className="text-xs text-gray-500 mt-1">{subtext}</span>
+        <span className="text-xs text-warm-gray mt-1">{subtext}</span>
       )}
     </div>
   )
@@ -114,8 +114,8 @@ const Insights: React.FC<InsightsProps> = ({ allData, isLoading }) => {
     return (
       <div className="w-full h-96 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-blue-500 mx-auto"></div>
-          <p className="mt-4 text-gray-400">Loading insights...</p>
+          <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-warm-peach mx-auto"></div>
+          <p className="mt-4 text-warm-gray">Loading insights...</p>
         </div>
       </div>
     );
@@ -171,7 +171,7 @@ const Insights: React.FC<InsightsProps> = ({ allData, isLoading }) => {
             <div className="inline-block relative">
               <svg className="w-40 h-40" viewBox="0 0 100 100">
                 <circle
-                  className="text-gray-700"
+                  className="text-warm-border"
                   strokeWidth="8"
                   stroke="currentColor"
                   fill="transparent"
@@ -180,7 +180,7 @@ const Insights: React.FC<InsightsProps> = ({ allData, isLoading }) => {
                   cy="50"
                 />
                 <circle
-                  className="text-blue-500"
+                  className="text-warm-peach"
                   strokeWidth="8"
                   strokeLinecap="round"
                   stroke="currentColor"
@@ -204,8 +204,8 @@ const Insights: React.FC<InsightsProps> = ({ allData, isLoading }) => {
           </div>
 
           {/* Key Metrics */}
-          <div className="flex-1 bg-gray-900 p-6 rounded-lg">
-            <h3 className="text-xl font-semibold mb-4 flex items-center">
+          <div className="flex-1 bg-warm-card border border-warm-border p-6 rounded-2xl">
+            <h3 className="text-xl font-semibold mb-4 flex items-center text-white">
               Key Metrics
               <QuestionMark content="Overview of your most productive periods" />
             </h3>
@@ -248,8 +248,8 @@ const Insights: React.FC<InsightsProps> = ({ allData, isLoading }) => {
         </div>
 
         {/* Goal Progress Section */}
-        <div className="bg-gray-900 p-6 rounded-lg print:bg-transparent print:border print:border-gray-200">
-          <h3 className="text-xl font-semibold mb-6 print:text-gray-900">
+        <div className="bg-warm-card border border-warm-border p-6 rounded-2xl print:bg-transparent print:border print:border-gray-200">
+          <h3 className="text-xl font-semibold mb-6 text-white print:text-gray-900">
             Goal Progress
           </h3>
           <GoalProgress allData={allData} />
@@ -257,8 +257,8 @@ const Insights: React.FC<InsightsProps> = ({ allData, isLoading }) => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {/* Completion Rates */}
-          <div className="bg-gray-900 p-6 rounded-lg">
-            <h3 className="text-xl font-semibold mb-6">
+          <div className="bg-warm-card border border-warm-border p-6 rounded-2xl">
+            <h3 className="text-xl font-semibold mb-6 text-white">
               Completion Rates
               <QuestionMark content="Your task completion rates compared to your average performance" />
             </h3>
@@ -275,10 +275,10 @@ const Insights: React.FC<InsightsProps> = ({ allData, isLoading }) => {
                   } vs. your ${period} average`;
                 const barColor =
                   period === 'daily'
-                    ? 'bg-green-500'
+                    ? 'bg-warm-sage'
                     : period === 'weekly'
-                      ? 'bg-blue-500'
-                      : 'bg-purple-500';
+                      ? 'bg-warm-blue'
+                      : 'bg-warm-peach';
 
                 return (
                   <div
@@ -291,7 +291,7 @@ const Insights: React.FC<InsightsProps> = ({ allData, isLoading }) => {
                       {period.charAt(0).toUpperCase() + period.slice(1)}
                     </span>
                     <div className="flex items-center flex-1 ml-4">
-                      <div className="w-full h-3 bg-gray-700 rounded-full mr-3">
+                      <div className="w-full h-3 bg-warm-hover rounded-full mr-3">
                         <div
                           className={`h-full ${barColor} rounded-full transition-all duration-500`}
                           style={{ width: `${Math.min(rate, 100)}%` }}
@@ -308,8 +308,8 @@ const Insights: React.FC<InsightsProps> = ({ allData, isLoading }) => {
           </div>
 
           {/* Project Distribution */}
-          <div className="bg-gray-900 p-6 rounded-lg">
-            <h3 className="text-xl font-semibold mb-6">
+          <div className="bg-warm-card border border-warm-border p-6 rounded-2xl">
+            <h3 className="text-xl font-semibold mb-6 text-white">
               Project Distribution
               <QuestionMark content="Distribution of completed tasks across your top projects" />
             </h3>
@@ -325,7 +325,7 @@ const Insights: React.FC<InsightsProps> = ({ allData, isLoading }) => {
                     {project.name}
                   </div>
                   <div className="flex-1">
-                    <div className="w-full h-3 bg-gray-700 rounded-full">
+                    <div className="w-full h-3 bg-warm-hover rounded-full">
                       <div
                         className="h-full rounded-full transition-all duration-500"
                         style={{
@@ -344,8 +344,8 @@ const Insights: React.FC<InsightsProps> = ({ allData, isLoading }) => {
           </div>
 
           {/* Weekly Progress */}
-          <div className="bg-gray-900 p-6 rounded-lg">
-            <h3 className="text-xl font-semibold mb-10">
+          <div className="bg-warm-card border border-warm-border p-6 rounded-2xl">
+            <h3 className="text-xl font-semibold mb-10 text-white">
               Weekly Progress
               <QuestionMark content="Number of tasks completed in the last 7 days" />
             </h3>
@@ -375,14 +375,14 @@ const Insights: React.FC<InsightsProps> = ({ allData, isLoading }) => {
                   >
                     <div className="relative w-full h-40 flex items-end justify-center">
                       <div
-                        className="absolute bottom-0 w-8 bg-blue-500 rounded-t transition-all duration-500"
+                        className="absolute bottom-0 w-8 bg-warm-blue rounded-t transition-all duration-500"
                         style={{
                           height: `${heightPercentage}%`,
                         }}
                       />
                     </div>
                     <span className="mt-2 text-sm font-medium">{dayName}</span>
-                    <span className="text-xs text-gray-400 mt-1">
+                    <span className="text-xs text-warm-gray mt-1">
                       {count}
                     </span>
                   </div>
@@ -393,8 +393,8 @@ const Insights: React.FC<InsightsProps> = ({ allData, isLoading }) => {
         </div>
 
         {/* Task Completion Trends */}
-        <div className="bg-gray-900 p-2 md:p-6 rounded-lg mt-6">
-          <h3 className="text-xl font-semibold mb-4 flex items-center">
+        <div className="bg-warm-card border border-warm-border p-2 md:p-6 rounded-2xl mt-6">
+          <h3 className="text-xl font-semibold mb-4 flex items-center text-white">
             Task Completion Trends
             <QuestionMark content="Historical trends of your task completion patterns" />
           </h3>
@@ -403,20 +403,20 @@ const Insights: React.FC<InsightsProps> = ({ allData, isLoading }) => {
             <div>
               {isLoading || !taskAverages?.last24Hours ? (
                 <div className="flex items-center justify-center h-[240px]">
-                  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-400"></div>
+                  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-warm-peach"></div>
                 </div>
               ) : (
                 <>
                   <div className="flex justify-between items-center mb-2">
-                    <span className="text-gray-400">Daily</span>
+                    <span className="text-warm-gray">Daily</span>
                     <div className="flex items-center">
-                      <span className="text-blue-500 font-semibold mr-3">
+                      <span className="text-warm-peach font-semibold mr-3">
                         {taskAverages.last24Hours.average} avg
                       </span>
                       <span
                         className={`text-sm px-2 py-1 rounded cursor-help ${taskAverages.last24Hours.percentChange >= 0
-                          ? 'text-green-400 bg-green-400/10'
-                          : 'text-red-400 bg-red-400/10'
+                          ? 'text-warm-sage bg-warm-sage/10'
+                          : 'text-warm-peach bg-warm-peach/10'
                           }`}
                         data-tooltip-id="insights-tooltip"
                         data-tooltip-content={`${Math.abs(
@@ -444,20 +444,20 @@ const Insights: React.FC<InsightsProps> = ({ allData, isLoading }) => {
             <div>
               {isLoading || !taskAverages?.last7Days ? (
                 <div className="flex items-center justify-center h-[240px]">
-                  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-400"></div>
+                  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-warm-peach"></div>
                 </div>
               ) : (
                 <>
                   <div className="flex justify-between items-center mb-2">
-                    <span className="text-gray-400">Weekly</span>
+                    <span className="text-warm-gray">Weekly</span>
                     <div className="flex items-center">
-                      <span className="text-blue-500 font-semibold mr-3">
+                      <span className="text-warm-peach font-semibold mr-3">
                         {taskAverages.last7Days.average} avg
                       </span>
                       <span
                         className={`text-sm px-2 py-1 rounded cursor-help ${taskAverages.last7Days.percentChange >= 0
-                          ? 'text-green-400 bg-green-400/10'
-                          : 'text-red-400 bg-red-400/10'
+                          ? 'text-warm-sage bg-warm-sage/10'
+                          : 'text-warm-peach bg-warm-peach/10'
                           }`}
                         data-tooltip-id="insights-tooltip"
                         data-tooltip-content={`${Math.abs(
@@ -485,20 +485,20 @@ const Insights: React.FC<InsightsProps> = ({ allData, isLoading }) => {
             <div>
               {isLoading || !taskAverages?.last30Days ? (
                 <div className="flex items-center justify-center h-[240px]">
-                  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-400"></div>
+                  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-warm-peach"></div>
                 </div>
               ) : (
                 <>
                   <div className="flex justify-between items-center mb-2">
-                    <span className="text-gray-400">Monthly</span>
+                    <span className="text-warm-gray">Monthly</span>
                     <div className="flex items-center">
-                      <span className="text-blue-500 font-semibold mr-3">
+                      <span className="text-warm-peach font-semibold mr-3">
                         {taskAverages.last30Days.average} avg
                       </span>
                       <span
                         className={`text-sm px-2 py-1 rounded cursor-help ${taskAverages.last30Days.percentChange >= 0
-                          ? 'text-green-400 bg-green-400/10'
-                          : 'text-red-400 bg-red-400/10'
+                          ? 'text-warm-sage bg-warm-sage/10'
+                          : 'text-warm-peach bg-warm-peach/10'
                           }`}
                         data-tooltip-id="insights-tooltip"
                         data-tooltip-content={`${Math.abs(
@@ -546,11 +546,11 @@ const Insights: React.FC<InsightsProps> = ({ allData, isLoading }) => {
   } catch (error) {
     console.error('Error in Insights component:', error);
     return (
-      <div className="w-full p-6 bg-red-900/20 rounded-lg">
-        <h3 className="text-xl font-semibold text-red-400 mb-2">
+      <div className="w-full p-6 bg-warm-peach/10 border border-warm-peach/30 rounded-lg">
+        <h3 className="text-xl font-semibold text-warm-peach mb-2">
           Error Loading Insights
         </h3>
-        <p className="text-gray-400">
+        <p className="text-warm-gray">
           There was an error loading your insights. Please try refreshing the
           page.
         </p>

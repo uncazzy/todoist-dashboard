@@ -11,13 +11,13 @@ const Legal: NextPage = () => {
       <div className="max-w-3xl mx-auto py-8">
         <Link
           href="/"
-          className="flex items-center text-gray-500 hover:text-gray-700 mb-6 transition-colors no-underline"
+          className="flex items-center text-warm-gray hover:text-white mb-6 transition-colors no-underline"
         >
           <IoArrowBack className="mr-1" />
           Back
         </Link>
         <h1 className="text-2xl font-bold mb-0">About & Legal Information</h1>
-        <span className="text-sm text-gray-400">Last updated: 2/13/2025</span>
+        <span className="text-sm text-warm-gray">Last updated: 2/13/2025</span>
 
         <section className="my-12">
           <h2 className="text-xl font-semibold mb-4">About Todoist Dashboard</h2>
@@ -104,7 +104,7 @@ const Legal: NextPage = () => {
                   href="https://doist.com/terms-of-service"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-blue-500 hover:text-blue-600"
+                  className="text-warm-peach hover:opacity-80"
                 >
                   terms of service
                 </a>{' '}
@@ -128,7 +128,7 @@ const Legal: NextPage = () => {
               href="https://github.com/uncazzy/todoist-dashboard/blob/main/LICENSE"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-blue-500 hover:text-blue-600"
+              className="text-warm-peach hover:opacity-80"
             >
               View the full MIT License
             </a>.
@@ -141,7 +141,7 @@ const Legal: NextPage = () => {
             If you have any questions, feedback, or concerns about this privacy policy or the service, feel free to{' '}
             <a
               href="mailto:todoist-dashboard@azzy.cloud"
-              className="text-blue-500 hover:text-blue-600"
+              className="text-warm-peach hover:opacity-80"
             >
               contact me
             </a>.

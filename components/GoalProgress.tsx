@@ -39,20 +39,28 @@ interface MetricCardProps {
   color?: 'blue' | 'green' | 'yellow';
 }
 
-const MetricCard: React.FC<MetricCardProps> = ({ title, value, tooltip, color = 'blue' }) => (
-  <div
-    className="bg-gray-800 p-4 rounded-lg print:bg-transparent print:border print:border-gray-100"
-    data-tooltip-id="insights-tooltip"
-    data-tooltip-content={tooltip}
-  >
-    <div className="h-full flex flex-col justify-between gap-2">
-      <div className="text-sm text-gray-400 print:text-gray-600">
-        {title} <BsQuestionCircle className="inline h-4 w-4 text-gray-400 cursor-help print:text-gray-500" />
+const MetricCard: React.FC<MetricCardProps> = ({ title, value, tooltip, color = 'blue' }) => {
+  const colorMap = {
+    blue: 'text-warm-blue',
+    green: 'text-warm-sage',
+    yellow: 'text-warm-peach'
+  };
+
+  return (
+    <div
+      className="bg-warm-hover border border-warm-border p-4 rounded-2xl hover:bg-warm-card transition-colors print:bg-transparent print:border print:border-gray-100"
+      data-tooltip-id="insights-tooltip"
+      data-tooltip-content={tooltip}
+    >
+      <div className="h-full flex flex-col justify-between gap-2">
+        <div className="text-sm text-warm-gray print:text-gray-600">
+          {title} <BsQuestionCircle className="inline h-4 w-4 text-warm-gray cursor-help print:text-gray-500" />
+        </div>
+        <div className={`text-xl font-semibold ${colorMap[color]} print:text-${color}-600`}>{value}</div>
       </div>
-      <div className={`text-xl font-semibold text-${color}-400 print:text-${color}-600`}>{value}</div>
     </div>
-  </div>
-);
+  );
+};
 
 const GoalProgress: React.FC<GoalProgressProps> = ({ allData }) => {
   const { allCompletedTasks } = allData;
@@ -115,7 +123,7 @@ const GoalProgress: React.FC<GoalProgressProps> = ({ allData }) => {
 
   return (
     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 print:gap-6">
-      {error && <div className="text-red-500">{error}</div>}
+      {error && <div className="text-warm-peach">{error}</div>}
       <MetricCard
         title="30-Day Total"
         value={totalCompleted}

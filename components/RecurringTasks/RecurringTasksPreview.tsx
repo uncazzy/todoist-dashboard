@@ -13,7 +13,7 @@ interface RecurringTasksPreviewProps {
 
 const RecurringTasksPreview: React.FC<RecurringTasksPreviewProps> = ({
   activeTasks,
-  allCompletedTasks}) => {
+  allCompletedTasks }) => {
   const recurringTasks = activeTasks.filter(task => task.due?.isRecurring);
 
   // Calculate overall stats
@@ -35,43 +35,34 @@ const RecurringTasksPreview: React.FC<RecurringTasksPreviewProps> = ({
 
   return (
     <div className="p-4">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <h2 className="text-lg sm:text-xl font-semibold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
-            Recurring Tasks
-          </h2>
-        </div>
-
-      </div>
-
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-        <div className="bg-gray-900/50 p-4 rounded-lg">
-          <div className="flex items-center gap-2 text-gray-400">
+        <div className="bg-warm-card/50 border border-warm-border p-4 rounded-2xl">
+          <div className="flex items-center gap-2 text-warm-gray">
             <BsCalendar3 className="w-4 h-4" />
             <span>Total Tasks</span>
           </div>
-          <div className="mt-2 text-2xl font-semibold">{totalRecurringTasks}</div>
+          <div className="mt-2 text-2xl font-semibold text-white">{totalRecurringTasks}</div>
         </div>
 
-        <div className="bg-gray-900/50 p-4 rounded-lg">
-          <div className="flex items-center gap-2 text-gray-400">
+        <div className="bg-warm-card/50 border border-warm-border p-4 rounded-2xl">
+          <div className="flex items-center gap-2 text-warm-gray">
             <IoIosCheckmarkCircle className="text-lg" />
             <span>Completed</span>
           </div>
-          <div className="mt-2 text-2xl font-semibold">{completedRecurringTasks}</div>
+          <div className="mt-2 text-2xl font-semibold text-white">{completedRecurringTasks}</div>
         </div>
 
         <Link
           href="/recurring"
-          className="group bg-gray-900/50 p-4 rounded-lg transition-all duration-200 no-underline hover:bg-gray-900/70 hover:-translate-y-0.5 hover:shadow-md"
+          className="group bg-warm-card/50 border border-warm-border p-4 rounded-2xl transition-all duration-200 no-underline hover:bg-warm-hover hover:-translate-y-0.5 hover:shadow-md"
         >
-          <div className="flex items-center gap-2 text-gray-400">
+          <div className="flex items-center gap-2 text-warm-gray">
             <IoMdTrendingUp className="text-lg" />
             <span>Avg. Completion Rate</span>
           </div>
           <div className="flex items-center justify-between">
-            <span className="text-2xl font-semibold">{averageCompletionRate}%</span>
-            <span className="text-sm text-blue-400/80 group-hover:text-blue-400 flex items-center gap-1">
+            <span className="text-2xl font-semibold text-white">{averageCompletionRate}%</span>
+            <span className="text-sm text-warm-peach/80 group-hover:text-warm-peach flex items-center gap-1">
               More
               <FaArrowRight className="w-3 h-3 transform group-hover:translate-x-0.5 transition-transform duration-200" />
             </span>

@@ -26,10 +26,10 @@ interface ChartDataItem {
 }
 
 const PRIORITY_COLORS: PriorityColors = {
-  1: '#808080',  // Gray for p4
-  2: '#4299e1',  // Blue for p3
-  3: '#f6ad55',  // Orange for p2
-  4: '#f56565',  // Red for p1
+  1: '#9CA3AF',  // warm-gray for p4
+  2: '#8BB4E8',  // warm-blue for p3
+  3: '#FF9B71',  // warm-peach for p2
+  4: '#FF7A3D',  // darker warm-peach for p1
 };
 
 const PRIORITY_LABELS: PriorityLabels = {
@@ -43,7 +43,7 @@ const TaskPriority: React.FC<TaskPriorityProps> = ({ activeTasks, loading }) => 
   if (!activeTasks || loading) {
     return (
       <div className="flex items-center justify-center h-[240px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-400"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-warm-peach"></div>
       </div>
     );
   }
@@ -65,6 +65,7 @@ const TaskPriority: React.FC<TaskPriorityProps> = ({ activeTasks, loading }) => 
   }));
 
   const option: EChartsOption = {
+    backgroundColor: 'transparent',
     tooltip: {
       trigger: 'item',
       backgroundColor: 'rgba(31, 41, 55, 0.9)',
@@ -84,7 +85,7 @@ const TaskPriority: React.FC<TaskPriorityProps> = ({ activeTasks, loading }) => 
       center: ['50%', '50%'],
       avoidLabelOverlap: true,
       itemStyle: {
-        borderColor: '#1f2937',
+        borderColor: '#0D0D0D',
         borderWidth: 2
       },
       label: {

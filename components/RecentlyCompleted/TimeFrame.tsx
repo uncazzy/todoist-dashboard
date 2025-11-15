@@ -29,14 +29,14 @@ export default function TimeFrame({
       {filters.map((filter, index) => (
         <div key={filter.id} className="flex items-center">
           {index > 0 && (
-            <div className="text-gray-700 mx-2">/</div>
+            <div className="text-warm-border mx-2">/</div>
           )}
           <button
             onClick={() => handleFilterClick(filter.id)}
             className={`px-3 py-1.5 rounded-lg transition-all duration-200 ${
               currentFilter === filter.id
-                ? 'bg-blue-500/10 text-blue-400'
-                : 'text-gray-500 hover:text-gray-400 hover:bg-gray-800'
+                ? 'bg-warm-peach/20 text-warm-peach'
+                : 'text-warm-gray hover:text-white hover:bg-warm-hover'
             }`}
             data-tooltip-id="timeframe-tooltip"
             data-tooltip-content={filter.tooltip}
@@ -47,7 +47,7 @@ export default function TimeFrame({
               )}
               <span>{filter.label}</span>
               {currentFilter === filter.id && (
-                <span className="text-xs font-medium px-1.5 py-0.5 rounded-full bg-green-500/10 text-green-400">
+                <span className="text-xs font-medium px-1.5 py-0.5 rounded-full bg-warm-sage/20 text-warm-sage">
                   {numOfTasks}
                 </span>
               )}

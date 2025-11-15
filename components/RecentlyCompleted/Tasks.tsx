@@ -67,19 +67,19 @@ export default function Tasks({ getPageItems, projectData, groupByProject }: Tas
                 }}
               />
               <h2 className="text-xl font-semibold print:text-gray-900">{project?.projectName || 'Unknown Project'}</h2>
-              <span className="text-sm text-gray-500 print:text-gray-600">({tasks.length} tasks)</span>
+              <span className="text-sm text-warm-gray print:text-gray-600">({tasks.length} tasks)</span>
             </div>
             <ul className="flex flex-col gap-2 print:gap-3">
               {tasks.map(task => (
                 <li
                   key={task.id}
-                  className="relative flex items-center p-2 rounded-lg transition-all duration-200 hover:bg-gray-800 group print:hover:bg-transparent print:border-b print:border-gray-100 print:pb-3"
+                  className="relative flex items-center p-2 rounded-lg transition-all duration-200 hover:bg-warm-hover group print:hover:bg-transparent print:border-b print:border-gray-100 print:pb-3"
                 >
                   <div className="flex items-center space-x-3 w-full">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
                         <div className="flex flex-col">
-                          <div className="pr-2 text-gray-300 group-hover:text-white transition-colors duration-200 print:text-gray-900">
+                          <div className="pr-2 text-white transition-colors duration-200 print:text-gray-900">
                             <ReactMarkdown
                               unwrapDisallowed
                               allowedElements={["span", "em", "a"]}
@@ -93,7 +93,7 @@ export default function Tasks({ getPageItems, projectData, groupByProject }: Tas
                               {extractTagsAndContent(task.content).tags.map((tag, index) => (
                                 <span
                                   key={index}
-                                  className="px-2 py-0.5 text-xs bg-gray-500/30 text-gray-300 rounded-md"
+                                  className="px-2 py-0.5 text-xs bg-warm-border/30 text-white rounded-md"
                                 >
                                   {tag}
                                 </span>
@@ -102,7 +102,7 @@ export default function Tasks({ getPageItems, projectData, groupByProject }: Tas
                           )}
                         </div>
                         <div className="flex flex-col items-end justify-center">
-                          <div className="text-xs text-gray-500 whitespace-nowrap print:text-gray-600">
+                          <div className="text-xs text-warm-gray whitespace-nowrap print:text-gray-600">
                             <IoIosCheckmarkCircle className="inline text-lg mr-1" title="Done" />
                             {new Date(task.completed_at).toLocaleDateString('en-US', {
                               month: 'short',
@@ -128,7 +128,7 @@ export default function Tasks({ getPageItems, projectData, groupByProject }: Tas
 
   // Regular view for screen (non-print)
   return (
-    <ul className="flex flex-col gap-2 border border-gray-800 rounded-lg p-4 print:border-gray-200 print:gap-4">
+    <ul className="flex flex-col gap-2 border border-warm-border rounded-lg p-4 print:border-gray-200 print:gap-4">
       {tasks.map(({ task, projectId }) => {
         const projectInfo = getProjectById(projectId, projectData);
         const projectColorHex = colorNameToHex(projectInfo?.projectColor as TodoistColor) || '#808080';
@@ -136,11 +136,11 @@ export default function Tasks({ getPageItems, projectData, groupByProject }: Tas
         return (
           <li
             key={task.id}
-            className="relative flex items-center p-2 rounded-lg transition-all duration-200 hover:bg-gray-800 group print:hover:bg-transparent print:border-b print:border-gray-100 print:pb-4"
+            className="relative flex items-center p-2 rounded-lg transition-all duration-200 hover:bg-warm-hover group print:hover:bg-transparent print:border-b print:border-gray-100 print:pb-4"
           >
             <div className="flex space-x-3 w-full">
               <span
-                className="w-3 h-3 rounded-full transition-all duration-200 group-hover:ring-2 ring-offset-2 ring-offset-gray-900 print:ring-offset-white"
+                className="w-3 h-3 rounded-full transition-all duration-200 group-hover:ring-2 ring-offset-2 ring-offset-warm-black print:ring-offset-white"
                 style={{
                   backgroundColor: projectColorHex + '80',
                   borderColor: projectColorHex,
@@ -151,7 +151,7 @@ export default function Tasks({ getPageItems, projectData, groupByProject }: Tas
               <div className="flex-1 min-w-0">
                 <div className="flex flex-col sm:flex-row justify-between gap-y-2">
                   <div className="flex flex-col">
-                    <div className="pr-2 text-gray-300 group-hover:text-white transition-colors duration-200 print:text-gray-900">
+                    <div className="pr-2 text-white transition-colors duration-200 print:text-gray-900">
                       <ReactMarkdown
                         unwrapDisallowed
                         allowedElements={["span", "em", "a"]}
@@ -165,7 +165,7 @@ export default function Tasks({ getPageItems, projectData, groupByProject }: Tas
                         {extractTagsAndContent(task.content).tags.map((tag, index) => (
                           <span
                             key={index}
-                            className="px-2 py-0.5 text-xs bg-gray-500/30 text-gray-300 rounded-md"
+                            className="px-2 py-0.5 text-xs bg-warm-border/30 text-white rounded-md"
                           >
                             {tag}
                           </span>
@@ -174,7 +174,7 @@ export default function Tasks({ getPageItems, projectData, groupByProject }: Tas
                     )}
                   </div>
                   <div className="flex flex-col sm:items-end justify-center">
-                    <div className="text-xs text-gray-300 whitespace-nowrap print:inline">
+                    <div className="text-xs text-white whitespace-nowrap print:inline">
                       <IoIosCheckmarkCircle className="inline text-lg mr-1" title="Done" />
                       {new Date(task.completed_at).toLocaleDateString('en-US', {
                         month: 'short',
@@ -185,7 +185,7 @@ export default function Tasks({ getPageItems, projectData, groupByProject }: Tas
                         hour12: true
                       })}
                     </div>
-                    <div className="text-xs text-gray-500 group-hover:text-gray-400 transition-colors duration-200 whitespace-nowrap print:text-gray-600 sm:mt-1" title={projectInfo?.projectName}>
+                    <div className="text-xs text-warm-gray group-hover:text-white transition-colors duration-200 whitespace-nowrap print:text-gray-600 sm:mt-1" title={projectInfo?.projectName}>
                       {projectInfo?.projectName}
                     </div>
                   </div>

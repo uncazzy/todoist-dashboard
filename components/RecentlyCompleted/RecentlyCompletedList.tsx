@@ -102,7 +102,7 @@ export default function RecentlyCompletedList({ allData }: RecentlyCompletedList
   return (
     <div
       id="recentlyCompleted"
-      className="bg-gray-900 p-4 rounded-xl shadow-lg flex flex-col print:bg-white print:shadow-none print:p-0"
+      className="bg-warm-card border border-warm-border p-4 rounded-2xl flex flex-col print:bg-white print:shadow-none print:p-0"
     >
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <TimeFrame
@@ -112,7 +112,7 @@ export default function RecentlyCompletedList({ allData }: RecentlyCompletedList
         />
         <button
           onClick={handlePrint}
-          className="hidden sm:flex px-4 py-2 hover:bg-blue-600 text-white rounded-lg transition-colors duration-200 items-center space-x-2 print:hidden"
+          className="hidden sm:flex px-4 py-2 bg-warm-hover hover:bg-warm-peach text-white rounded-lg transition-colors duration-200 items-center space-x-2 print:hidden border border-warm-border"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -172,7 +172,7 @@ export default function RecentlyCompletedList({ allData }: RecentlyCompletedList
           )}
           <button
             onClick={handlePrint}
-            className="sm:hidden px-4 py-2 hover:bg-blue-600 text-white rounded-lg transition-colors duration-200 flex items-center space-x-2 print:hidden ml-auto"
+            className="sm:hidden px-4 py-2 bg-warm-hover hover:bg-warm-peach text-white rounded-lg transition-colors duration-200 flex items-center space-x-2 print:hidden ml-auto border border-warm-border"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -195,7 +195,7 @@ export default function RecentlyCompletedList({ allData }: RecentlyCompletedList
           body * {
             visibility: hidden;
           }
-          .bg-gray-900 {
+          .bg-warm-black, .bg-warm-card {
             background-color: white !important;
           }
           .text-gray-300, .text-gray-500 {

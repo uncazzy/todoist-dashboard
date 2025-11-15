@@ -96,7 +96,7 @@ export const TaskCalendar = React.memo(({ taskData, task, project }: TaskCalenda
 
   // Get next due date status color
   const getNextDueColor = useCallback(() => {
-    if (!task.due?.date) return 'text-gray-400';
+    if (!task.due?.date) return 'text-warm-gray';
     const dueDate = parseISO(task.due.date);
     const today = new Date();
 
@@ -105,11 +105,11 @@ export const TaskCalendar = React.memo(({ taskData, task, project }: TaskCalenda
     const isPastDue = isBefore(dueDate, today) && !isDueToday;
 
     if (isDueToday) {
-      return 'text-yellow-500';
+      return 'text-warm-peach';
     } else if (isPastDue) {
-      return 'text-red-500';
+      return 'text-warm-peach';
     } else {
-      return 'text-green-500';
+      return 'text-warm-sage';
     }
   }, [task.due?.date]);
 
@@ -123,11 +123,11 @@ export const TaskCalendar = React.memo(({ taskData, task, project }: TaskCalenda
   const nextDueColor = getNextDueColor();
 
   return (
-    <div className="bg-gray-900/50 rounded-lg p-4 hover:bg-gray-900/70 transition-colors">
+    <div className="bg-warm-card/30 border border-warm-border rounded-2xl p-4 hover:bg-warm-card/50 transition-colors">
       <div className="flex flex-col sm:flex-row items-start justify-between mb-4 sm:mb-2 gap-4 sm:gap-0">
         <div className="space-y-1 w-full sm:w-auto">
           <div className="space-y-0.5 mb-4">
-            <h3 className="font-medium text-gray-200 mb-0">{task.content}</h3>
+            <h3 className="font-medium text-white mb-0">{task.content}</h3>
             {nextDue && (
               <span className={`${nextDueColor} text-xs flex items-center gap-1`}
                 data-tooltip-id="task-calendar-tooltip"
@@ -150,11 +150,11 @@ export const TaskCalendar = React.memo(({ taskData, task, project }: TaskCalenda
                 </span>
               </div>
             )}
-            <div className="text-xs text-gray-400 flex items-center gap-1">
+            <div className="text-xs text-warm-gray flex items-center gap-1">
               <BsCalendar3 className="w-4 h-4" />
               <span>
                 {task.due?.string}
-                {taskData.pattern?.type === 'unsupported' && <span className="ml-2 text-yellow-500">(Pattern not supported)</span>}
+                {taskData.pattern?.type === 'unsupported' && <span className="ml-2 text-warm-peach">(Pattern not supported)</span>}
               </span>
             </div>
           </div>
@@ -163,31 +163,31 @@ export const TaskCalendar = React.memo(({ taskData, task, project }: TaskCalenda
         <div className="flex flex-col items-start sm:items-center gap-2 w-full sm:w-auto">
           <div className="flex items-center gap-4 w-full sm:w-auto justify-start sm:justify-end">
             <div
-              className="text-sm text-gray-400 flex items-center gap-1 cursor-help"
+              className="text-sm text-warm-gray flex items-center gap-1 cursor-help"
               data-tooltip-id="task-calendar-tooltip"
               data-tooltip-content={stats.isLongTerm
                 ? `This task recurs every ${stats.interval || 12} months - too long for 6-month analysis window. ${stats.isOnTrack ? 'Task has been completed at least once in the past 6 months.' : 'Task has not been completed in the past 6 months.'}`
                 : `6-month completion rate: ${stats.completionRate}% of scheduled tasks completed`}
             >
-              <IoMdTrendingUp className={`w-4 h-4 ${stats.isLongTerm ? (stats.isOnTrack ? 'text-green-500' : 'text-gray-600') : (stats.completionRate > 0 ? 'text-green-500' : 'text-gray-600')}`} />
+              <IoMdTrendingUp className={`w-4 h-4 ${stats.isLongTerm ? (stats.isOnTrack ? 'text-warm-sage' : 'text-warm-gray/50') : (stats.completionRate > 0 ? 'text-warm-sage' : 'text-warm-gray/50')}`} />
               {stats.isLongTerm ? (stats.isOnTrack ? 'On Track' : 'Long-term') : `${stats.completionRate}%`}
             </div>
             {!stats.isLongTerm && (
               <>
                 <div
-                  className="text-sm text-gray-400 flex items-center gap-1 cursor-help"
+                  className="text-sm text-warm-gray flex items-center gap-1 cursor-help"
                   data-tooltip-id="task-calendar-tooltip"
                   data-tooltip-content={`Current streak: ${stats.currentStreak} consecutive ${getRecurrenceDescription()} completions`}
                 >
-                  <FaCheckCircle className={`w-4 h-4 ${stats.currentStreak > 0 ? 'text-blue-500' : 'text-gray-600'}`} />
+                  <FaCheckCircle className={`w-4 h-4 ${stats.currentStreak > 0 ? 'text-warm-sage' : 'text-warm-gray'}`} />
                   {stats.currentStreak}
                 </div>
                 <div
-                  className="text-sm text-gray-400 flex items-center gap-1 cursor-help"
+                  className="text-sm text-warm-gray flex items-center gap-1 cursor-help"
                   data-tooltip-id="task-calendar-tooltip"
                   data-tooltip-content={`Longest streak in past 6 months: ${stats.longestStreak} consecutive ${getRecurrenceDescription()} completions`}
                 >
-                  <IoMdTrendingUp className={`w-4 h-4 ${stats.longestStreak > 0 ? 'text-yellow-500' : 'text-gray-600'}`} />
+                  <IoMdTrendingUp className={`w-4 h-4 ${stats.longestStreak > 0 ? 'text-warm-peach' : 'text-warm-gray/50'}`} />
                   {stats.longestStreak}
                 </div>
               </>
@@ -212,19 +212,19 @@ export const TaskCalendar = React.memo(({ taskData, task, project }: TaskCalenda
             >
               <SparklinesLine
                 style={{
-                  stroke: "#60a5fa",
+                  stroke: "#FF9B71",
                   strokeWidth: 1,
                   fill: "none"
                 }}
               />
               <SparklinesBars
                 style={{
-                  fill: "#60a5fa",
+                  fill: "#FF9B71",
                   fillOpacity: "0.2"
                 }}
               />
             </Sparklines>
-            <div className="flex justify-between text-[10px] text-gray-400 mt-1">
+            <div className="flex justify-between text-[10px] text-warm-gray mt-1">
               <span>now</span>
               <span>6mo ago</span>
             </div>
@@ -236,10 +236,10 @@ export const TaskCalendar = React.memo(({ taskData, task, project }: TaskCalenda
       <div className="flex gap-4 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0">
         {months.map(({ month, days }) => (
           <div key={month} className="flex-none min-w-[180px]">
-            <div className="text-xs text-gray-400 mb-1">{month}</div>
+            <div className="text-xs text-warm-gray mb-1">{month}</div>
             <div className="grid grid-cols-7 gap-0.5">
               {weekDays.map(day => (
-                <div key={day.key} className="text-xs text-gray-500 h-4 flex items-center justify-center">
+                <div key={day.key} className="text-xs text-warm-gray/70 h-4 flex items-center justify-center">
                   {day.label}
                 </div>
               ))}
@@ -256,18 +256,18 @@ export const TaskCalendar = React.memo(({ taskData, task, project }: TaskCalenda
                   <div key={date.toString()} className="group relative">
                     <div
                       className={`h-6 sm:h-5 w-full rounded-sm flex items-center justify-center text-[11px] sm:text-xs
-                        ${completed ? 'bg-emerald-500 dark:bg-emerald-500 text-white' :
-                          isPast ? 'bg-gray-800 dark:bg-gray-800 text-gray-400' :
-                            'bg-gray-900 dark:bg-gray-900 text-gray-500'
+                        ${completed ? 'bg-warm-sage dark:bg-warm-sage text-white' :
+                          isPast ? 'bg-warm-hover dark:bg-warm-hover text-warm-gray' :
+                            'bg-warm-card dark:bg-warm-card text-warm-gray'
                         }
-                        ${isToday ? 'ring-1 ring-blue-500' : ''}
-                        transition-all duration-200 hover:ring-1 hover:ring-blue-400
+                        ${isToday ? 'ring-1 ring-warm-peach' : ''}
+                        transition-all duration-200 hover:ring-1 hover:ring-warm-peach
                       `}
                     >
                       {format(date, 'd')}
                     </div>
-                    <div className="absolute bottom-full left-0 mb-1 px-2 py-1 
-                      bg-gray-800 text-xs text-gray-200 rounded-md opacity-0 group-hover:opacity-100 
+                    <div className="absolute bottom-full left-0 mb-1 px-2 py-1
+                      bg-warm-card border border-warm-border text-xs text-white rounded-md opacity-0 group-hover:opacity-100
                       transition-opacity whitespace-nowrap pointer-events-none z-10">
                       {format(date, 'EEEE, MMMM d, yyyy')}
                       <br />

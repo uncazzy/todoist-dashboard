@@ -28,14 +28,14 @@ const NeglectedTasks: React.FC<NeglectedTasksProps> = ({ activeTasks, projectDat
               return (
                 <div
                   key={task.id}
-                  className="bg-gray-900 rounded-lg p-3 shadow-sm hover:shadow-md transition-all duration-200 border border-gray-800 hover:border-orange-500/30"
+                  className="bg-warm-card rounded-2xl p-3 border border-warm-border hover:bg-warm-hover transition-all duration-200"
                 >
                   <div className="flex space-x-3">
                     <div className="flex-1 min-w-0">
                       <h3 className="text-white text-sm font-medium truncate my-2">{task.content}</h3>
 
                       <div className="flex items-center space-x-1 mt-1 w-full">
-                        <span className="inline-flex items-center max-w-[150px] px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 whitespace-nowrap truncate">
+                        <span className="inline-flex items-center max-w-[150px] px-2 py-0.5 rounded text-xs font-medium bg-warm-peach/20 text-warm-peach border border-warm-peach/30 whitespace-nowrap truncate">
                           {project?.name || 'No Project'}
                         </span>
 
@@ -54,7 +54,7 @@ const NeglectedTasks: React.FC<NeglectedTasksProps> = ({ activeTasks, projectDat
                                 d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
                               />
                             </svg>
-                            <span className="text-xs text-gray-400 flex items-center">Created on {" "}
+                            <span className="text-xs text-warm-gray flex items-center">Created on {" "}
                               {new Date(task.createdAt).toLocaleDateString('en-US', {
                                 month: 'short',
                                 day: 'numeric',
@@ -64,7 +64,7 @@ const NeglectedTasks: React.FC<NeglectedTasksProps> = ({ activeTasks, projectDat
                           </div>
                           <div>
                             {task.due && (
-                              <span className="text-xs text-red-400 flex items-center">
+                              <span className="text-xs text-warm-peach flex items-center">
                                 <svg
                                   className="w-3 h-3 mr-1"
                                   fill="none"
@@ -94,14 +94,14 @@ const NeglectedTasks: React.FC<NeglectedTasksProps> = ({ activeTasks, projectDat
             })}
           </div>
         ) : (
-          <div className="text-center py-4 text-gray-400">
+          <div className="text-center py-4 text-warm-gray">
             No neglected tasks found
           </div>
         )}
       </div>
     );
   } else {
-    return <div className="text-center py-4 text-gray-400">Loading tasks...</div>;
+    return <div className="text-center py-4 text-warm-gray">Loading tasks...</div>;
   }
 };
 
