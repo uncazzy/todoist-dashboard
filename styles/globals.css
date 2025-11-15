@@ -6,74 +6,44 @@ html,
 body {
   padding: 0;
   margin: 0;
-  color: white;
-  background: black;
+  color: #F5F5F5;
+  background: #0D0D0D;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
 
-h1 { 
+h1 {
   display: block;
-  font-size: 2em;
+  font-size: 2.5rem;
   margin-top: 0.67em;
   margin-bottom: 0.67em;
-  margin-left: 0;
-  margin-right: 0;
-  font-weight: bold;
+  font-weight: 700;
 }
 
 h2 {
   display: block;
-  font-size: 1.5em;
+  font-size: 2rem;
   margin-top: 0.83em;
   margin-bottom: 0.83em;
-  margin-left: 0;
-  margin-right: 0;
-  font-weight: bold;
+  font-weight: 600;
 }
 
-h3 { 
+h3 {
   display: block;
-  font-size: 1.17em;
+  font-size: 1.5rem;
   margin-top: 1em;
   margin-bottom: 1em;
-  margin-left: 0;
-  margin-right: 0;
-  font-weight: bold;
+  font-weight: 600;
 }
 
-h4 { 
-  display: block;
-  margin-top: 1.33em;
-  margin-bottom: 1.33em;
-  margin-left: 0;
-  margin-right: 0;
-  font-weight: bold;
-}
-
-h5 { 
-  display: block;
-  font-size: .83em;
-  margin-top: 1.67em;
-  margin-bottom: 1.67em;
-  margin-left: 0;
-  margin-right: 0;
-  font-weight: bold;
-}
-
-h6 { 
-  display: block;
-  font-size: .67em;
-  margin-top: 2.33em;
-  margin-bottom: 2.33em;
-  margin-left: 0;
-  margin-right: 0;
-  font-weight: bold;
+h4, h5, h6 {
+  font-weight: 600;
 }
 
 p {
   padding-bottom: 0.5rem;
   padding-top: 0.5rem;
 }
-
 
 a {
   text-decoration-line: underline;
@@ -83,6 +53,7 @@ a {
 .hideMenuNav {
   display: none;
 }
+
 .showMenuNav {
   display: block;
   position: absolute;
@@ -96,45 +67,43 @@ a {
   justify-content: space-evenly;
   align-items: center;
 }
-/* End Header menu */
 
-/* Modern Scrollbar Styles */
+/* Warm scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.05);
+  background: rgba(0, 0, 0, 0.1);
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(155, 155, 155, 0.5);
+  background: rgba(255, 155, 113, 0.3);
   border-radius: 4px;
   transition: background 0.2s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(155, 155, 155, 0.7);
+  background: rgba(255, 155, 113, 0.5);
 }
 
 ::-webkit-scrollbar-corner {
   background: transparent;
 }
 
-/* Firefox scrollbar styles */
+/* Firefox */
 * {
   scrollbar-width: thin;
-  scrollbar-color: rgba(155, 155, 155, 0.5) rgba(0, 0, 0, 0.05);
+  scrollbar-color: rgba(255, 155, 113, 0.3) rgba(0, 0, 0, 0.1);
 }
 
-/* Hide scrollbar but maintain functionality */
 .hide-scrollbar {
-  scrollbar-width: none; /* Firefox */
-  -ms-overflow-style: none; /* Internet Explorer 10+ */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
 
 .hide-scrollbar::-webkit-scrollbar {
-  display: none; /* WebKit */
+  display: none;
 }

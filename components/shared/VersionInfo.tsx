@@ -2,10 +2,18 @@ import React, { useState } from 'react';
 import { FaTimes } from 'react-icons/fa';
 
 // Current version number
-const APP_VERSION = '0.8.0';
+const APP_VERSION = '0.9.0';
 
 // Changelog entries - newest first
 const CHANGELOG = [
+  {
+    version: '0.9.0',
+    date: 'November 2025',
+    changes: [
+      'UI Redesign: Applied warm minimalist color scheme across all components',
+      'Replaced Neglected Tasks with Backlog Health and its new health-scoring model',
+    ]
+  },
   {
     version: '0.8.0',
     date: 'October 2025',
@@ -73,7 +81,7 @@ const VersionInfo: React.FC = () => {
   return (
     <>
       <span
-        className="text-xs text-gray-600 hover:text-gray-400 cursor-pointer transition-colors"
+        className="text-xs text-warm-gray hover:text-white cursor-pointer transition-colors"
         onClick={() => setShowModal(true)}
         title="View changelog"
       >
@@ -83,37 +91,37 @@ const VersionInfo: React.FC = () => {
       {/* Changelog Modal */}
       {showModal && (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-70 p-4">
-          <div className="bg-gray-800 border border-gray-700 rounded-lg w-full max-w-lg max-h-[80vh] overflow-y-auto shadow-xl">
-            <div className="flex justify-between items-center p-4 border-b border-gray-700">
+          <div className="bg-warm-card border border-warm-border rounded-lg w-full max-w-lg max-h-[80vh] overflow-y-auto shadow-xl">
+            <div className="flex justify-between items-center p-4 border-b border-warm-border">
               <h2 className="text-xl font-semibold text-white">Changelog</h2>
               <button
                 onClick={() => setShowModal(false)}
-                className="text-gray-400 hover:text-white"
+                className="text-warm-gray hover:text-white"
               >
                 <FaTimes />
               </button>
             </div>
-            
+
             <div className="p-5">
               {CHANGELOG.map((release) => (
                 <div key={release.version} className="mb-6 last:mb-0">
                   <div className="flex justify-between items-baseline mb-2">
-                    <h3 className="text-lg font-medium text-blue-400">v{release.version}</h3>
-                    <span className="text-sm text-gray-400">{release.date}</span>
+                    <h3 className="text-lg font-medium text-warm-peach">v{release.version}</h3>
+                    <span className="text-sm text-warm-gray">{release.date}</span>
                   </div>
                   <ul className="list-disc ml-5 space-y-1">
                     {release.changes.map((change, index) => (
-                      <li key={index} className="text-gray-300 text-sm">{change}</li>
+                      <li key={index} className="text-white text-sm">{change}</li>
                     ))}
                   </ul>
                 </div>
               ))}
             </div>
-            
-            <div className="border-t border-gray-700 p-4 flex justify-end">
+
+            <div className="border-t border-warm-border p-4 flex justify-end">
               <button
                 onClick={() => setShowModal(false)}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md text-sm font-medium"
+                className="px-4 py-2 bg-warm-peach hover:opacity-90 text-white rounded-md text-sm font-medium"
               >
                 Close
               </button>

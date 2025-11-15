@@ -71,20 +71,20 @@ const TrendChart: React.FC<TrendChartProps> = ({ data, labels, height = 200 }) =
           smooth: true,
           symbol: 'none',
           lineStyle: {
-            color: '#3B82F6',
+            color: '#8BB4E8',  // warm-blue
             width: 3
           },
           areaStyle: {
             color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-              { offset: 0, color: 'rgba(59, 130, 246, 0.5)' },
-              { offset: 1, color: 'rgba(59, 130, 246, 0.0)' }
+              { offset: 0, color: 'rgba(139, 180, 232, 0.5)' },  // warm-blue with opacity
+              { offset: 1, color: 'rgba(139, 180, 232, 0.0)' }
             ])
           }
         }
       ],
       tooltip: {
         trigger: 'axis',
-        backgroundColor: 'rgba(17, 24, 39, 0.9)',
+        backgroundColor: 'rgba(26, 26, 26, 0.95)',
         borderColor: '#4B5563',
         textStyle: { color: '#E5E7EB' },
         formatter: function(params: CallbackDataParams | CallbackDataParams[]): string {

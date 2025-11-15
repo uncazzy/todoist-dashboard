@@ -44,15 +44,15 @@ const LoadingIndicator: React.FC<LoadingIndicatorProps> = ({
   };
 
   return (
-    <div className="mb-8 bg-gray-800 p-2 sm:p-6 rounded-xl shadow-lg">
+    <div className="mb-8 bg-warm-card border border-warm-border p-2 sm:p-6 rounded-2xl">
       <div className="flex justify-between items-center mb-2">
-        <div className="text-sm text-gray-400">
+        <div className="text-sm text-warm-gray">
           Last updated: {getTimeAgo(lastUpdateTime)}
         </div>
         <button
           onClick={onRefresh}
           disabled={loading || loadingMore}
-          className="flex items-center px-3 py-1 text-sm bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex items-center px-3 py-1 text-sm bg-warm-hover hover:bg-warm-border rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
           title={loading ? 'Loading in progress' : 'Refresh tasks from Todoist'}
         >
           <svg
@@ -71,26 +71,26 @@ const LoadingIndicator: React.FC<LoadingIndicatorProps> = ({
           Refresh
         </button>
       </div>
-      <div className="bg-gray-700 rounded-full h-3">
+      <div className="bg-warm-border rounded-full h-3">
         <div
           className={`h-3 rounded-full transition-all duration-500 max-w-full ${
-            loadError ? 'bg-gradient-to-r from-yellow-500 to-orange-500' : 'bg-gradient-to-r from-blue-500 to-purple-500'
+            loadError ? 'bg-warm-peach' : 'bg-warm-sage'
           }`}
           style={{ width: `${progressPercentage}%` }}
         />
       </div>
       <div className="text-sm mt-2 text-center flex items-center justify-center gap-2">
-        <span className={loadError ? 'text-yellow-400' : 'text-gray-400'}>
+        <span className={loadError ? 'text-warm-peach' : 'text-warm-gray'}>
           {isLoadingFromCache ? 'Loaded from cache: ' : 'Loaded '}
           {loadingProgress.loaded} out of {Math.min(MAX_TASKS, loadingProgress.total)} tasks
           {loadingProgress.total > MAX_TASKS && (
-            <span className="text-gray-500"> ({loadingProgress.total} total available)</span>
+            <span className="text-warm-gray/70"> ({loadingProgress.total} total available)</span>
           )}
         </span>
         {loadError && (
           <>
-            <BsExclamationTriangle 
-              className="text-yellow-400 cursor-help"
+            <BsExclamationTriangle
+              className="text-warm-peach cursor-help"
               data-tooltip-id="error-tooltip"
               data-tooltip-content={`Only partial data loaded: ${loadError.message}`}
             />

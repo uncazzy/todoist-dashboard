@@ -29,8 +29,8 @@ export default function Pagination({
           disabled={currentPage === 1}
           className={`p-1.5 rounded-lg transition-all duration-200 ${
             currentPage === 1
-              ? 'text-gray-600 cursor-not-allowed'
-              : 'text-blue-400 hover:bg-blue-500/10 hover:text-blue-300'
+              ? 'text-warm-gray/50 cursor-not-allowed'
+              : 'text-warm-peach hover:bg-warm-peach/10 hover:text-warm-peach'
           }`}
         >
           <svg
@@ -47,8 +47,8 @@ export default function Pagination({
           </svg>
         </button>
 
-        <div className="px-3 py-1 rounded-lg bg-gray-800/50 text-sm">
-          <span className="text-gray-400">Page {currentPage} of {totalPages}</span>
+        <div className="px-3 py-1 rounded-lg bg-warm-card/50 text-sm border border-warm-border">
+          <span className="text-warm-gray">Page {currentPage} of {totalPages}</span>
         </div>
 
         <button
@@ -56,8 +56,8 @@ export default function Pagination({
           disabled={currentPage === totalPages}
           className={`p-1.5 rounded-lg transition-all duration-200 ${
             currentPage === totalPages
-              ? 'text-gray-600 cursor-not-allowed'
-              : 'text-blue-400 hover:bg-blue-500/10 hover:text-blue-300'
+              ? 'text-warm-gray/50 cursor-not-allowed'
+              : 'text-warm-peach hover:bg-warm-peach/10 hover:text-warm-peach'
           }`}
         >
           <svg

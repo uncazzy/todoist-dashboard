@@ -19,44 +19,64 @@ const QuickStats: React.FC<QuickStatsProps> = ({
   karmaTrend,
   karmaRising,
 }) => {
+  const colorClassMap = {
+    'warm-peach': 'text-warm-peach',
+    'warm-blue': 'text-warm-blue',
+    'warm-sage': 'text-warm-sage',
+  } as const;
+
+  const stats = [
+    {
+      label: 'Active Tasks',
+      value: activeTasks.length,
+      color: 'warm-peach',
+    },
+    {
+      label: 'Active Projects',
+      value: projectCount,
+      color: 'warm-blue',
+    },
+    {
+      label: 'Completed Tasks',
+      value: totalCompletedTasks,
+      color: 'warm-sage',
+    },
+    {
+      label: 'Karma Score',
+      value: karma || 0,
+      color: 'warm-peach',
+      subtitle: getKarmaLevel(karma || 0),
+      trend: karmaTrend !== 'none' ? (karmaRising ? 'up' : 'down') : null,
+    },
+  ];
+
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-      <div className="bg-gray-800 rounded-xl p-4 sm:p-6 shadow-lg transform hover:scale-105 transition-transform">
-        <h3 className="text-gray-400 text-sm sm:text-base mb-2">Active Tasks</h3>
-        <div className="text-2xl sm:text-3xl font-bold text-blue-400">
-          {activeTasks.length}
-        </div>
-      </div>
-      <div className="bg-gray-800 rounded-xl p-4 sm:p-6 shadow-lg transform hover:scale-105 transition-transform">
-        <h3 className="text-gray-400 text-sm sm:text-base mb-2">Active Projects</h3>
-        <div className="text-2xl sm:text-3xl font-bold text-blue-400">
-          {projectCount}
-        </div>
-      </div>
-      <div className="bg-gray-800 rounded-xl p-4 sm:p-6 shadow-lg transform hover:scale-105 transition-transform">
-        <h3 className="text-gray-400 text-sm sm:text-base mb-2">Completed Tasks</h3>
-        <div className="text-2xl sm:text-3xl font-bold text-purple-400">
-          {totalCompletedTasks}
-        </div>
-      </div>
-      <div className="bg-gray-800 rounded-xl p-4 sm:p-6 shadow-lg transform hover:scale-105 transition-transform">
-        <h3 className="text-gray-400 text-sm sm:text-base mb-2">Karma Score</h3>
-        <div className="flex flex-col">
-          <div className="flex items-center gap-2">
-            <div className="text-2xl sm:text-3xl font-bold text-green-400">
-              {karma || 0}
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      {stats.map((stat) => (
+        <div
+          key={stat.label}
+          className="bg-warm-card rounded-2xl p-6 border border-warm-border hover:bg-warm-hover hover:shadow-lg transition-all"
+        >
+          <h3 className="text-sm text-warm-gray mb-3 font-medium">{stat.label}</h3>
+          <div className="flex items-center gap-3">
+            <div
+              className={`text-4xl font-semibold ${
+                colorClassMap[stat.color as keyof typeof colorClassMap] ?? 'text-warm-blue'
+              }`}
+            >
+              {stat.value}
             </div>
-            {karmaTrend !== 'none' && (
-              <div className={`text-xl ${karmaRising ? 'text-green-500' : 'text-red-500'}`}>
-                {karmaRising ? <IoMdTrendingUp /> : <IoMdTrendingDown />}
+            {stat.trend && (
+              <div className={stat.trend === 'up' ? 'text-warm-sage' : 'text-warm-peach'}>
+                {stat.trend === 'up' ? <IoMdTrendingUp size={24} /> : <IoMdTrendingDown size={24} />}
               </div>
             )}
           </div>
-          <div className="text-sm text-gray-400 mt-1">
-            {getKarmaLevel(karma || 0)}
-          </div>
+          {stat.subtitle && (
+            <p className="text-xs text-warm-gray mt-2">{stat.subtitle}</p>
+          )}
         </div>
-      </div>
+      ))}
     </div>
   );
 };

@@ -14,11 +14,11 @@ export const metadata = {
 const FeatureCard = ({ icon: Icon, title, description }: { icon: any; title: string; description: string }) => (
   <div className="flex items-start space-x-3 p-3">
     <div className="flex-shrink-0">
-      <Icon className="h-5 w-5 text-blue-400 mt-1" />
+      <Icon className="h-5 w-5 text-warm-peach mt-1" />
     </div>
     <div>
       <h3 className="font-medium text-white my-0">{title}</h3>
-      <p className="text-gray-400">{description}</p>
+      <p className="text-warm-gray">{description}</p>
     </div>
   </div>
 );
@@ -77,13 +77,13 @@ const SignIn: NextPage = () => {
     <Layout title={metadata.title} description={metadata.description}>
       <div className="container mx-auto max-h-fit flex flex-col md:flex-row mt-6 mb-12">
         {/* Right side - Sign in */}
-        <div className="w-full md:w-1/2 flex flex-col items-center justify-center p-12 bg-gray-900 my-6 sm:my-0 sm:order-2 rounded-e-xl sm:border-s border-gray-700">
+        <div className="w-full md:w-1/2 flex flex-col items-center justify-center p-12 bg-warm-card my-6 sm:my-0 sm:order-2 rounded-e-xl sm:border-s border-warm-border">
           <div className="w-full max-w-sm space-y-6">
             <div className="text-center">
               <h2 className="text-2xl font-bold text-white">
                 Welcome Back
               </h2>
-              <p className="mt-2 text-sm text-gray-400">
+              <p className="mt-2 text-sm text-warm-gray">
                 Sign in with your Todoist account to continue
               </p>
             </div>
@@ -106,13 +106,13 @@ const SignIn: NextPage = () => {
         </div>
 
         {/* Left side - Features */}
-        <div className="w-full md:w-1/2 bg-gray-900 p-12 flex-col justify-between">
+        <div className="w-full md:w-1/2 bg-warm-card p-12 flex-col justify-between">
           <div>
             <div className="mb-12">
               <h1 className="text-2xl font-bold text-white mb-3">
                 Todoist Dashboard
               </h1>
-              <p className="text-gray-400 leading-relaxed">
+              <p className="text-warm-gray leading-relaxed">
                 Transform your Todoist experience with powerful analytics and insights. Track your productivity, visualize patterns, and optimize your task management workflow.
               </p>
             </div>

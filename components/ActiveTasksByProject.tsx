@@ -40,7 +40,7 @@ export default function ActiveTasksByProject({ projectData, activeTasks, loading
   if (!projectData || !activeTasks || loading) {
     return (
       <div className="flex items-center justify-center h-[240px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-400"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-warm-peach"></div>
       </div>
     );
   }
@@ -57,7 +57,7 @@ export default function ActiveTasksByProject({ projectData, activeTasks, loading
   const option: ECOption = {
     tooltip: {
       trigger: 'axis',
-      backgroundColor: 'rgba(31, 41, 55, 0.9)',
+      backgroundColor: 'rgba(26, 26, 26, 0.95)',
       borderColor: '#374151',
       borderWidth: 1,
       textStyle: {
@@ -140,7 +140,7 @@ export default function ActiveTasksByProject({ projectData, activeTasks, loading
       barGap: '30%',
       showBackground: true,
       backgroundStyle: {
-        color: 'rgba(31, 41, 55, 0.2)',
+        color: 'rgba(42, 42, 42, 0.3)',  // warm-border with transparency
         borderRadius: [4, 4, 0, 0]
       }
     }]

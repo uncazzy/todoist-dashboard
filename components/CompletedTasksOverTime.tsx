@@ -168,7 +168,7 @@ export default function CompletedTasksOverTime({ allData, loading }: CompletedTa
   const option: EChartsOption = {
     tooltip: {
       trigger: 'axis',
-      backgroundColor: 'rgba(31, 41, 55, 0.9)',
+      backgroundColor: 'rgba(26, 26, 26, 0.95)',
       borderColor: '#374151',
       borderWidth: 1,
       textStyle: {
@@ -234,16 +234,10 @@ export default function CompletedTasksOverTime({ allData, loading }: CompletedTa
       symbolSize: 8,
       lineStyle: {
         width: 4,
-        color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{
-          offset: 0,
-          color: '#60a5fa'
-        }, {
-          offset: 1,
-          color: '#7c3aed'
-        }])
+        color: '#FF9B71'  // warm-peach
       },
       itemStyle: {
-        color: '#60a5fa',
+        color: '#FF9B71',  // warm-peach
         borderWidth: 2,
         borderColor: '#ffffff'
       },
@@ -251,10 +245,10 @@ export default function CompletedTasksOverTime({ allData, loading }: CompletedTa
         opacity: 0.2,
         color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [{
           offset: 0,
-          color: '#60a5fa'
+          color: '#FF9B71'  // warm-peach
         }, {
           offset: 1,
-          color: '#7c3aed'
+          color: '#7FD49E'  // warm-sage
         }])
       }
     }]
@@ -267,7 +261,7 @@ export default function CompletedTasksOverTime({ allData, loading }: CompletedTa
           <select
             value={viewType}
             onChange={(e) => setViewType(e.target.value as ViewType)}
-            className="bg-gray-800 text-gray-200 rounded-lg px-3 py-1 text-sm border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="bg-warm-card text-white rounded-lg px-3 py-1 text-sm border border-warm-border focus:outline-none focus:ring-2 focus:ring-warm-peach"
           >
             {getViewTypeOptions().map(option => (
               <option key={option.value} value={option.value}>
@@ -278,7 +272,7 @@ export default function CompletedTasksOverTime({ allData, loading }: CompletedTa
           <select
             value={timeFrame}
             onChange={(e) => handleTimeFrameChange(e.target.value as TimeFrame)}
-            className="bg-gray-800 text-gray-200 rounded-lg px-3 py-1 text-sm border border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="bg-warm-card text-white rounded-lg px-3 py-1 text-sm border border-warm-border focus:outline-none focus:ring-2 focus:ring-warm-peach"
           >
             <option value="1M">1 Month</option>
             <option value="3M">3 Months</option>

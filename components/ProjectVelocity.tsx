@@ -25,7 +25,7 @@ export default function ProjectVelocity({
   if (loading || completedTasks.length === 0 || projectData.length === 0) {
     return (
       <div className="flex items-center justify-center h-[300px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-400"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-warm-peach"></div>
       </div>
     );
   }
@@ -103,7 +103,7 @@ export default function ProjectVelocity({
       axisPointer: {
         type: 'shadow'
       },
-      backgroundColor: 'rgba(31, 41, 55, 0.9)',
+      backgroundColor: 'rgba(26, 26, 26, 0.95)',
       borderColor: '#374151',
       borderWidth: 1,
       textStyle: {
@@ -165,16 +165,16 @@ export default function ProjectVelocity({
       <div className="mb-4">
         <div className="flex flex-wrap gap-2">
           {velocityData.majorShifts.map((shift, index) => (
-            <div 
-              key={shift.projectId + index} 
-              className="flex items-center bg-gray-700/30 rounded-lg px-3 py-2 text-sm"
+            <div
+              key={shift.projectId + index}
+              className="flex items-center bg-warm-border/30 rounded-lg px-3 py-2 text-sm"
             >
               <span className="mr-2 font-medium">
                 {shift.projectName}:
               </span>
-              <span 
+              <span
                 className={`flex items-center ${
-                  shift.direction === 'up' ? 'text-green-400' : 'text-red-400'
+                  shift.direction === 'up' ? 'text-warm-sage' : 'text-warm-peach'
                 }`}
               >
                 {shift.direction === 'up' ? (
@@ -187,7 +187,7 @@ export default function ProjectVelocity({
             </div>
           ))}
           {velocityData.majorShifts.length === 0 && (
-            <div className="text-gray-400 text-sm">
+            <div className="text-warm-gray text-sm">
               No significant focus shifts detected
             </div>
           )}

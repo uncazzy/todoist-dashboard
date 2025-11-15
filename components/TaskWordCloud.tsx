@@ -39,8 +39,10 @@ const TaskWordCloud = ({ tasks }: TaskWordCloudProps): JSX.Element => {
   useEffect(() => {
     if (!tasks.length || !svgRef.current || !dimensions.width) return;
 
+    const svgElement = svgRef.current;
+
     // Clear previous content
-    d3.select(svgRef.current).selectAll("*").remove();
+    d3.select(svgElement).selectAll("*").remove();
 
     // Process text from tasks
     const words = tasks
@@ -87,9 +89,9 @@ const TaskWordCloud = ({ tasks }: TaskWordCloudProps): JSX.Element => {
       .on("end", draw);
 
     function draw(words: cloud.Word[]) {
-      if (!svgRef.current) return;
+      if (!svgElement) return;
 
-      const svg = d3.select(svgRef.current)
+      const svg = d3.select(svgElement)
         .attr("width", dimensions.width)
         .attr("height", dimensions.height)
         .attr("viewBox", [-dimensions.width/2, -dimensions.height/2, dimensions.width, dimensions.height])
@@ -120,9 +122,8 @@ const TaskWordCloud = ({ tasks }: TaskWordCloudProps): JSX.Element => {
     layout.start();
 
     return () => {
-      const svg = svgRef.current;
-      if (svg) {
-        d3.select(svg).selectAll("*").remove();
+      if (svgElement) {
+        d3.select(svgElement).selectAll("*").remove();
       }
     };
   }, [tasks, dimensions]);

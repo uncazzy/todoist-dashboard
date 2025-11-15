@@ -7,7 +7,7 @@ import Insights from './Insights';
 import RecentlyCompletedList from './RecentlyCompleted/RecentlyCompletedList';
 import CompletedTasksOverTime from './CompletedTasksOverTime';
 import TaskPriority from './TaskPriority';
-import NeglectedTasks from './NeglectedTasks';
+import BacklogHealth from './BacklogHealth';
 import CompletedByTimeOfDay from './CompletedByTimeOfDay';
 import { SiTodoist } from 'react-icons/si';
 import CompletionStreak from './CompletionStreak';
@@ -45,7 +45,7 @@ export default function Dashboard(): JSX.Element {
   const quickStatsRef = useExportSection('quick-stats', 'Quick Stats');
   const insightsRef = useExportSection('insights', 'Insights');
   const projectVelocityRef = useExportSection('project-velocity', 'Project Velocity & Focus Shifts');
-  const recentlyCompletedNeglectedRef = useExportSection('recently-completed-neglected', 'Recently Completed & Neglected Tasks');
+  const recentlyCompletedBacklogRef = useExportSection('recently-completed-backlog', 'Recently Completed & Backlog Health');
   const recurringTasksRef = useExportSection('recurring-tasks', 'Recurring Tasks');
   const taskManagementRef = useExportSection('task-management', 'Tasks by Priority & Active Tasks by Project');
   const completedTasksRef = useExportSection('completed-tasks', 'Completed Tasks Over Time & By Project');
@@ -57,8 +57,8 @@ export default function Dashboard(): JSX.Element {
   if (status !== 'authenticated') {
     return (
       <Layout title="Dashboard | Todoist Dashboard" description="View your Todoist analytics and insights">
-        <div className="p-6 bg-gray-900 rounded-lg">
-          <p className="text-gray-400">Please sign in to view your dashboard.</p>
+        <div className="p-6 bg-warm-card border border-warm-border rounded-2xl">
+          <p className="text-warm-gray">Please sign in to view your dashboard.</p>
         </div>
       </Layout>
     );
@@ -71,11 +71,11 @@ export default function Dashboard(): JSX.Element {
           <div className="text-center">
             <h2 className="text-2xl font-semibold mb-4">Loading your dashboard...</h2>
             {loadingProgress && loadingProgress.total > 0 && (
-              <div className="text-gray-400">
+              <div className="text-warm-gray">
                 Loaded {loadingProgress.loaded} out of {Math.min(MAX_TASKS, loadingProgress.total)}{' '}
                 tasks
                 {loadingProgress.total > MAX_TASKS && (
-                  <span className="text-gray-500"> ({loadingProgress.total} total available)</span>
+                  <span className="text-warm-gray/70"> ({loadingProgress.total} total available)</span>
                 )}
               </div>
             )}
@@ -88,12 +88,12 @@ export default function Dashboard(): JSX.Element {
   if (error) {
     return (
       <Layout title="Dashboard | Todoist Dashboard" description="View your Todoist analytics and insights">
-        <div className="p-6 bg-red-900/20 rounded-lg">
-          <h3 className="text-xl font-semibold text-red-400 mb-2">Error Loading Dashboard</h3>
-          <p className="text-gray-400 mb-4">{error}</p>
+        <div className="p-6 bg-warm-peach/10 border border-warm-peach/30 rounded-lg">
+          <h3 className="text-xl font-semibold text-warm-peach mb-2">Error Loading Dashboard</h3>
+          <p className="text-warm-gray mb-4">{error}</p>
           <button
             onClick={refreshData}
-            className="px-4 py-2 bg-red-500 hover:bg-red-600 rounded-lg transition-colors"
+            className="px-4 py-2 bg-warm-peach hover:opacity-90 rounded-lg transition-colors"
           >
             Try Again
           </button>
@@ -105,8 +105,8 @@ export default function Dashboard(): JSX.Element {
   if (!data) {
     return (
       <Layout title="Dashboard | Todoist Dashboard" description="View your Todoist analytics and insights">
-        <div className="p-6 bg-gray-900 rounded-lg">
-          <p className="text-gray-400">No data available. Please check your Todoist connection.</p>
+        <div className="p-6 bg-warm-card border border-warm-border rounded-2xl">
+          <p className="text-warm-gray">No data available. Please check your Todoist connection.</p>
         </div>
       </Layout>
     );
@@ -129,22 +129,18 @@ export default function Dashboard(): JSX.Element {
 
   return (
     <Layout title="Dashboard | Todoist Dashboard" description="View your Todoist analytics and insights">
-      <div className="min-h-screen rounded-lg bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white">
-        <div className="container mx-auto p-6">
-          <header className="mb-8">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+      <div className="min-h-screen bg-warm-black">
+        <div className="container mx-auto px-6 py-8 max-w-7xl">
+          <header className="mb-10">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-6">
               <div>
-                <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500 mb-2">
+                <h1 className="text-4xl font-bold text-white mb-2 flex items-center gap-3">
+                  <SiTodoist className="text-warm-peach" />
                   Todoist Dashboard
                 </h1>
-                <p className="text-gray-400">
-                  <span>
-                    <SiTodoist className="inline text-red-500 ml-1 mr-2" />
-                  </span>
-                  Your productivity at a glance
-                </p>
+                <p className="text-warm-gray text-sm">Your productivity at a glance</p>
               </div>
-              <div className="flex items-center">
+              <div className="flex items-center gap-3">
                 {data?.projectData && (
                   <ProjectPicker
                     projects={data.projectData}
@@ -183,9 +179,9 @@ export default function Dashboard(): JSX.Element {
           </div>
 
           {/* Main Content Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
+          <div className="space-y-6 mt-6">
             {/* Insights Section */}
-            <div className="lg:col-span-3" ref={insightsRef}>
+            <div ref={insightsRef}>
               <Insights
                 allData={{
                   ...data,
@@ -198,8 +194,8 @@ export default function Dashboard(): JSX.Element {
             </div>
 
             {/* Project Velocity & Focus Drift */}
-            <div className="lg:col-span-3 bg-gray-800 rounded-xl p-4 sm:p-6 shadow-lg" ref={projectVelocityRef}>
-              <h2 className="text-lg sm:text-xl font-semibold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
+            <div className="bg-warm-card border border-warm-border rounded-2xl p-6 sm:p-8 hover:bg-warm-hover transition-colors" ref={projectVelocityRef}>
+              <h2 className="text-2xl font-semibold text-white mb-6">
                 Project Velocity & Focus Shifts
                 <QuestionMark content="Shows how your focus shifts between projects over time. Analyze your project velocity (tasks completed per period) and focus drift (percentage of total effort per project)." />
               </h2>
@@ -210,11 +206,12 @@ export default function Dashboard(): JSX.Element {
               />
             </div>
 
-            {/* Recently Completed and Neglected Tasks - 2 Column Layout */}
-            <div className="lg:col-span-3 grid grid-cols-1 sm:grid-cols-2 gap-6" ref={recentlyCompletedNeglectedRef}>
-              <div className="bg-gray-800 rounded-xl p-4 sm:p-6 shadow-lg">
-                <h2 className="text-lg sm:text-xl font-semibold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
-                  Recently Completed <span className="text-white">✅</span>
+            {/* Recently Completed and Backlog Health - 2 Column Layout */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6" ref={recentlyCompletedBacklogRef}>
+              <div className="bg-warm-card border border-warm-border rounded-2xl p-6 hover:bg-warm-hover transition-colors">
+                <h2 className="text-xl font-semibold text-white mb-6 flex items-center gap-2">
+                  Recently Completed
+                  <span className="text-2xl">✅</span>
                 </h2>
                 <RecentlyCompletedList
                   allData={{
@@ -224,28 +221,32 @@ export default function Dashboard(): JSX.Element {
                 />
               </div>
 
-              <div className="bg-gray-800 rounded-xl p-4 sm:p-6 shadow-lg">
-                <h2 className="text-lg sm:text-xl font-semibold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500 my-2">
-                  Neglected Tasks
-                  <QuestionMark content="Tasks that have been on your list the longest without being completed. Consider reviewing these tasks to either complete them, reschedule, or remove if no longer relevant." />
+              <div className="bg-warm-card border border-warm-border rounded-2xl p-6 hover:bg-warm-hover transition-colors">
+                <h2 className="text-xl font-semibold text-white mb-6">
+                  Backlog Health
+                  <QuestionMark content="Health score based on task age, overdue status, and due dates. Shows tasks needing attention: overdue tasks, very old tasks (60+ days), old unscheduled tasks (30+ days), and high-priority tasks without due dates." />
                 </h2>
-                <NeglectedTasks
+                <BacklogHealth
                   activeTasks={filteredActiveTasks}
-                  projectData={projectData}
+                  completedTasks={filteredCompletedTasks}
+                  projectData={filteredProjects}
                 />
               </div>
             </div>
 
             {/* Recurring Tasks Section */}
-            <div className="md:col-span-3 bg-gray-800 rounded-lg" ref={recurringTasksRef}>
-              <div className="flex items-center">
+            <div className="bg-warm-card border border-warm-border rounded-2xl p-6 hover:bg-warm-hover transition-colors" ref={recurringTasksRef}>
+              <div className="flex items-center mb-6">
+                <h2 className="text-xl font-semibold text-white">
+                  Recurring Tasks
+                </h2>
                 <Tooltip content="Track your recurring tasks and habits. View completion rates, streaks, and trends.">
-                  <BsQuestionCircle className="w-5 h-5 text-gray-400" />
+                  <BsQuestionCircle className="w-5 h-5 text-warm-gray ml-2" />
                 </Tooltip>
               </div>
               {needsFullData ? (
                 <div className="flex justify-center items-center h-48">
-                  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+                  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-warm-peach"></div>
                 </div>
               ) : (
                 <RecurringTasksPreview
@@ -256,9 +257,9 @@ export default function Dashboard(): JSX.Element {
             </div>
 
             {/* Task Management Section - 2 Column Layout */}
-            <div className="lg:col-span-3 grid grid-cols-1 sm:grid-cols-2 gap-6" ref={taskManagementRef}>
-              <div className={`bg-gray-800 rounded-xl p-4 sm:p-6 shadow-lg ${needsFullData ? 'opacity-50' : ''}`}>
-                <h2 className="text-lg sm:text-xl font-semibold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6" ref={taskManagementRef}>
+              <div className={`bg-warm-card border border-warm-border rounded-2xl p-6 transition-opacity ${needsFullData ? 'opacity-50' : ''}`}>
+                <h2 className="text-xl font-semibold text-white mb-6">
                   Tasks by Priority
                 </h2>
                 <TaskPriority
@@ -267,8 +268,8 @@ export default function Dashboard(): JSX.Element {
                 />
               </div>
 
-              <div className={`bg-gray-800 rounded-xl p-4 sm:p-6 shadow-lg ${needsFullData ? 'opacity-50' : ''}`}>
-                <h2 className="text-lg sm:text-xl font-semibold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
+              <div className={`bg-warm-card border border-warm-border rounded-2xl p-6 transition-opacity ${needsFullData ? 'opacity-50' : ''}`}>
+                <h2 className="text-xl font-semibold text-white mb-6">
                   Active Tasks by Project
                 </h2>
                 <ActiveTasksByProject
@@ -280,9 +281,9 @@ export default function Dashboard(): JSX.Element {
             </div>
 
             {/* Completed Tasks over time and by project - 2 Column Layout */}
-            <div className="lg:col-span-3 grid grid-cols-1 sm:grid-cols-2 gap-6" ref={completedTasksRef}>
-              <div className={`bg-gray-800 rounded-xl p-4 sm:p-6 shadow-lg ${needsFullData ? 'opacity-50' : ''}`}>
-                <h2 className="text-lg sm:text-xl font-semibold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6" ref={completedTasksRef}>
+              <div className={`bg-warm-card border border-warm-border rounded-2xl p-6 transition-opacity ${needsFullData ? 'opacity-50' : ''}`}>
+                <h2 className="text-xl font-semibold text-white mb-6">
                   Completed Tasks Over Time
                 </h2>
                 <CompletedTasksOverTime
@@ -291,8 +292,8 @@ export default function Dashboard(): JSX.Element {
                 />
               </div>
 
-              <div className={`flex flex-col bg-gray-800 rounded-xl p-4 sm:p-6 shadow-lg ${needsFullData ? 'opacity-50' : ''}`}>
-                <h2 className="text-lg sm:text-xl font-semibold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
+              <div className={`flex flex-col bg-warm-card border border-warm-border rounded-2xl p-6 transition-opacity ${needsFullData ? 'opacity-50' : ''}`}>
+                <h2 className="text-xl font-semibold text-white mb-6">
                   Completed Tasks by Project
                 </h2>
                 <CompletedTasksByProject
@@ -308,8 +309,8 @@ export default function Dashboard(): JSX.Element {
             </div>
 
             {/* Completion Heatmap */}
-            <div className="lg:col-span-3 bg-gray-800 rounded-xl p-4 sm:p-6 shadow-lg" ref={completionHeatmapRef}>
-              <h2 className="text-lg sm:text-xl font-semibold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
+            <div className="bg-warm-card border border-warm-border rounded-2xl p-6 sm:p-8" ref={completionHeatmapRef}>
+              <h2 className="text-xl sm:text-2xl font-semibold text-white mb-6">
                 Completion Patterns Heatmap
                 <QuestionMark content="Visualization of when you typically complete tasks by day of week and time of day. Identify your most productive times and optimize your schedule accordingly." />
               </h2>
@@ -320,13 +321,11 @@ export default function Dashboard(): JSX.Element {
             </div>
 
             {/* Daily Stats - 2 Column Layout */}
-            <div className="lg:col-span-3 grid grid-cols-1 sm:grid-cols-2 gap-6" ref={dailyStatsRef}>
-              <div className={`bg-gray-800 rounded-xl p-4 sm:p-6 shadow-lg ${needsFullData ? 'opacity-50' : ''}`}>
-                <div className="flex items-center gap-2">
-                  <h2 className="text-lg sm:text-xl font-semibold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
-                    Daily Streak
-                  </h2>
-                </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6" ref={dailyStatsRef}>
+              <div className={`bg-warm-card border border-warm-border rounded-2xl p-6 transition-opacity ${needsFullData ? 'opacity-50' : ''}`}>
+                <h2 className="text-xl font-semibold text-white mb-6">
+                  Daily Streak
+                </h2>
                 <CompletionStreak
                   allData={{
                     allCompletedTasks: filteredCompletedTasks
@@ -334,8 +333,8 @@ export default function Dashboard(): JSX.Element {
                 />
               </div>
 
-              <div className={`bg-gray-800 rounded-xl p-4 sm:p-6 shadow-lg ${needsFullData ? 'opacity-50' : ''}`}>
-                <h2 className="text-lg sm:text-xl font-semibold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
+              <div className={`bg-warm-card border border-warm-border rounded-2xl p-6 transition-opacity ${needsFullData ? 'opacity-50' : ''}`}>
+                <h2 className="text-xl font-semibold text-white mb-6">
                   Daily Activity Pattern
                 </h2>
                 <CompletedByTimeOfDay
@@ -350,8 +349,8 @@ export default function Dashboard(): JSX.Element {
           </div>
 
           {/* Task Lead Time Analysis */}
-          <div className="lg:col-span-3 bg-gray-800 rounded-xl p-4 sm:p-6 shadow-lg" ref={taskLeadTimeRef}>
-            <h2 className="text-lg sm:text-xl font-semibold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
+          <div className="bg-warm-card border border-warm-border rounded-2xl p-6 sm:p-8 mt-8" ref={taskLeadTimeRef}>
+            <h2 className="text-xl sm:text-2xl font-semibold text-white mb-6">
               Task Lead Time Analysis
               <QuestionMark content="Cycle time analysis showing how long tasks take from creation to completion. This helps identify bottlenecks in your workflow and set expectations for different types of tasks." />
             </h2>
@@ -363,20 +362,18 @@ export default function Dashboard(): JSX.Element {
           </div>
 
           {/* Task Topics Section */}
-          <div className="bg-gray-800 rounded-lg p-6 my-6" ref={taskTopicsRef}>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg sm:text-xl font-semibold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500">
+          <div className="bg-warm-card border border-warm-border rounded-2xl p-6 my-8" ref={taskTopicsRef}>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl sm:text-2xl font-semibold text-white">
                 Task Topics
               </h2>
-              <div className="flex items-center space-x-2">
-                <Tooltip content="Shows the most common topics in your tasks">
-                  <BsQuestionCircle className="w-5 h-5 text-gray-400" />
-                </Tooltip>
-              </div>
+              <Tooltip content="Shows the most common topics in your tasks">
+                <BsQuestionCircle className="w-5 h-5 text-warm-gray" />
+              </Tooltip>
             </div>
             {needsFullData ? (
               <div className="flex justify-center items-center h-48">
-                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-warm-peach"></div>
               </div>
             ) : (
               <TaskWordCloud
@@ -388,7 +385,8 @@ export default function Dashboard(): JSX.Element {
         <Tooltip
           id="dashboard-tooltip"
           place="top"
-          className="max-w-xs text-center"
+          className="z-50 max-w-xs text-center"
+          noArrow={true}
         />
 
         {/* Export Modal */}

@@ -6,6 +6,7 @@ module.exports = {
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
   ],
   safelist: [
+    // Todoist project colors
     'bg-pink-700',    // berry_red
     'bg-red-600',     // red
     'bg-orange-400',  // orange
@@ -28,7 +29,22 @@ module.exports = {
     'bg-stone-400',   // taupe
   ],
   theme: {
-    extend: {},
+    extend: {
+      colors: {
+        // Warm, organic color palette
+        'warm-black': '#0D0D0D',
+        'warm-card': '#1A1A1A',
+        'warm-border': '#2A2A2A',
+        'warm-hover': '#202020',
+        'warm-peach': '#FF9B71',
+        'warm-sage': '#7FD49E',
+        'warm-blue': '#8BB4E8',
+        'warm-gray': '#9CA3AF',
+      },
+      fontFamily: {
+        sans: ['Inter', 'system-ui', 'sans-serif'],
+      },
+    },
   },
   plugins: [],
 };

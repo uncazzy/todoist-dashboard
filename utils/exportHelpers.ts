@@ -575,7 +575,7 @@ export function buildHtmlDocument(
 
     /* Ensure proper text colors for dark theme */
     body {
-      background: linear-gradient(to bottom right, #111827, #1f2937, #111827);
+      background: #0D0D0D;
       color: ${textColor};
     }
 
@@ -593,14 +593,14 @@ export function buildHtmlDocument(
 <body>
   <div style="min-height: 100vh; padding: 1.5rem;">
     <div style="max-width: 1280px; margin: 0 auto;">
-      <div style="text-align: center; margin-bottom: 2rem; border-bottom: 1px solid #374151; padding-bottom: 1rem;">
-        <h1 style="color: #60a5fa; font-size: 1.5rem; margin: 0 0 0.5rem 0;">Todoist Dashboard Export</h1>
-        <p style="color: #9ca3af; font-size: 0.875rem; margin: 0;">Generated on ${timestamp}</p>
+      <div style="text-align: center; margin-bottom: 2rem; border-bottom: 1px solid #2A2A2A; padding-bottom: 1rem;">
+        <h1 style="color: #FF9B71; font-size: 1.5rem; margin: 0 0 0.5rem 0;">Todoist Dashboard Export</h1>
+        <p style="color: #9CA3AF; font-size: 0.875rem; margin: 0;">Generated on ${timestamp}</p>
       </div>
 
       ${bodyContent}
 
-      <div style="text-align: center; margin-top: 3rem; padding-top: 2rem; border-top: 1px solid #374151; color: #6b7280; font-size: 0.75rem;">
+      <div style="text-align: center; margin-top: 3rem; padding-top: 2rem; border-top: 1px solid #2A2A2A; color: #9CA3AF; font-size: 0.75rem;">
         Exported from Todoist Dashboard
       </div>
     </div>

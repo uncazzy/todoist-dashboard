@@ -19,7 +19,7 @@ export default function CompletedByTimeOfDay({ allData, loading }: CompletedByTi
   if (!allData?.allCompletedTasks || loading) {
     return (
       <div className="flex items-center justify-center h-[240px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-400"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-warm-peach"></div>
       </div>
     );
   }
@@ -50,7 +50,7 @@ export default function CompletedByTimeOfDay({ allData, loading }: CompletedByTi
   const option: EChartsOption = {
     tooltip: {
       trigger: 'axis',
-      backgroundColor: 'rgba(31, 41, 55, 0.9)',
+      backgroundColor: 'rgba(26, 26, 26, 0.95)',
       borderColor: '#374151',
       borderWidth: 1,
       textStyle: {
@@ -114,31 +114,11 @@ export default function CompletedByTimeOfDay({ allData, loading }: CompletedByTi
         type: 'bar',
         itemStyle: {
           borderRadius: [4, 4, 0, 0],
-          color: {
-            type: 'linear',
-            x: 0,
-            y: 0,
-            x2: 0,
-            y2: 1,
-            colorStops: [
-              { offset: 0, color: '#60a5fa' },
-              { offset: 1, color: '#3b82f6' }
-            ]
-          }
+          color: '#8BB4E8'  // warm-blue
         },
         emphasis: {
           itemStyle: {
-            color: {
-              type: 'linear',
-              x: 0,
-              y: 0,
-              x2: 0,
-              y2: 1,
-              colorStops: [
-                { offset: 0, color: '#93c5fd' },
-                { offset: 1, color: '#60a5fa' }
-              ]
-            }
+            color: '#A5C7EF'  // lighter warm-blue
           }
         }
       }
