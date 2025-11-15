@@ -58,7 +58,7 @@ export default function CompletionHeatmap({
           ${count > 0 ? `<div class="text-xs">${((count / heatmapData.totalCompletions) * 100).toFixed(1)}% of total</div>` : ''}
         `;
       },
-      backgroundColor: 'rgba(31, 41, 55, 0.9)',
+      backgroundColor: 'rgba(26, 26, 26, 0.95)',
       borderColor: '#374151',
       borderWidth: 1,
       textStyle: {

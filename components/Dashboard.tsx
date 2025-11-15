@@ -7,7 +7,7 @@ import Insights from './Insights';
 import RecentlyCompletedList from './RecentlyCompleted/RecentlyCompletedList';
 import CompletedTasksOverTime from './CompletedTasksOverTime';
 import TaskPriority from './TaskPriority';
-import NeglectedTasks from './NeglectedTasks';
+import BacklogHealth from './BacklogHealth';
 import CompletedByTimeOfDay from './CompletedByTimeOfDay';
 import { SiTodoist } from 'react-icons/si';
 import CompletionStreak from './CompletionStreak';
@@ -45,7 +45,7 @@ export default function Dashboard(): JSX.Element {
   const quickStatsRef = useExportSection('quick-stats', 'Quick Stats');
   const insightsRef = useExportSection('insights', 'Insights');
   const projectVelocityRef = useExportSection('project-velocity', 'Project Velocity & Focus Shifts');
-  const recentlyCompletedNeglectedRef = useExportSection('recently-completed-neglected', 'Recently Completed & Neglected Tasks');
+  const recentlyCompletedBacklogRef = useExportSection('recently-completed-backlog', 'Recently Completed & Backlog Health');
   const recurringTasksRef = useExportSection('recurring-tasks', 'Recurring Tasks');
   const taskManagementRef = useExportSection('task-management', 'Tasks by Priority & Active Tasks by Project');
   const completedTasksRef = useExportSection('completed-tasks', 'Completed Tasks Over Time & By Project');
@@ -206,8 +206,8 @@ export default function Dashboard(): JSX.Element {
               />
             </div>
 
-            {/* Recently Completed and Neglected Tasks - 2 Column Layout */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6" ref={recentlyCompletedNeglectedRef}>
+            {/* Recently Completed and Backlog Health - 2 Column Layout */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6" ref={recentlyCompletedBacklogRef}>
               <div className="bg-warm-card border border-warm-border rounded-2xl p-6 hover:bg-warm-hover transition-colors">
                 <h2 className="text-xl font-semibold text-white mb-6 flex items-center gap-2">
                   Recently Completed
@@ -223,12 +223,13 @@ export default function Dashboard(): JSX.Element {
 
               <div className="bg-warm-card border border-warm-border rounded-2xl p-6 hover:bg-warm-hover transition-colors">
                 <h2 className="text-xl font-semibold text-white mb-6">
-                  Neglected Tasks
-                  <QuestionMark content="Tasks that have been on your list the longest without being completed. Consider reviewing these tasks to either complete them, reschedule, or remove if no longer relevant." />
+                  Backlog Health
+                  <QuestionMark content="Health score based on task age, overdue status, and due dates. Shows tasks needing attention: overdue tasks, very old tasks (60+ days), old unscheduled tasks (30+ days), and high-priority tasks without due dates." />
                 </h2>
-                <NeglectedTasks
+                <BacklogHealth
                   activeTasks={filteredActiveTasks}
-                  projectData={projectData}
+                  completedTasks={filteredCompletedTasks}
+                  projectData={filteredProjects}
                 />
               </div>
             </div>
@@ -384,7 +385,8 @@ export default function Dashboard(): JSX.Element {
         <Tooltip
           id="dashboard-tooltip"
           place="top"
-          className="max-w-xs text-center"
+          className="z-50 max-w-xs text-center"
+          noArrow={true}
         />
 
         {/* Export Modal */}

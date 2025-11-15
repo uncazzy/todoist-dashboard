@@ -84,7 +84,7 @@ const TrendChart: React.FC<TrendChartProps> = ({ data, labels, height = 200 }) =
       ],
       tooltip: {
         trigger: 'axis',
-        backgroundColor: 'rgba(17, 24, 39, 0.9)',
+        backgroundColor: 'rgba(26, 26, 26, 0.95)',
         borderColor: '#4B5563',
         textStyle: { color: '#E5E7EB' },
         formatter: function(params: CallbackDataParams | CallbackDataParams[]): string {

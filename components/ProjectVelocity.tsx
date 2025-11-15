@@ -103,7 +103,7 @@ export default function ProjectVelocity({
       axisPointer: {
         type: 'shadow'
       },
-      backgroundColor: 'rgba(31, 41, 55, 0.9)',
+      backgroundColor: 'rgba(26, 26, 26, 0.95)',
       borderColor: '#374151',
       borderWidth: 1,
       textStyle: {

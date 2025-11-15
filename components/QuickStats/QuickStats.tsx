@@ -19,6 +19,12 @@ const QuickStats: React.FC<QuickStatsProps> = ({
   karmaTrend,
   karmaRising,
 }) => {
+  const colorClassMap = {
+    'warm-peach': 'text-warm-peach',
+    'warm-blue': 'text-warm-blue',
+    'warm-sage': 'text-warm-sage',
+  } as const;
+
   const stats = [
     {
       label: 'Active Tasks',
@@ -53,7 +59,11 @@ const QuickStats: React.FC<QuickStatsProps> = ({
         >
           <h3 className="text-sm text-warm-gray mb-3 font-medium">{stat.label}</h3>
           <div className="flex items-center gap-3">
-            <div className={`text-4xl font-semibold text-${stat.color}`}>
+            <div
+              className={`text-4xl font-semibold ${
+                colorClassMap[stat.color as keyof typeof colorClassMap] ?? 'text-warm-blue'
+              }`}
+            >
               {stat.value}
             </div>
             {stat.trend && (

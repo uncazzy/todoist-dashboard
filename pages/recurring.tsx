@@ -115,7 +115,9 @@ const RecurringTasksPage = () => {
                 activeTasks={selectedProjectIds.length > 0
                   ? data.activeTasks.filter(task => selectedProjectIds.includes(task.projectId))
                   : data.activeTasks}
-                allCompletedTasks={data.allCompletedTasks}
+                allCompletedTasks={selectedProjectIds.length > 0
+                  ? data.allCompletedTasks.filter(task => selectedProjectIds.includes(task.project_id))
+                  : data.allCompletedTasks}
                 projectData={data.projectData}
               />
             </div>

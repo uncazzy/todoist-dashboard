@@ -11,7 +11,7 @@ const CHANGELOG = [
     date: 'November 2025',
     changes: [
       'UI Redesign: Applied warm minimalist color scheme across all components',
-      'Updated all charts, buttons, and interactive elements with cohesive warm palette',
+      'Replaced Neglected Tasks with Backlog Health and its new health-scoring model',
     ]
   },
   {

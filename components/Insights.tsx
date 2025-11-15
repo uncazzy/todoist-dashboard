@@ -524,23 +524,7 @@ const Insights: React.FC<InsightsProps> = ({ allData, isLoading }) => {
           </div>
         </div>
 
-        <Tooltip
-          id="insights-tooltip"
-          className="z-50 max-w-[90vw] break-words"
-          place="bottom"
-          positionStrategy="fixed"
-          noArrow={true}
-          style={{
-            backgroundColor: 'rgba(17, 24, 39, 0.95)',
-            color: '#e5e7eb',
-            borderRadius: '0.5rem',
-            padding: '0.5rem 0.75rem',
-            fontSize: '0.875rem',
-            lineHeight: '1.25rem',
-            maxWidth: '90vw',
-            wordBreak: 'break-word',
-          }}
-        />
+        <Tooltip id="insights-tooltip" />
       </div>
     );
   } catch (error) {

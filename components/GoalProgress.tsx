@@ -43,7 +43,13 @@ const MetricCard: React.FC<MetricCardProps> = ({ title, value, tooltip, color = 
   const colorMap = {
     blue: 'text-warm-blue',
     green: 'text-warm-sage',
-    yellow: 'text-warm-peach'
+    yellow: 'text-warm-peach',
+  };
+
+  const printColorMap = {
+    blue: 'print:text-blue-600',
+    green: 'print:text-green-600',
+    yellow: 'print:text-yellow-600',
   };
 
   return (
@@ -56,7 +62,7 @@ const MetricCard: React.FC<MetricCardProps> = ({ title, value, tooltip, color = 
         <div className="text-sm text-warm-gray print:text-gray-600">
           {title} <BsQuestionCircle className="inline h-4 w-4 text-warm-gray cursor-help print:text-gray-500" />
         </div>
-        <div className={`text-xl font-semibold ${colorMap[color]} print:text-${color}-600`}>{value}</div>
+        <div className={`text-xl font-semibold ${colorMap[color]} ${printColorMap[color]}`}>{value}</div>
       </div>
     </div>
   );
