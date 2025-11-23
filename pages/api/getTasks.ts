@@ -3,16 +3,18 @@ import { getToken } from 'next-auth/jwt';
 import { MAX_TASKS, INITIAL_BATCH_SIZE } from "../../utils/constants";
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { fetchWithRetry } from '../../utils/fetchWithRetry';
-import type { 
-  CompletedTask, 
-  TodoistStats, 
-  TodoistUser, 
-  LoadMoreResponse, 
+import type {
+  CompletedTask,
+  TodoistStats,
+  TodoistUser,
+  LoadMoreResponse,
   ErrorResponse,
   DashboardData,
   ActiveTask,
   ProjectData
 } from '../../types';
+import { USE_FAKE_DATA } from '../../config/dataSource';
+import fakeDataset from '../../test/data/fake-dataset.json';
 
 interface ApiResponse extends Omit<DashboardData, 'projectData'> {
   projectData: ProjectData[];
@@ -127,6 +129,23 @@ export default async function handler(
   response: NextApiResponse<ApiResponse | LoadMoreResponse | ErrorResponse>
 ) {
   try {
+    // If using fake data, return it immediately
+    if (USE_FAKE_DATA) {
+
+      // Handle "load more" requests (fake data is already fully loaded)
+      if (request.query.loadMore === 'true') {
+        return response.status(200).json({
+          newTasks: [],
+          hasMoreTasks: false,
+          totalTasks: fakeDataset.totalCompletedTasks,
+          loadedTasks: fakeDataset.totalCompletedTasks
+        });
+      }
+
+      // Return fake dataset
+      return response.status(200).json(fakeDataset as unknown as ApiResponse);
+    }
+
     const token = await getToken({ req: request });
     if (!token?.accessToken) {
       return response.status(401).json({ error: "Not authenticated" });

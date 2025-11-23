@@ -82,10 +82,38 @@ Contributions to Todoist Dashboard are welcome! Whether it's reporting a bug, su
 
 Please check out [Contributing Guidelines](CONTRIBUTING.md) for detailed instructions on how to get started.
 
-### Test Data
+### Test Data & Development Mode
 
-For development and testing purposes, this project includes test data generators in the `/test` directory. 
-Currently available generators:
+For development and testing purposes, you can use fake data instead of connecting to the Todoist API. This is useful for:
+- Testing dashboard features without a Todoist account
+- Developing new features with realistic data patterns
+- Testing edge cases (overdue tasks, stale tasks, streaks, etc.)
+- Performance testing with large datasets
+
+#### Using Fake Data
+
+1. **Generate fake dataset** (only needed once, or when you want fresh data):
+```bash
+cd test/scripts
+python generate_full_dataset.py --projects 6 --active-tasks 75 --completed-tasks 1500 --months 12
+```
+
+2. **Enable fake data mode** by editing `config/dataSource.ts`:
+```typescript
+export const USE_FAKE_DATA = true;  // Change to true
+```
+
+3. **Start the development server**:
+```bash
+npm run dev
+```
+
+4. **Switch back to real data** by setting `USE_FAKE_DATA = false` in `config/dataSource.ts`
+
+#### Test Data Generators
+
+The project includes several test data generators in `/test/scripts`:
+- `generate_full_dataset.py`: Generate comprehensive fake dashboard data (projects, active tasks, completed tasks)
 - `generate_recurring_tasks.py`: Generate test data for recurring tasks with various patterns
 
 See [test/README.md](test/README.md) for detailed usage instructions and examples.

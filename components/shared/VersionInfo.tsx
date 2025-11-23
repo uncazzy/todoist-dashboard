@@ -2,10 +2,17 @@ import React, { useState } from 'react';
 import { FaTimes } from 'react-icons/fa';
 
 // Current version number
-const APP_VERSION = '0.9.0';
+const APP_VERSION = '0.10.0';
 
 // Changelog entries - newest first
 const CHANGELOG = [
+  {
+    version: '0.10.0',
+    date: 'November 2025',
+    changes: [
+      'Added fake data generator and toggle for testing with realistic task patterns',
+    ]
+  },
   {
     version: '0.9.0',
     date: 'November 2025',
