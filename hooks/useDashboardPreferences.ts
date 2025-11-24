@@ -41,10 +41,15 @@ function loadPreferences(): DashboardPreferences {
     }
 
     // Deserialize date strings to Date objects
+    const rawDateRange =
+      parsed.dateRange && typeof parsed.dateRange === 'object'
+        ? parsed.dateRange
+        : { start: null, end: null, preset: 'all' };
+
     const dateRange: DateRange = {
-      start: parsed.dateRange.start ? new Date(parsed.dateRange.start) : null,
-      end: parsed.dateRange.end ? new Date(parsed.dateRange.end) : null,
-      preset: parsed.dateRange.preset || 'all',
+      start: rawDateRange.start ? new Date(rawDateRange.start) : null,
+      end: rawDateRange.end ? new Date(rawDateRange.end) : null,
+      preset: rawDateRange.preset || 'all',
     };
 
     // Validate dates are not invalid

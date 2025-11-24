@@ -3,6 +3,12 @@ import { IoMdTrendingDown, IoMdTrendingUp } from 'react-icons/io';
 import { getKarmaLevel } from '../../utils/karma';
 import { ActiveTask } from '../../types';
 
+interface WeeklyComparison {
+  thisWeek: number;
+  lastWeek: number;
+  percentChange: number;
+}
+
 interface QuickStatsProps {
   activeTasks: ActiveTask[];
   projectCount: number;
@@ -10,6 +16,7 @@ interface QuickStatsProps {
   karma: number;
   karmaTrend: string;
   karmaRising: boolean;
+  weeklyComparison?: WeeklyComparison;
 }
 
 const QuickStats: React.FC<QuickStatsProps> = ({
@@ -19,6 +26,7 @@ const QuickStats: React.FC<QuickStatsProps> = ({
   karma,
   karmaTrend,
   karmaRising,
+  weeklyComparison,
 }) => {
   const colorClassMap = {
     'warm-peach': 'text-warm-peach',
@@ -41,6 +49,12 @@ const QuickStats: React.FC<QuickStatsProps> = ({
       label: 'Completed Tasks',
       value: totalCompletedTasks,
       color: 'warm-sage',
+      subtitle: weeklyComparison
+        ? `${weeklyComparison.thisWeek} this week · ${weeklyComparison.percentChange >= 0 ? '↑' : '↓'}${Math.abs(weeklyComparison.percentChange)}%`
+        : undefined,
+      trend: weeklyComparison
+        ? (weeklyComparison.percentChange >= 0 ? 'up' : 'down')
+        : null,
     },
     {
       label: 'Karma Score',

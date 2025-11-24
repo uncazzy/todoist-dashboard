@@ -11,6 +11,7 @@ const CHANGELOG = [
     date: 'November 2025',
     changes: [
       'Added date range filter for completed tasks with presets and custom ranges',
+      'Added week-over-week comparison to Completed Tasks stat',
       'Added fake data generator toggle for testing with realistic task patterns',
     ]
   },

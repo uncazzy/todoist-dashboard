@@ -31,6 +31,7 @@ import ExportButton from './Export/ExportButton';
 import ExportModal from './Export/ExportModal';
 import { useExportSection } from '../hooks/useExportManager';
 import { filterCompletedTasksByDateRange } from '../utils/filterByDateRange';
+import { startOfDay, endOfDay, subDays } from 'date-fns';
 
 export default function Dashboard(): JSX.Element {
   const { status } = useSession();
@@ -96,6 +97,31 @@ export default function Dashboard(): JSX.Element {
       ).length,
     }));
   }, [filteredProjects, filteredCompletedTasks]);
+
+  // Calculate week-over-week comparison (uses project filter only, ignores date filter)
+  const weeklyComparison = useMemo(() => {
+    const now = new Date();
+    const today = endOfDay(now);
+    const sevenDaysAgo = startOfDay(subDays(now, 6));
+    const fourteenDaysAgo = startOfDay(subDays(now, 13));
+    const eightDaysAgo = endOfDay(subDays(now, 7));
+
+    const thisWeek = projectFilteredCompletedTasks.filter(task => {
+      const date = new Date(task.completed_at);
+      return date >= sevenDaysAgo && date <= today;
+    }).length;
+
+    const lastWeek = projectFilteredCompletedTasks.filter(task => {
+      const date = new Date(task.completed_at);
+      return date >= fourteenDaysAgo && date <= eightDaysAgo;
+    }).length;
+
+    const percentChange = lastWeek > 0
+      ? Math.round(((thisWeek - lastWeek) / lastWeek) * 100)
+      : thisWeek > 0 ? 100 : 0;
+
+    return { thisWeek, lastWeek, percentChange };
+  }, [projectFilteredCompletedTasks]);
 
   if (status !== 'authenticated') {
     return (
@@ -227,6 +253,7 @@ export default function Dashboard(): JSX.Element {
               karma={data?.karma || 0}
               karmaTrend={data?.karmaTrend || 'none'}
               karmaRising={data?.karmaRising || false}
+              weeklyComparison={weeklyComparison}
             />
           </div>
 
