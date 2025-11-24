@@ -10,7 +10,8 @@ const CHANGELOG = [
     version: '0.10.0',
     date: 'November 2025',
     changes: [
-      'Added fake data generator and toggle for testing with realistic task patterns',
+      'Added date range filter for completed tasks with presets and custom ranges',
+      'Added fake data generator toggle for testing with realistic task patterns',
     ]
   },
   {

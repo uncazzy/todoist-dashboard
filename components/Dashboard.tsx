@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useSession } from 'next-auth/react';
 import { Tooltip } from 'react-tooltip';
 import ActiveTasksByProject from './ActiveTasksByProject';
@@ -10,6 +10,7 @@ import TaskPriority from './TaskPriority';
 import BacklogHealth from './BacklogHealth';
 import CompletedByTimeOfDay from './CompletedByTimeOfDay';
 import { SiTodoist } from 'react-icons/si';
+import { HiX } from 'react-icons/hi';
 import CompletionStreak from './CompletionStreak';
 import TaskWordCloud from './TaskWordCloud';
 import RecurringTasksPreview from './RecurringTasks/RecurringTasksPreview';
@@ -19,18 +20,22 @@ import QuestionMark from './shared/QuestionMark';
 import LoadingIndicator from './shared/LoadingIndicator';
 import QuickStats from './QuickStats/QuickStats';
 import { useDashboardData } from '../hooks/useDashboardData';
+import { useDashboardPreferences } from '../hooks/useDashboardPreferences';
 import Layout from './layout/Layout';
 import ProjectPicker from './ProjectPicker';
+import DateRangePicker from './DateRangePicker';
 import TaskLeadTime from './TaskLeadTime';
 import ProjectVelocity from './ProjectVelocity';
 import CompletionHeatmap from './CompletionHeatmap';
 import ExportButton from './Export/ExportButton';
 import ExportModal from './Export/ExportModal';
 import { useExportSection } from '../hooks/useExportManager';
+import { filterCompletedTasksByDateRange } from '../utils/filterByDateRange';
 
 export default function Dashboard(): JSX.Element {
   const { status } = useSession();
-  const [selectedProjectIds, setSelectedProjectIds] = useState<string[]>([]);
+  const { preferences, updatePreferences, clearPreferences } = useDashboardPreferences();
+  const { selectedProjectIds, dateRange } = preferences;
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const {
     data,
@@ -53,6 +58,44 @@ export default function Dashboard(): JSX.Element {
   const dailyStatsRef = useExportSection('daily-stats', 'Daily Streak & Activity Pattern');
   const taskLeadTimeRef = useExportSection('task-lead-time', 'Task Lead Time Analysis');
   const taskTopicsRef = useExportSection('task-topics', 'Task Topics');
+
+  // Compute filtered data (must be before early returns for hooks rules)
+  const { projectData = [], allCompletedTasks = [], activeTasks = [] } = data || {};
+  const needsFullData = data?.hasMoreTasks || false;
+
+  // Filter by project (active tasks are not date-filtered, only completed tasks)
+  const filteredActiveTasks = useMemo(() => {
+    return selectedProjectIds.length > 0
+      ? activeTasks?.filter(task => selectedProjectIds.includes(task.projectId)) || []
+      : activeTasks || [];
+  }, [activeTasks, selectedProjectIds]);
+
+  const projectFilteredCompletedTasks = useMemo(() => {
+    return selectedProjectIds.length > 0
+      ? allCompletedTasks?.filter(task => selectedProjectIds.includes(task.project_id)) || []
+      : allCompletedTasks || [];
+  }, [allCompletedTasks, selectedProjectIds]);
+
+  // Apply date range filter to completed tasks
+  const filteredCompletedTasks = useMemo(() => {
+    return filterCompletedTasksByDateRange(projectFilteredCompletedTasks, dateRange);
+  }, [projectFilteredCompletedTasks, dateRange]);
+
+  const filteredProjects = useMemo(() => {
+    return selectedProjectIds.length > 0
+      ? projectData?.filter(project => selectedProjectIds.includes(project.id)) || []
+      : projectData || [];
+  }, [projectData, selectedProjectIds]);
+
+  // Compute projects with completed task counts (memoized for performance)
+  const projectsWithCounts = useMemo(() => {
+    return filteredProjects.map(project => ({
+      ...project,
+      completedTasksCount: filteredCompletedTasks.filter(
+        task => task.project_id === project.id
+      ).length,
+    }));
+  }, [filteredProjects, filteredCompletedTasks]);
 
   if (status !== 'authenticated') {
     return (
@@ -112,25 +155,10 @@ export default function Dashboard(): JSX.Element {
     );
   }
 
-  const { projectData, allCompletedTasks, activeTasks } = data;
-  const needsFullData = data.hasMoreTasks;
-
-  const filteredActiveTasks = selectedProjectIds.length > 0
-    ? activeTasks?.filter(task => selectedProjectIds.includes(task.projectId)) || []
-    : activeTasks || [];
-
-  const filteredCompletedTasks = selectedProjectIds.length > 0
-    ? allCompletedTasks?.filter(task => selectedProjectIds.includes(task.project_id)) || []
-    : allCompletedTasks || [];
-
-  const filteredProjects = selectedProjectIds.length > 0
-    ? projectData?.filter(project => selectedProjectIds.includes(project.id)) || []
-    : projectData || [];
-
   return (
     <Layout title="Dashboard | Todoist Dashboard" description="View your Todoist analytics and insights">
       <div className="min-h-screen bg-warm-black">
-        <div className="container mx-auto px-6 py-8 max-w-7xl">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8 max-w-7xl">
           <header className="mb-10">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-6">
               <div>
@@ -140,14 +168,38 @@ export default function Dashboard(): JSX.Element {
                 </h1>
                 <p className="text-warm-gray text-sm">Your productivity at a glance</p>
               </div>
-              <div className="flex items-center gap-3">
-                {data?.projectData && (
-                  <ProjectPicker
-                    projects={data.projectData}
-                    selectedProjectIds={selectedProjectIds}
-                    onProjectSelect={setSelectedProjectIds}
+              <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-3 sm:gap-4 w-full sm:w-auto">
+                {/* Filter Controls Group */}
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 p-2 sm:p-1 bg-warm-card/50 border border-warm-border/50 rounded-xl backdrop-blur-sm w-full sm:w-auto">
+                  {data?.projectData && (
+                    <ProjectPicker
+                      projects={data.projectData}
+                      selectedProjectIds={selectedProjectIds}
+                      onProjectSelect={(ids) => updatePreferences({ selectedProjectIds: ids })}
+                    />
+                  )}
+                  <DateRangePicker
+                    dateRange={dateRange}
+                    onDateRangeChange={(range) => updatePreferences({ dateRange: range })}
                   />
-                )}
+                  {(selectedProjectIds.length > 0 || dateRange.preset !== 'all') && (
+                    <>
+                      <div className="w-full h-px sm:w-px sm:h-6 bg-warm-border" />
+                      <button
+                        onClick={clearPreferences}
+                        className="flex items-center justify-center gap-1.5 px-3 py-2.5 sm:py-2 text-sm font-medium text-white bg-warm-hover hover:bg-warm-peach hover:text-white border border-warm-border hover:border-warm-peach rounded-lg transition-all duration-200 w-full sm:w-auto"
+                        aria-label="Reset all filters"
+                        data-tooltip-id="dashboard-tooltip"
+                        data-tooltip-content="Clear both project and date filters to show all data"
+                      >
+                        <HiX className="w-3.5 h-3.5" />
+                        Reset
+                      </button>
+                    </>
+                  )}
+                </div>
+
+                {/* Export Action - Standalone */}
                 <ExportButton
                   onClick={() => setIsExportModalOpen(true)}
                   disabled={isLoading || !data}
@@ -297,12 +349,7 @@ export default function Dashboard(): JSX.Element {
                   Completed Tasks by Project
                 </h2>
                 <CompletedTasksByProject
-                  projectData={filteredProjects.map(project => ({
-                    ...project,
-                    completedTasksCount: filteredCompletedTasks.filter(
-                      task => task.project_id === project.id
-                    ).length,
-                  }))}
+                  projectData={projectsWithCounts}
                   loading={needsFullData}
                 />
               </div>

@@ -16,9 +16,9 @@ const HOURS = Array.from({ length: 24 }, (_, i) => {
   return `${hour}${ampm}`;
 });
 
-export default function CompletionHeatmap({ 
-  completedTasks, 
-  loading = false 
+function CompletionHeatmap({
+  completedTasks,
+  loading = false
 }: CompletionHeatmapProps): JSX.Element {
   // Handle loading state
   if (loading || !completedTasks || completedTasks.length === 0) {
@@ -181,4 +181,6 @@ export default function CompletionHeatmap({
       </div>
     </div>
   );
-} 
+}
+
+export default React.memo(CompletionHeatmap);

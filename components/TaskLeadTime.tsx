@@ -10,7 +10,7 @@ interface TaskLeadTimeProps {
   loading?: boolean;
 }
 
-export default function TaskLeadTime({ completedTasks, activeTasks, loading = false }: TaskLeadTimeProps): JSX.Element {
+function TaskLeadTime({ completedTasks, activeTasks, loading = false }: TaskLeadTimeProps): JSX.Element {
   // Handle loading state
   if (loading || !completedTasks || completedTasks.length === 0) {
     return (
@@ -141,4 +141,6 @@ export default function TaskLeadTime({ completedTasks, activeTasks, loading = fa
       </div>
     </div>
   );
-} 
+}
+
+export default React.memo(TaskLeadTime);

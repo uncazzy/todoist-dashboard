@@ -13,8 +13,11 @@ import type {
   ActiveTask,
   ProjectData
 } from '../../types';
-import { USE_FAKE_DATA } from '../../config/dataSource';
-import fakeDataset from '../../test/data/fake-dataset.json';
+
+// Toggle fake data testing
+const USE_FAKE_DATA = false;
+// Import fake dataset testing
+import fakeDataset from '../../test/data/date-filter-test.json';
 
 interface ApiResponse extends Omit<DashboardData, 'projectData'> {
   projectData: ProjectData[];
@@ -71,7 +74,7 @@ async function getTotalTaskCount(token: string): Promise<number> {
     if (typeof data.completed_count !== 'number') {
       throw new Error('Invalid response: completed_count is not a number');
     }
-    
+
     return data.completed_count;
   } catch (error) {
     console.error('Error getting total task count:', error);
@@ -201,7 +204,7 @@ export default async function handler(
 
     // Map projects to our internal format
     const projectData = projects.map(mapToProjectData);
-    
+
     // Map active tasks to our internal format
     const activeTasks = tasks.map(mapToActiveTask);
 
@@ -222,18 +225,18 @@ export default async function handler(
   } catch (error) {
     console.error('Error in getTasks API:', error);
     if (error instanceof TodoistAPIError) {
-      return response.status(error.statusCode).json({ 
+      return response.status(error.statusCode).json({
         error: error.message,
         details: 'Todoist API error'
       });
     }
     if (error instanceof ValidationError) {
-      return response.status(400).json({ 
+      return response.status(400).json({
         error: error.message,
         details: 'Validation error'
       });
     }
-    response.status(500).json({ 
+    response.status(500).json({
       error: 'Internal server error',
       details: error instanceof Error ? error.message : 'Unknown error'
     });

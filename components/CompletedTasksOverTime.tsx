@@ -38,7 +38,7 @@ interface DataPoints {
   data: number[];
 }
 
-export default function CompletedTasksOverTime({ allData, loading }: CompletedTasksOverTimeProps) {
+function CompletedTasksOverTime({ allData, loading }: CompletedTasksOverTimeProps) {
   const [timeFrame, setTimeFrame] = useState<TimeFrame>('1M');
   const [viewType, setViewType] = useState<ViewType>('daily');
   
@@ -285,3 +285,5 @@ export default function CompletedTasksOverTime({ allData, loading }: CompletedTa
     </div>
   );
 }
+
+export default React.memo(CompletedTasksOverTime);

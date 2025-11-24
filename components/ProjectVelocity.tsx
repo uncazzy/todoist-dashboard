@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import ReactECharts from 'echarts-for-react';
 import { EChartsOption, BarSeriesOption } from 'echarts';
 import { format } from 'date-fns';
@@ -15,13 +15,22 @@ interface ProjectVelocityProps {
   loading?: boolean;
 }
 
-export default function ProjectVelocity({
+function ProjectVelocity({
   completedTasks,
   projectData,
   timeIntervals = 4,
   intervalDays = 7,
   loading = false
 }: ProjectVelocityProps): JSX.Element {
+  // Extract project names map (memoized for performance)
+  const projectNames = useMemo(() => {
+    const names: Record<string, string> = {};
+    projectData.forEach(project => {
+      names[project.id] = project.name;
+    });
+    return names;
+  }, [projectData]);
+
   if (loading || completedTasks.length === 0 || projectData.length === 0) {
     return (
       <div className="flex items-center justify-center h-[300px]">
@@ -54,14 +63,6 @@ export default function ProjectVelocity({
 
   // Limit to 8 projects for clarity
   const limitedProjectIds = Array.from(topProjectIds).slice(0, 8);
-
-  // Extract project data to color map
-  const projectColors: Record<string, string> = {};
-  const projectNames: Record<string, string> = {};
-  projectData.forEach(project => {
-    projectColors[project.id] = project.color || 'grey';
-    projectNames[project.id] = project.name;
-  });
 
   // Prepare data for stacked bar chart
   const series: BarSeriesOption[] = limitedProjectIds.map(projectId => {
@@ -203,4 +204,6 @@ export default function ProjectVelocity({
       </div>
     </div>
   );
-} 
+}
+
+export default React.memo(ProjectVelocity);

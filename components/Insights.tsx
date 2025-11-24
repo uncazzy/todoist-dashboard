@@ -57,6 +57,7 @@ type CreatedTasks = {
 };
 
 type ProjectStat = {
+  id: string;
   name: string;
   completedTasks: number;
   color: string;
@@ -153,7 +154,7 @@ const Insights: React.FC<InsightsProps> = ({ allData, isLoading }) => {
       projectData
         ?.filter((project) => project.name !== 'Inbox')
         .map((project) => ({
-
+          id: project.id,
           name: project.name,
           completedTasks: allCompletedTasks.filter(
             (task) => task.project_id === project.id
@@ -314,9 +315,9 @@ const Insights: React.FC<InsightsProps> = ({ allData, isLoading }) => {
               <QuestionMark content="Distribution of completed tasks across your top projects" />
             </h3>
             <div className="space-y-4">
-              {projectStats.slice(0, 5).map((project, index) => (
+              {projectStats.slice(0, 5).map((project) => (
                 <div
-                  key={index}
+                  key={project.id}
                   className="flex items-center space-x-3"
                   data-tooltip-id="insights-tooltip"
                   data-tooltip-content={`${project.completedTasks} tasks completed in ${project.name}`}

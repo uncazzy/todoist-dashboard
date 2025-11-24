@@ -1,9 +1,10 @@
 import React from 'react';
 import { IoMdTrendingDown, IoMdTrendingUp } from 'react-icons/io';
 import { getKarmaLevel } from '../../utils/karma';
+import { ActiveTask } from '../../types';
 
 interface QuickStatsProps {
-  activeTasks: any[];
+  activeTasks: ActiveTask[];
   projectCount: number;
   totalCompletedTasks: number;
   karma: number;
@@ -81,4 +82,4 @@ const QuickStats: React.FC<QuickStatsProps> = ({
   );
 };
 
-export default QuickStats;
+export default React.memo(QuickStats);

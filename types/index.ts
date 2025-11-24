@@ -155,3 +155,19 @@ export type TodoistColor =
   | 'charcoal'
   | 'grey'
   | 'taupe';
+
+// Date Range Types for Dashboard Filtering
+export type DateRangePreset = 'all' | '7d' | '30d' | '90d' | '6m' | '1y' | 'custom';
+
+export interface DateRange {
+  start: Date | null;
+  end: Date | null;
+  preset: DateRangePreset;
+}
+
+// Dashboard Preferences (persisted in localStorage)
+export interface DashboardPreferences {
+  selectedProjectIds: string[];
+  dateRange: DateRange;
+  version: number; // For schema migration in the future
+}
