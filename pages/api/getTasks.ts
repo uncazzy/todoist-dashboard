@@ -16,8 +16,6 @@ import type {
 
 // Toggle fake data testing
 const USE_FAKE_DATA = false;
-// Import fake dataset testing
-import fakeDataset from '../../test/data/fake-dataset.json';
 
 interface ApiResponse extends Omit<DashboardData, 'projectData'> {
   projectData: ProjectData[];
@@ -134,6 +132,8 @@ export default async function handler(
   try {
     // If using fake data, return it immediately
     if (USE_FAKE_DATA) {
+      
+      const fakeDataset = await import('../../test/data/fake-dataset.json');
 
       // Handle "load more" requests (fake data is already fully loaded)
       if (request.query.loadMore === 'true') {

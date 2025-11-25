@@ -10,6 +10,7 @@ import styles from './DateRangePicker.module.css';
 interface DateRangePickerProps {
   dateRange: DateRange;
   onDateRangeChange: (range: DateRange) => void;
+  fullWidth?: boolean;
 }
 
 // Preset options - defined outside component to prevent re-creation on every render
@@ -18,6 +19,7 @@ const PRESETS: readonly DateRangePreset[] = ['all', '7d', '30d', '90d', '6m', '1
 const DateRangePicker: React.FC<DateRangePickerProps> = ({
   dateRange,
   onDateRangeChange,
+  fullWidth = false,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [customStart, setCustomStart] = useState<Date | null>(dateRange.start);
@@ -116,15 +118,18 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
   };
 
   const handleApplyCustomRange = () => {
-    // Validate dates
-    if (customStart && customEnd && customStart > customEnd) {
+    if (!customStart || !customEnd) {
+      setError('Please select both start and end dates');
+      return;
+    }
+
+    if (customStart > customEnd) {
       setError('Start date must be before end date');
       return;
     }
 
-    // Prevent future dates
     const now = new Date();
-    if ((customStart && customStart > now) || (customEnd && customEnd > now)) {
+    if (customStart > now || customEnd > now) {
       setError('Cannot select future dates');
       return;
     }
@@ -172,7 +177,7 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
         ref={triggerButtonRef}
         onClick={() => setIsOpen(!isOpen)}
         onKeyDown={handleTriggerKeyDown}
-        className={`flex items-center gap-2 px-4 py-2.5 sm:py-2 text-sm rounded-lg transition-colors duration-200 border backdrop-blur-sm w-full sm:w-auto sm:min-w-[160px] sm:max-w-[280px] justify-between ${
+        className={`flex items-center gap-2 px-4 py-2.5 sm:py-2 text-sm rounded-lg transition-colors duration-200 border backdrop-blur-sm ${fullWidth ? 'w-full' : 'w-full sm:w-auto sm:min-w-[160px] sm:max-w-[280px]'} justify-between ${
           isActiveFilter
             ? 'bg-warm-peach/10 hover:bg-warm-peach/20 border-warm-peach text-warm-peach'
             : 'bg-warm-hover hover:bg-warm-card border-warm-border text-white'
@@ -199,7 +204,7 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: animationDuration }}
-            className="absolute left-0 sm:right-0 top-full mt-2 w-full sm:w-80 py-3 bg-warm-card rounded-lg shadow-lg border border-warm-border backdrop-blur-sm"
+            className={`absolute left-0 top-full mt-2 py-3 bg-warm-card rounded-lg shadow-lg border border-warm-border backdrop-blur-sm ${fullWidth ? 'right-0 w-full' : 'sm:right-0 w-full sm:w-80'}`}
             role="menu"
             aria-label="Date range filter options"
           >

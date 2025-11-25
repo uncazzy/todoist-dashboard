@@ -25,15 +25,15 @@ export function parseLabelsFromContent(content: string, validLabels: Label[]): s
 
   for (const label of sortedLabels) {
     const pattern = `@${label.name}`;
+    const escapedPattern = escapeRegex(pattern);
+    const boundaryPattern = `(?<!\\S)${escapedPattern}(?=$|[\\s.,!?;:])`;
+    const existsRegex = new RegExp(boundaryPattern, 'i');
 
-    // Check if this label pattern exists in the content (case-insensitive)
-    const lowerContent = remainingContent.toLowerCase();
-    const lowerPattern = pattern.toLowerCase();
-
-    if (lowerContent.includes(lowerPattern)) {
+    if (existsRegex.test(remainingContent)) {
       foundLabels.push(label.name);
       // Remove the matched label to avoid double-counting
-      remainingContent = remainingContent.replace(new RegExp(escapeRegex(pattern), 'gi'), '');
+      const removeRegex = new RegExp(boundaryPattern, 'gi');
+      remainingContent = remainingContent.replace(removeRegex, '');
     }
   }
 

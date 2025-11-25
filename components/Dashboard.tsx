@@ -30,6 +30,8 @@ import CompletionHeatmap from './CompletionHeatmap';
 import ExportButton from './Export/ExportButton';
 import ExportModal from './Export/ExportModal';
 import { VisibilityButton, VisibilityModal } from './VisibilitySettings';
+import { MobileControlsFAB, MobileControlsSheet } from './MobileControls';
+import { AnimatePresence } from 'framer-motion';
 import { useExportSection } from '../hooks/useExportManager';
 import { filterCompletedTasksByDateRange } from '../utils/filterByDateRange';
 import { startOfDay, endOfDay, subDays } from 'date-fns';
@@ -41,6 +43,7 @@ export default function Dashboard(): JSX.Element {
   const { selectedProjectIds, dateRange, visibleSections } = preferences;
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [isVisibilityModalOpen, setIsVisibilityModalOpen] = useState(false);
+  const [isMobileControlsOpen, setIsMobileControlsOpen] = useState(false);
   const [labelViewMode, setLabelViewMode] = useState<LabelViewMode>('all');
 
   // Helper to check if a section is visible
@@ -208,9 +211,10 @@ export default function Dashboard(): JSX.Element {
                 </h1>
                 <p className="text-warm-gray text-sm">Your productivity at a glance</p>
               </div>
-              <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-3 sm:gap-4 w-full sm:w-auto">
+              {/* Desktop Controls - hidden on mobile */}
+              <div className="hidden sm:flex sm:flex-row sm:flex-wrap sm:items-center gap-3 sm:gap-4 w-full sm:w-auto">
                 {/* Filter Controls Group */}
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 p-2 sm:p-1 bg-warm-card/50 border border-warm-border/50 rounded-xl backdrop-blur-sm w-full sm:w-auto">
+                <div className="flex flex-row items-center gap-3 p-1 bg-warm-card/50 border border-warm-border/50 rounded-xl backdrop-blur-sm w-auto">
                   {data?.projectData && (
                     <ProjectPicker
                       projects={data.projectData}
@@ -224,10 +228,10 @@ export default function Dashboard(): JSX.Element {
                   />
                   {(selectedProjectIds.length > 0 || dateRange.preset !== 'all') && (
                     <>
-                      <div className="w-full h-px sm:w-px sm:h-6 bg-warm-border" />
+                      <div className="w-px h-6 bg-warm-border" />
                       <button
                         onClick={clearPreferences}
-                        className="flex items-center justify-center gap-1.5 px-3 py-2.5 sm:py-2 text-sm font-medium text-white bg-warm-hover hover:bg-warm-peach hover:text-white border border-warm-border hover:border-warm-peach rounded-lg transition-all duration-200 w-full sm:w-auto"
+                        className="flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium text-white bg-warm-hover hover:bg-warm-peach hover:text-white border border-warm-border hover:border-warm-peach rounded-lg transition-all duration-200"
                         aria-label="Reset all filters"
                         data-tooltip-id="dashboard-tooltip"
                         data-tooltip-content="Clear both project and date filters to show all data"
@@ -240,7 +244,7 @@ export default function Dashboard(): JSX.Element {
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
+                <div className="flex flex-row gap-3">
                   <VisibilityButton
                     onClick={() => setIsVisibilityModalOpen(true)}
                     disabled={isLoading || !data}
@@ -581,6 +585,77 @@ export default function Dashboard(): JSX.Element {
           visibleSections={visibleSections}
           onVisibleSectionsChange={(sections) => updatePreferences({ visibleSections: sections })}
         />
+
+        {/* Mobile Controls FAB - hidden when sheet is open */}
+        <AnimatePresence>
+          {!isMobileControlsOpen && (
+            <MobileControlsFAB
+              onClick={() => setIsMobileControlsOpen(true)}
+              hasActiveFilters={selectedProjectIds.length > 0 || dateRange.preset !== 'all'}
+            />
+          )}
+        </AnimatePresence>
+
+        {/* Mobile Controls Bottom Sheet */}
+        <MobileControlsSheet
+          isOpen={isMobileControlsOpen}
+          onClose={() => setIsMobileControlsOpen(false)}
+        >
+          <div className="space-y-6 p-4 pb-8">
+            {/* Section 1: Filters */}
+            <section>
+              <h3 className="text-sm font-medium text-warm-gray mb-3">Filters</h3>
+              <div className="space-y-3">
+                {data?.projectData && (
+                  <ProjectPicker
+                    projects={data.projectData}
+                    selectedProjectIds={selectedProjectIds}
+                    onProjectSelect={(ids) => updatePreferences({ selectedProjectIds: ids })}
+                    fullWidth
+                  />
+                )}
+                <DateRangePicker
+                  dateRange={dateRange}
+                  onDateRangeChange={(range) => updatePreferences({ dateRange: range })}
+                  fullWidth
+                />
+                {(selectedProjectIds.length > 0 || dateRange.preset !== 'all') && (
+                  <button
+                    onClick={() => {
+                      clearPreferences();
+                      setIsMobileControlsOpen(false);
+                    }}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium text-warm-peach bg-warm-hover border border-warm-peach/30 rounded-lg hover:bg-warm-peach/10 transition-colors"
+                  >
+                    <HiX className="w-4 h-4" />
+                    Reset All Filters
+                  </button>
+                )}
+              </div>
+            </section>
+
+            {/* Section 2: Actions */}
+            <section className="pt-4 border-t border-warm-border">
+              <h3 className="text-sm font-medium text-warm-gray mb-3">Actions</h3>
+              <div className="flex flex-col gap-3">
+                <VisibilityButton
+                  onClick={() => {
+                    setIsMobileControlsOpen(false);
+                    setIsVisibilityModalOpen(true);
+                  }}
+                  disabled={isLoading || !data}
+                />
+                <ExportButton
+                  onClick={() => {
+                    setIsMobileControlsOpen(false);
+                    setIsExportModalOpen(true);
+                  }}
+                  disabled={isLoading || !data}
+                />
+              </div>
+            </section>
+          </div>
+        </MobileControlsSheet>
       </div>
     </Layout>
   );

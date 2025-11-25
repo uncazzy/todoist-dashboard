@@ -113,8 +113,7 @@ python generate_full_dataset.py --projects 6 --active-tasks 75 --completed-tasks
 
 ### Step 2: Enable Fake Data Mode
 
-Edit `pages\api\getTasks.ts`:
-
+Edit `pages/api/getTasks.ts`:
 ```typescript
 const USE_FAKE_DATA = true;  // Toggle this and adjust path to data!
 ```

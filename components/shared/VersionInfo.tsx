@@ -10,11 +10,11 @@ const CHANGELOG = [
     version: '0.10.0',
     date: 'November 2025',
     changes: [
-      'Added dashboard customization - show/hide sections with the new Customize button',
-      'Added date range filter for completed tasks with presets and custom ranges',
-      'Added label/tag analytics showing task distribution across labels',
-      'Added week-over-week comparison to Completed Tasks stat',
-      'Added animated count-up effect to QuickStats cards',
+      'Added dashboard customization to show/hide sections',
+      'Added date range filter with presets and custom ranges',
+      'Added mobile-optimized filter controls with bottom sheet UI',
+      'Added label distribution chart for tag analytics',
+      'Added week-over-week stats and animated counters',
       'Updated favicon',
     ]
   },

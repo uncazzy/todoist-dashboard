@@ -9,12 +9,17 @@ export function useCountUp(end: number, duration: number = 800): number {
       return;
     }
 
-    let startTime: number;
+    const parsedDuration = Number(duration);
+    const normalizedDuration = Number.isFinite(parsedDuration) ? parsedDuration : 0;
+    const shouldAnimate = normalizedDuration > 0;
+
+    let startTime: number | null = null;
     let animationFrame: number;
 
     const animate = (currentTime: number) => {
-      if (!startTime) startTime = currentTime;
-      const progress = Math.min((currentTime - startTime) / duration, 1);
+      if (startTime === null) startTime = currentTime;
+      const elapsed = currentTime - startTime;
+      const progress = shouldAnimate ? Math.min(elapsed / normalizedDuration, 1) : 1;
 
       // Ease-out curve for natural feel
       const easeOut = 1 - Math.pow(1 - progress, 3);
