@@ -10,11 +10,11 @@ const CHANGELOG = [
     version: '0.10.0',
     date: 'November 2025',
     changes: [
-      'Added label/tag analytics showing task distribution across labels',
+      'Added dashboard customization - show/hide sections with the new Customize button',
       'Added date range filter for completed tasks with presets and custom ranges',
+      'Added label/tag analytics showing task distribution across labels',
       'Added week-over-week comparison to Completed Tasks stat',
       'Added animated count-up effect to QuickStats cards',
-      'Added fake data generator toggle for testing with realistic task patterns',
       'Updated favicon',
     ]
   },
@@ -89,7 +89,7 @@ const CHANGELOG = [
 
 const VersionInfo: React.FC = () => {
   const [showModal, setShowModal] = useState(false);
-  
+
   return (
     <>
       <span
@@ -99,7 +99,7 @@ const VersionInfo: React.FC = () => {
       >
         v{APP_VERSION}
       </span>
-      
+
       {/* Changelog Modal */}
       {showModal && (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-70 p-4">

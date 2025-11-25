@@ -180,8 +180,6 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
         aria-label={triggerAriaLabel}
         aria-expanded={isOpen}
         aria-haspopup="menu"
-        data-tooltip-id="dashboard-tooltip"
-        data-tooltip-content="Filter completed tasks by date range. Active tasks are not affected by date filters."
       >
         <div className="flex items-center gap-2 min-w-0">
           <HiCalendar className="w-4 h-4 flex-shrink-0" />

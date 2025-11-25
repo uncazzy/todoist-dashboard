@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BsQuestionCircle } from 'react-icons/bs';
+import { Tooltip } from 'react-tooltip';
 
 interface Task {
   completed_at: string;
@@ -53,14 +54,19 @@ const MetricCard: React.FC<MetricCardProps> = ({ title, value, tooltip, color = 
   };
 
   return (
-    <div
-      className="bg-warm-hover border border-warm-border p-4 rounded-2xl hover:bg-warm-card transition-colors print:bg-transparent print:border print:border-gray-100"
-      data-tooltip-id="insights-tooltip"
-      data-tooltip-content={tooltip}
-    >
+    <div className="bg-warm-hover border border-warm-border p-4 rounded-2xl hover:bg-warm-card transition-colors print:bg-transparent print:border print:border-gray-100">
       <div className="h-full flex flex-col justify-between gap-2">
-        <div className="text-sm text-warm-gray print:text-gray-600">
-          {title} <BsQuestionCircle className="inline h-4 w-4 text-warm-gray cursor-help print:text-gray-500" />
+        <div className="text-sm text-warm-gray print:text-gray-600 flex items-center">
+          {title}
+          <button
+            type="button"
+            className="inline-flex items-center justify-center ml-1.5 text-warm-gray hover:text-white cursor-help focus:outline-none focus:text-white print:hidden"
+            data-tooltip-id="goal-progress-tooltip"
+            data-tooltip-content={tooltip}
+            aria-label={tooltip}
+          >
+            <BsQuestionCircle className="h-4 w-4" />
+          </button>
         </div>
         <div className={`text-xl font-semibold ${colorMap[color]} ${printColorMap[color]}`}>{value}</div>
       </div>
@@ -128,39 +134,48 @@ const GoalProgress: React.FC<GoalProgressProps> = ({ allData }) => {
   const bestWeeklyStreak = goals?.max_weekly_streak?.count || 0;
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 print:gap-6">
-      {error && <div className="text-warm-peach">{error}</div>}
-      <MetricCard
-        title="30-Day Total"
-        value={totalCompleted}
-        tooltip="Total tasks completed over the last 30 days"
-        color="green"
+    <>
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 print:gap-6">
+        {error && <div className="text-warm-peach">{error}</div>}
+        <MetricCard
+          title="30-Day Total"
+          value={totalCompleted}
+          tooltip="Total tasks completed over the last 30 days"
+          color="green"
+        />
+        <MetricCard
+          title="Current Daily Streak"
+          value={`${currentDailyStreak} days`}
+          tooltip="Your current streak of consecutive days meeting or exceeding your daily goal"
+          color="blue"
+        />
+        <MetricCard
+          title="Best Daily Streak"
+          value={`${bestDailyStreak} days`}
+          tooltip="Your longest streak of consecutive days meeting or exceeding your daily goal"
+          color="yellow"
+        />
+        <MetricCard
+          title="Current Weekly Streak"
+          value={`${currentWeeklyStreak} weeks`}
+          tooltip="Your current streak of consecutive weeks meeting or exceeding your weekly goal"
+          color="blue"
+        />
+        <MetricCard
+          title="Best Weekly Streak"
+          value={`${bestWeeklyStreak} weeks`}
+          tooltip="Your longest streak of consecutive weeks meeting or exceeding your weekly goal"
+          color="yellow"
+        />
+      </div>
+      <Tooltip
+        id="goal-progress-tooltip"
+        place="top"
+        className="z-50 max-w-xs text-center"
+        positionStrategy="fixed"
+        openOnClick={true}
       />
-      <MetricCard
-        title="Current Daily Streak"
-        value={`${currentDailyStreak} days`}
-        tooltip="Your current streak of consecutive days meeting or exceeding your daily goal"
-        color="blue"
-      />
-      <MetricCard
-        title="Best Daily Streak"
-        value={`${bestDailyStreak} days`}
-        tooltip="Your longest streak of consecutive days meeting or exceeding your daily goal"
-        color="yellow"
-      />
-      <MetricCard
-        title="Current Weekly Streak"
-        value={`${currentWeeklyStreak} weeks`}
-        tooltip="Your current streak of consecutive weeks meeting or exceeding your weekly goal"
-        color="blue"
-      />
-      <MetricCard
-        title="Best Weekly Streak"
-        value={`${bestWeeklyStreak} weeks`}
-        tooltip="Your longest streak of consecutive weeks meeting or exceeding your weekly goal"
-        color="yellow"
-      />
-    </div>
+    </>
   );
 };
 

@@ -2,7 +2,7 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import type { DashboardPreferences, DateRange } from '@/types';
 
 const STORAGE_KEY = 'todoist_dashboard_preferences';
-const SCHEMA_VERSION = 1;
+const SCHEMA_VERSION = 2;
 const SAVE_DEBOUNCE_MS = 300;
 
 // Default preferences
@@ -13,6 +13,7 @@ const DEFAULT_PREFERENCES: DashboardPreferences = {
     end: null,
     preset: 'all',
   },
+  visibleSections: [], // Empty array means all sections visible
   version: SCHEMA_VERSION,
 };
 
@@ -33,6 +34,13 @@ function loadPreferences(): DashboardPreferences {
     }
 
     const parsed = JSON.parse(stored);
+
+    // Schema migration: v1 -> v2
+    if (parsed.version === 1) {
+      console.info('Migrating dashboard preferences from v1 to v2');
+      parsed.visibleSections = []; // All sections visible by default
+      parsed.version = 2;
+    }
 
     // Validate schema version
     if (parsed.version !== SCHEMA_VERSION) {
@@ -65,6 +73,9 @@ function loadPreferences(): DashboardPreferences {
         ? parsed.selectedProjectIds
         : [],
       dateRange,
+      visibleSections: Array.isArray(parsed.visibleSections)
+        ? parsed.visibleSections
+        : [],
       version: SCHEMA_VERSION,
     };
   } catch (error) {

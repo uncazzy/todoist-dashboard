@@ -280,7 +280,7 @@ export const TaskCalendar = React.memo(({ taskData, task, project }: TaskCalenda
           </div>
         ))}
       </div>
-      <Tooltip id="task-calendar-tooltip" />
+      <Tooltip id="task-calendar-tooltip" positionStrategy="fixed" openOnClick={true} className="z-50 max-w-xs text-center" />
     </div>
   );
 });

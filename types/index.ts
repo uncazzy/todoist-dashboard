@@ -179,5 +179,6 @@ export interface DateRange {
 export interface DashboardPreferences {
   selectedProjectIds: string[];
   dateRange: DateRange;
+  visibleSections: string[]; // Empty array means all sections visible
   version: number; // For schema migration in the future
 }

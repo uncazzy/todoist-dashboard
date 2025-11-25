@@ -113,10 +113,10 @@ python generate_full_dataset.py --projects 6 --active-tasks 75 --completed-tasks
 
 ### Step 2: Enable Fake Data Mode
 
-Edit `config/dataSource.ts`:
+Edit `pages\api\getTasks.ts`:
 
 ```typescript
-export const USE_FAKE_DATA = true;  // Toggle this!
+const USE_FAKE_DATA = true;  // Toggle this and adjust path to data!
 ```
 
 ### Step 3: Start Development Server
@@ -132,7 +132,7 @@ The dashboard will now use fake data instead of the Todoist API.
 When you're ready to use real data again:
 
 ```typescript
-export const USE_FAKE_DATA = false;
+const USE_FAKE_DATA = false;
 ```
 
 ## What Gets Tested

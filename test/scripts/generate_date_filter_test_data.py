@@ -14,7 +14,7 @@ import json
 import random
 import argparse
 from datetime import datetime, timedelta
-from typing import List, Dict
+from typing import List, Dict, Tuple
 
 # Simple project templates for testing
 TEST_PROJECTS = [
@@ -84,13 +84,15 @@ def generate_projects() -> List[Dict]:
     return projects
 
 
-def generate_completed_task(project_id: str, completion_datetime: datetime) -> Dict:
+def generate_completed_task(project_id: str, completion_datetime: datetime, lead_time_days: int = None) -> Tuple[Dict, int, datetime]:
     """Generate a single completed task"""
     task_id = generate_id()
     content = random.choice(TASK_CONTENTS)
 
     # Task was created before completion (1-30 days lead time)
-    lead_time_days = random.randint(1, 30)
+    if lead_time_days is None:
+        lead_time_days = random.randint(1, 30)
+    
     created_at = completion_datetime - timedelta(days=lead_time_days, hours=random.randint(0, 23))
 
     return {
@@ -108,7 +110,7 @@ def generate_completed_task(project_id: str, completion_datetime: datetime) -> D
         "v2_project_id": generate_v2_id(),
         "v2_section_id": None,
         "v2_task_id": generate_v2_id()
-    }
+    }, lead_time_days, created_at
 
 
 def generate_active_task_for_completed(task_id: str, project_id: str, content: str, created_at: datetime) -> Dict:
@@ -192,12 +194,10 @@ def main():
         # Generate tasks
         for task_date in task_dates:
             project = random.choice(projects)
-            task = generate_completed_task(project["id"], task_date)
+            task, lead_time_days, created_at = generate_completed_task(project["id"], task_date)
             completed_tasks.append(task)
 
             # Create matching active task (for lead time calculation)
-            lead_time_days = random.randint(1, 30)
-            created_at = task_date - timedelta(days=lead_time_days)
             active_task = generate_active_task_for_completed(
                 task["task_id"],
                 project["id"],

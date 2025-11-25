@@ -16,24 +16,31 @@ type ECOption = echarts.ComposeOption<
   TooltipComponentOption | GridComponentOption | BarSeriesOption
 >;
 
+export type LabelViewMode = 'all' | 'active';
+
 interface LabelDistributionProps {
   activeTasks: ActiveTask[];
   completedTasks: CompletedTask[];
   labels: Label[];
   loading?: boolean;
+  viewMode?: LabelViewMode;
 }
 
-function LabelDistribution({ activeTasks, completedTasks, labels, loading }: LabelDistributionProps) {
+function LabelDistribution({ activeTasks, completedTasks, labels, loading, viewMode = 'all' }: LabelDistributionProps) {
+
   const labelStats = useMemo(() => {
     if (!labels || labels.length === 0) return [];
 
     const stats = getLabelStats(activeTasks, completedTasks, labels);
 
-    // Convert to array and sort by total count (descending)
+    // Convert to array and sort by relevant count (descending)
     return Array.from(stats.values())
-      .filter(stat => stat.total > 0) // Only show labels with tasks
-      .sort((a, b) => b.total - a.total);
-  }, [activeTasks, completedTasks, labels]);
+      .filter(stat => viewMode === 'all' ? stat.total > 0 : stat.active > 0)
+      .sort((a, b) => viewMode === 'all'
+        ? b.total - a.total
+        : b.active - a.active
+      );
+  }, [activeTasks, completedTasks, labels, viewMode]);
 
   if (loading) {
     return (
@@ -82,6 +89,10 @@ function LabelDistribution({ activeTasks, completedTasks, labels, loading }: Lab
         const stat = labelStats.find(s => s.label.name === firstItem.name);
 
         if (!stat) return safeName;
+
+        if (viewMode === 'active') {
+          return `<strong>@${safeName}</strong><br/>Active: ${stat.active}`;
+        }
 
         return `<strong>@${safeName}</strong><br/>
 Active: ${stat.active}<br/>
@@ -136,7 +147,7 @@ Total: ${stat.total}`;
     series: [{
       type: 'bar',
       data: labelStats.map((stat) => ({
-        value: stat.total,
+        value: viewMode === 'all' ? stat.total : stat.active,
         name: stat.label.name,
         itemStyle: {
           color: colorNameToHex(stat.label.color, '80') || '#808080',
