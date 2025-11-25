@@ -233,7 +233,7 @@ const BacklogHealth: React.FC<BacklogHealthProps> = ({ activeTasks, completedTas
         </div>
       )}
 
-      <Tooltip id="backlog-tooltip" />
+      <Tooltip id="backlog-tooltip" positionStrategy="fixed" openOnClick={true} className="z-50 max-w-xs text-center" />
     </div>
   );
 };

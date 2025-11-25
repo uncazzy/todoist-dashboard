@@ -1,0 +1,54 @@
+<svg width="256" height="256" viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg">
+  <!-- Dark rounded background -->
+  <rect width="256" height="256" rx="56" fill="#0D0D0D"/>
+
+  <!-- Gradients -->
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1A1A1A;stop-opacity:0.5" />
+      <stop offset="100%" style="stop-color:#0D0D0D;stop-opacity:0" />
+    </linearGradient>
+    <linearGradient id="bar1Grad" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" style="stop-color:#FF9B71;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#FFB89A;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="bar2Grad" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" style="stop-color:#FFB89A;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#FFC5A8;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="bar3Grad" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" style="stop-color:#FFC5A8;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#B4DDBE;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="bar4Grad" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" style="stop-color:#9DD4AC;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#7FD49E;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- Background gradient overlay -->
+  <rect width="256" height="256" rx="56" fill="url(#bgGrad)"/>
+
+  <!-- Base line -->
+  <line x1="45" y1="195" x2="211" y2="195" stroke="#2A2A2A" stroke-width="3" stroke-linecap="round"/>
+
+  <!-- Bar 1 - with gradient fill -->
+  <rect x="55" y="155" width="32" height="40" rx="4" fill="url(#bar1Grad)"/>
+  <rect x="55" y="155" width="32" height="40" rx="4" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"/>
+  <rect x="55" y="155" width="32" height="8" rx="4" fill="rgba(255,255,255,0.15)"/>
+
+  <!-- Bar 2 - with gradient fill -->
+  <rect x="97" y="125" width="32" height="70" rx="4" fill="url(#bar2Grad)"/>
+  <rect x="97" y="125" width="32" height="70" rx="4" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"/>
+  <rect x="97" y="125" width="32" height="8" rx="4" fill="rgba(255,255,255,0.15)"/>
+
+  <!-- Bar 3 - with gradient fill -->
+  <rect x="139" y="85" width="32" height="110" rx="4" fill="url(#bar3Grad)"/>
+  <rect x="139" y="85" width="32" height="110" rx="4" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"/>
+  <rect x="139" y="85" width="32" height="8" rx="4" fill="rgba(255,255,255,0.15)"/>
+
+  <!-- Bar 4 - with gradient fill -->
+  <rect x="181" y="55" width="32" height="140" rx="4" fill="url(#bar4Grad)"/>
+  <rect x="181" y="55" width="32" height="140" rx="4" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="1.5"/>
+  <rect x="181" y="55" width="32" height="8" rx="4" fill="rgba(255,255,255,0.2)"/>
+</svg>

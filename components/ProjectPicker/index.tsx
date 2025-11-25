@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ProjectData, TodoistColor } from '../../types';
 import { HiOutlineChevronDown } from 'react-icons/hi';
+import { FaHashtag } from "react-icons/fa";
 import { motion, AnimatePresence } from 'framer-motion';
 import { getColorClass } from '../../utils/projectUtils';
 
@@ -8,17 +9,20 @@ interface ProjectPickerProps {
   projects: ProjectData[];
   selectedProjectIds: string[];
   onProjectSelect: (projectIds: string[]) => void;
+  fullWidth?: boolean;
 }
 
 const ProjectPicker: React.FC<ProjectPickerProps> = ({
   projects,
   selectedProjectIds,
   onProjectSelect,
+  fullWidth = false,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const selectedProjects = projects.filter(p => selectedProjectIds.includes(p.id));
+  const isActiveFilter = selectedProjectIds.length > 0;
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -39,21 +43,27 @@ const ProjectPicker: React.FC<ProjectPickerProps> = ({
   };
 
   return (
-    <div className="relative z-10 mr-4" ref={dropdownRef}>
+    <div className={`relative ${isOpen ? 'z-50' : 'z-10'}`} ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-4 py-2 text-sm bg-warm-hover hover:bg-warm-card rounded-lg transition-colors duration-200 border border-warm-border backdrop-blur-sm min-w-[160px]">
-        <span className="text-white">
-          {selectedProjects.length === 0
-            ? 'All Projects'
-            : selectedProjects.length === 1
-            ? '1 Project'
-            : `${selectedProjects.length} Projects`}
-        </span>
-        <HiOutlineChevronDown
-          className={`w-4 h-4 text-warm-gray transition-transform duration-200 ${
-            isOpen ? 'transform rotate-180' : ''
+        className={`flex items-center gap-2 px-4 py-2.5 sm:py-2 text-sm rounded-lg transition-colors duration-200 border backdrop-blur-sm ${fullWidth ? 'w-full' : 'w-full sm:w-auto sm:min-w-[160px]'} justify-between ${isActiveFilter
+          ? 'bg-warm-peach/10 hover:bg-warm-peach/20 border-warm-peach text-warm-peach'
+          : 'bg-warm-hover hover:bg-warm-card border-warm-border text-white'
           }`}
+        aria-label="Filter by projects">
+        <div className="flex items-center gap-2 min-w-0">
+          <FaHashtag className="w-4 h-4 flex-shrink-0" />
+          <span>
+            {selectedProjects.length === 0
+              ? 'All Projects'
+              : selectedProjects.length === 1
+                ? '1 Project'
+                : `${selectedProjects.length} Projects`}
+          </span>
+        </div>
+        <HiOutlineChevronDown
+          className={`w-4 h-4 flex-shrink-0 transition-transform duration-200 ${isOpen ? 'transform rotate-180' : ''
+            }`}
         />
       </button>
 
@@ -64,7 +74,7 @@ const ProjectPicker: React.FC<ProjectPickerProps> = ({
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.2 }}
-            className="absolute left:0 sm:right-0 mt-2 w-72 py-2 bg-warm-card rounded-lg shadow-lg border border-warm-border backdrop-blur-sm"
+            className={`absolute left-0 top-full mt-2 py-2 bg-warm-card rounded-lg shadow-lg border border-warm-border ${fullWidth ? 'right-0 w-full' : 'sm:right-0 w-full sm:w-72'}`}
           >
             <div className="max-h-[300px] overflow-y-auto custom-scrollbar">
               {projects.map((project) => (

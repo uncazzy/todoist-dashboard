@@ -94,7 +94,7 @@ const LoadingIndicator: React.FC<LoadingIndicatorProps> = ({
               data-tooltip-id="error-tooltip"
               data-tooltip-content={`Only partial data loaded: ${loadError.message}`}
             />
-            <Tooltip id="error-tooltip" />
+            <Tooltip id="error-tooltip" positionStrategy="fixed" openOnClick={true} className="z-50 max-w-xs text-center" />
           </>
         )}
       </div>

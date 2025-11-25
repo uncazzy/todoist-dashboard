@@ -2,10 +2,22 @@ import React, { useState } from 'react';
 import { FaTimes } from 'react-icons/fa';
 
 // Current version number
-const APP_VERSION = '0.9.0';
+const APP_VERSION = '0.10.0';
 
 // Changelog entries - newest first
 const CHANGELOG = [
+  {
+    version: '0.10.0',
+    date: 'November 2025',
+    changes: [
+      'Added dashboard customization to show/hide sections',
+      'Added date range filter with presets and custom ranges',
+      'Added mobile-optimized filter controls with bottom sheet UI',
+      'Added label distribution chart for tag analytics',
+      'Added week-over-week stats and animated counters',
+      'Updated favicon',
+    ]
+  },
   {
     version: '0.9.0',
     date: 'November 2025',
@@ -77,7 +89,7 @@ const CHANGELOG = [
 
 const VersionInfo: React.FC = () => {
   const [showModal, setShowModal] = useState(false);
-  
+
   return (
     <>
       <span
@@ -87,7 +99,7 @@ const VersionInfo: React.FC = () => {
       >
         v{APP_VERSION}
       </span>
-      
+
       {/* Changelog Modal */}
       {showModal && (
         <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-70 p-4">

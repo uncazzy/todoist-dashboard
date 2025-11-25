@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import TimeFrame from "./TimeFrame";
 import Pagination from "./Pagination";
 import Tasks from "./Tasks";
 import { DashboardData, CompletedTask } from "../../types";
-import { parseISO, isToday, subDays, isAfter } from "date-fns";
+import { parseISO, isToday, subDays } from "date-fns";
 
 interface TaskWithProject {
   task: CompletedTask;
@@ -17,48 +17,58 @@ interface RecentlyCompletedListProps {
 export default function RecentlyCompletedList({ allData }: RecentlyCompletedListProps) {
   const { projectData, allCompletedTasks } = allData;
   const [currentFilter, setCurrentFilter] = useState<'today' | 'week' | 'month'>("today");
-  const tasksCompletedToday: TaskWithProject[] = [];
-  const tasksCompletedThisWeek: TaskWithProject[] = [];
-  const tasksCompletedThisMonth: TaskWithProject[] = [];
   const [isPrinting, setIsPrinting] = useState(false);
 
-  if (allCompletedTasks) {
-    const now = new Date();
-    const sevenDaysAgo = subDays(now, 7);
-    const thirtyDaysAgo = subDays(now, 30);
+  // Memoize date filtering to prevent recalculation on every render
+  const { tasksCompletedToday, tasksCompletedThisWeek, tasksCompletedThisMonth } = useMemo(() => {
+    const today: TaskWithProject[] = [];
+    const week: TaskWithProject[] = [];
+    const month: TaskWithProject[] = [];
 
-    allCompletedTasks.forEach((task) => {
-      // Skip tasks without a valid completed_at date
-      if (typeof task.completed_at !== 'string') return;
-      
-      const completedDate = parseISO(task.completed_at);
-      const projectId = task.project_id;
-      
-      // Today's tasks - using isToday which handles timezone correctly
-      if (isToday(completedDate)) {
-        tasksCompletedToday.push({
-          task,
-          projectId,
-        });
-      }
-      
-      // Last 7 days tasks
-      if (isAfter(completedDate, sevenDaysAgo)) {
-        tasksCompletedThisWeek.push({
-          task,
-          projectId,
-        });
-      }
-      
-      // Last 30 days tasks
-      if (isAfter(completedDate, thirtyDaysAgo)) {
-        tasksCompletedThisMonth.push({
-          task,
-          projectId,
-        });
-      }
-    });
-  }
+    if (allCompletedTasks) {
+      const now = new Date();
+      const sevenDaysAgo = subDays(now, 7);
+      const thirtyDaysAgo = subDays(now, 30);
+
+      allCompletedTasks.forEach((task) => {
+        // Skip tasks without a valid completed_at date
+        if (typeof task.completed_at !== 'string') return;
+
+        const completedDate = parseISO(task.completed_at);
+        const projectId = task.project_id;
+
+        // Today's tasks - using isToday which handles timezone correctly
+        if (isToday(completedDate)) {
+          today.push({
+            task,
+            projectId,
+          });
+        }
+
+        // Last 7 days tasks
+        if (completedDate >= sevenDaysAgo) {
+          week.push({
+            task,
+            projectId,
+          });
+        }
+
+        // Last 30 days tasks
+        if (completedDate >= thirtyDaysAgo) {
+          month.push({
+            task,
+            projectId,
+          });
+        }
+      });
+    }
+
+    return {
+      tasksCompletedToday: today,
+      tasksCompletedThisWeek: week,
+      tasksCompletedThisMonth: month,
+    };
+  }, [allCompletedTasks]);
 
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;

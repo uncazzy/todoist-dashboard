@@ -55,7 +55,7 @@ export default function TimeFrame({
           </button>
         </div>
       ))}
-      <Tooltip id="timeframe-tooltip" />
+      <Tooltip id="timeframe-tooltip" positionStrategy="fixed" openOnClick={true} className="z-50 max-w-xs text-center" />
     </div>
   );
 }

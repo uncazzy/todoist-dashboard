@@ -10,7 +10,7 @@ interface TaskLeadTimeProps {
   loading?: boolean;
 }
 
-export default function TaskLeadTime({ completedTasks, activeTasks, loading = false }: TaskLeadTimeProps): JSX.Element {
+function TaskLeadTime({ completedTasks, activeTasks, loading = false }: TaskLeadTimeProps): JSX.Element {
   // Handle loading state
   if (loading || !completedTasks || completedTasks.length === 0) {
     return (
@@ -40,7 +40,7 @@ export default function TaskLeadTime({ completedTasks, activeTasks, loading = fa
       formatter: (params: any) => {
         const data = Array.isArray(params) ? params[0] : params;
         if (!data) return '';
-        
+
         return `
           <div>
             <div>${data.name}</div>
@@ -127,7 +127,7 @@ export default function TaskLeadTime({ completedTasks, activeTasks, loading = fa
           <div className="text-2xl font-bold text-warm-sage">{formattedMedian} days</div>
         </div>
       </div>
-      
+
       <div className="h-[240px] w-full">
         <ReactECharts
           option={option}
@@ -135,10 +135,12 @@ export default function TaskLeadTime({ completedTasks, activeTasks, loading = fa
           opts={{ renderer: 'svg' }}
         />
       </div>
-      
+
       <div className="mt-2 text-xs text-warm-gray text-center">
-        Based on {stats.totalTasks} tasks with valid creation and completion data
+        Based on {stats.totalTasks} recurring task{stats.totalTasks !== 1 ? 's' : ''}
       </div>
     </div>
   );
-} 
+}
+
+export default React.memo(TaskLeadTime);

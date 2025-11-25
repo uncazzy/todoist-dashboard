@@ -43,6 +43,10 @@ const colors: Record<TodoistColor, ColorMapping> = {
   taupe: { tailwind: "stone-400", hex: "#ccac93" },
 } as const;
 
+function isValidTodoistColor(color: string): color is TodoistColor {
+  return Object.prototype.hasOwnProperty.call(colors, color);
+}
+
 export function getProjectById(projectId: string | null, projectData: ProjectData[] = []): ProjectInfo {
   if (!projectId || !projectData) {
     return DEFAULT_PROJECT;
@@ -65,8 +69,12 @@ export function getColorClass(color: TodoistColor | null): string {
   return colors[color].tailwind;
 }
 
-export function colorNameToHex(color: TodoistColor | null, opacity?: string): string | null {
-  if (!color) return null;
+/**
+ * Converts a Todoist color name to its hex value.
+ * Accepts dynamic strings from API responses but validates against the known palette at runtime.
+ */
+export function colorNameToHex(color: string | null, opacity?: string): string | null {
+  if (!color || !isValidTodoistColor(color)) return null;
   const hex = colors[color].hex;
   if (!hex) return null;
   return opacity ? hex + opacity : hex;

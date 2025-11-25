@@ -15,7 +15,7 @@ interface CompletedByTimeOfDayProps {
   loading: boolean;
 }
 
-export default function CompletedByTimeOfDay({ allData, loading }: CompletedByTimeOfDayProps) {
+function CompletedByTimeOfDay({ allData, loading }: CompletedByTimeOfDayProps) {
   if (!allData?.allCompletedTasks || loading) {
     return (
       <div className="flex items-center justify-center h-[240px]">
@@ -135,3 +135,5 @@ export default function CompletedByTimeOfDay({ allData, loading }: CompletedByTi
     </div>
   );
 }
+
+export default React.memo(CompletedByTimeOfDay);

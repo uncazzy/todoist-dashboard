@@ -3,16 +3,21 @@ import { getToken } from 'next-auth/jwt';
 import { MAX_TASKS, INITIAL_BATCH_SIZE } from "../../utils/constants";
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { fetchWithRetry } from '../../utils/fetchWithRetry';
-import type { 
-  CompletedTask, 
-  TodoistStats, 
-  TodoistUser, 
-  LoadMoreResponse, 
+import path from 'path';
+import { promises as fs } from 'fs';
+import type {
+  CompletedTask,
+  TodoistStats,
+  TodoistUser,
+  LoadMoreResponse,
   ErrorResponse,
   DashboardData,
   ActiveTask,
   ProjectData
 } from '../../types';
+
+// Toggle dummy data testing via env flag to avoid bundling local fixtures in prod
+const USE_DUMMY_DATA = process.env.USE_DUMMY_DATA === 'true';
 
 interface ApiResponse extends Omit<DashboardData, 'projectData'> {
   projectData: ProjectData[];
@@ -30,6 +35,18 @@ class ValidationError extends Error {
   constructor(message: string) {
     super(message);
     this.name = 'ValidationError';
+  }
+}
+
+async function loadDummyDataset(): Promise<ApiResponse> {
+  const datasetPath = path.join(process.cwd(), 'test/data/dummy-dataset.json');
+
+  try {
+    const fileContents = await fs.readFile(datasetPath, 'utf-8');
+    return JSON.parse(fileContents) as ApiResponse;
+  } catch (error) {
+    console.error('Failed to load dummy dataset at', datasetPath, error);
+    throw new Error('Fake dataset not found. Create test/data/dummy-dataset.json or disable USE_DUMMY_DATA.');
   }
 }
 
@@ -69,7 +86,7 @@ async function getTotalTaskCount(token: string): Promise<number> {
     if (typeof data.completed_count !== 'number') {
       throw new Error('Invalid response: completed_count is not a number');
     }
-    
+
     return data.completed_count;
   } catch (error) {
     console.error('Error getting total task count:', error);
@@ -127,6 +144,24 @@ export default async function handler(
   response: NextApiResponse<ApiResponse | LoadMoreResponse | ErrorResponse>
 ) {
   try {
+    // If using dummy data, return it immediately
+    if (USE_DUMMY_DATA) {
+      const dummyDataset = await loadDummyDataset();
+
+      // Handle "load more" requests (dummy data is already fully loaded)
+      if (request.query.loadMore === 'true') {
+        return response.status(200).json({
+          newTasks: [],
+          hasMoreTasks: false,
+          totalTasks: dummyDataset.totalCompletedTasks,
+          loadedTasks: dummyDataset.totalCompletedTasks
+        });
+      }
+
+      // Return dummy dataset
+      return response.status(200).json(dummyDataset as unknown as ApiResponse);
+    }
+
     const token = await getToken({ req: request });
     if (!token?.accessToken) {
       return response.status(401).json({ error: "Not authenticated" });
@@ -172,17 +207,18 @@ export default async function handler(
     const userData = await userResponse.json() as TodoistUser;
 
     // Fetch other required data
-    const [totalCount, projects, tasks] = await Promise.all([
+    const [totalCount, projects, tasks, labels] = await Promise.all([
       getTotalTaskCount(accessToken),
       api.getProjects(),
-      api.getTasks()
+      api.getTasks(),
+      api.getLabels()
     ]);
 
     const initialTasks = await fetchCompletedTasksBatch(accessToken, 0, INITIAL_BATCH_SIZE);
 
     // Map projects to our internal format
     const projectData = projects.map(mapToProjectData);
-    
+
     // Map active tasks to our internal format
     const activeTasks = tasks.map(mapToActiveTask);
 
@@ -190,6 +226,7 @@ export default async function handler(
       allCompletedTasks: initialTasks,
       projectData,
       activeTasks,
+      labels,
       totalCompletedTasks: totalCount,
       hasMoreTasks: initialTasks.length < Math.min(totalCount, MAX_TASKS),
       karma: userData.karma,
@@ -203,18 +240,18 @@ export default async function handler(
   } catch (error) {
     console.error('Error in getTasks API:', error);
     if (error instanceof TodoistAPIError) {
-      return response.status(error.statusCode).json({ 
+      return response.status(error.statusCode).json({
         error: error.message,
         details: 'Todoist API error'
       });
     }
     if (error instanceof ValidationError) {
-      return response.status(400).json({ 
+      return response.status(400).json({
         error: error.message,
         details: 'Validation error'
       });
     }
-    response.status(500).json({ 
+    response.status(500).json({
       error: 'Internal server error',
       details: error instanceof Error ? error.message : 'Unknown error'
     });

@@ -24,7 +24,7 @@ interface CompletedTasksByProjectProps {
   loading?: boolean;
 }
 
-export default function CompletedTasksByProject({ projectData, loading }: CompletedTasksByProjectProps) {
+function CompletedTasksByProject({ projectData, loading }: CompletedTasksByProjectProps) {
   if (!projectData || loading) {
     return (
       <div className="flex items-center justify-center h-[240px]">
@@ -133,3 +133,5 @@ export default function CompletedTasksByProject({ projectData, loading }: Comple
     />
   );
 }
+
+export default React.memo(CompletedTasksByProject);

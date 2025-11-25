@@ -1,6 +1,6 @@
 {
   "name": "todoist-dashboard",
-  "version": "0.9.0",
+  "version": "0.10.0",
   "private": false,
   "license": "MIT",
   "repository": {
@@ -36,6 +36,7 @@
     "query-string": "^8.1.0",
     "react": "18.2.0",
     "react-beautiful-dnd": "^13.1.1",
+    "react-datepicker": "^8.9.0",
     "react-dom": "18.2.0",
     "react-icons": "^4.10.1",
     "react-markdown": "^8.0.7",
