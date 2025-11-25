@@ -3,6 +3,8 @@ import { getToken } from 'next-auth/jwt';
 import { MAX_TASKS, INITIAL_BATCH_SIZE } from "../../utils/constants";
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { fetchWithRetry } from '../../utils/fetchWithRetry';
+import path from 'path';
+import { promises as fs } from 'fs';
 import type {
   CompletedTask,
   TodoistStats,
@@ -14,8 +16,8 @@ import type {
   ProjectData
 } from '../../types';
 
-// Toggle fake data testing
-const USE_FAKE_DATA = false;
+// Toggle dummy data testing via env flag to avoid bundling local fixtures in prod
+const USE_DUMMY_DATA = process.env.USE_DUMMY_DATA === 'true';
 
 interface ApiResponse extends Omit<DashboardData, 'projectData'> {
   projectData: ProjectData[];
@@ -33,6 +35,18 @@ class ValidationError extends Error {
   constructor(message: string) {
     super(message);
     this.name = 'ValidationError';
+  }
+}
+
+async function loadDummyDataset(): Promise<ApiResponse> {
+  const datasetPath = path.join(process.cwd(), 'test/data/dummy-dataset.json');
+
+  try {
+    const fileContents = await fs.readFile(datasetPath, 'utf-8');
+    return JSON.parse(fileContents) as ApiResponse;
+  } catch (error) {
+    console.error('Failed to load dummy dataset at', datasetPath, error);
+    throw new Error('Fake dataset not found. Create test/data/dummy-dataset.json or disable USE_DUMMY_DATA.');
   }
 }
 
@@ -130,23 +144,22 @@ export default async function handler(
   response: NextApiResponse<ApiResponse | LoadMoreResponse | ErrorResponse>
 ) {
   try {
-    // If using fake data, return it immediately
-    if (USE_FAKE_DATA) {
-      
-      const fakeDataset = await import('../../test/data/fake-dataset.json');
+    // If using dummy data, return it immediately
+    if (USE_DUMMY_DATA) {
+      const dummyDataset = await loadDummyDataset();
 
-      // Handle "load more" requests (fake data is already fully loaded)
+      // Handle "load more" requests (dummy data is already fully loaded)
       if (request.query.loadMore === 'true') {
         return response.status(200).json({
           newTasks: [],
           hasMoreTasks: false,
-          totalTasks: fakeDataset.totalCompletedTasks,
-          loadedTasks: fakeDataset.totalCompletedTasks
+          totalTasks: dummyDataset.totalCompletedTasks,
+          loadedTasks: dummyDataset.totalCompletedTasks
         });
       }
 
-      // Return fake dataset
-      return response.status(200).json(fakeDataset as unknown as ApiResponse);
+      // Return dummy dataset
+      return response.status(200).json(dummyDataset as unknown as ApiResponse);
     }
 
     const token = await getToken({ req: request });

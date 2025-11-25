@@ -2,7 +2,7 @@
 """
 Comprehensive Todoist Test Data Generator
 
-Generates realistic fake data for testing the Todoist Dashboard including:
+Generates realistic dummy data for testing the Todoist Dashboard including:
 - Multiple projects with varied colors
 - Active tasks (mix of priorities, due dates, ages)
 - Completed tasks with realistic patterns (time of day, day of week, project focus)
@@ -172,7 +172,7 @@ def parse_args():
     parser.add_argument("--active-tasks", type=int, default=75, help="Number of active tasks")
     parser.add_argument("--completed-tasks", type=int, default=1500, help="Number of completed tasks")
     parser.add_argument("--months", type=int, default=12, help="Months of history to generate")
-    parser.add_argument("--output", type=str, default="../data/fake-dataset.json", help="Output file path")
+    parser.add_argument("--output", type=str, default="../data/dummy-dataset.json", help="Output file path")
     return parser.parse_args()
 
 
@@ -613,7 +613,7 @@ def main():
     print(f"   - Karma: {user_stats['karma']}")
     print(f"   - Daily goal: {user_stats['dailyGoal']}")
     print(f"   - Weekly goal: {user_stats['weeklyGoal']}")
-    print(f"\nReady to use! Toggle USE_FAKE_DATA in config/dataSource.ts\n")
+    print(f"\nReady to use! Toggle USE_DUMMY_DATA in .env.local\n")
 
 
 if __name__ == "__main__":

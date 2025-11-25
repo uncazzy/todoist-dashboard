@@ -251,9 +251,8 @@ def main():
         print(f"   - {period['name']:30} -> {period['count']:3} tasks (total: {total_so_far})")
 
     print("\nTo use this test data:")
-    print("   1. Toggle USE_FAKE_DATA in config/dataSource.ts")
-    print("   2. Update FAKE_DATA_PATH to point to this file")
-    print("   3. Test each date range filter preset:")
+    print("   1. Toggle USE_DUMMY_DATA in .env.local")
+    print("   2. Test each date range filter preset:")
     print("      - Last 7 days:  Should show ~10 tasks")
     print("      - Last 30 days: Should show ~25 tasks (10 + 15)")
     print("      - Last 90 days: Should show ~45 tasks (10 + 15 + 20)")

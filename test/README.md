@@ -1,6 +1,6 @@
 # Test Data Generators
 
-This directory contains Python scripts for generating realistic fake Todoist data for development and testing.
+This directory contains Python scripts for generating realistic dummy Todoist data for development and testing.
 
 ## Overview
 
@@ -10,7 +10,7 @@ Testing the Todoist Dashboard requires substantial task completion history. The 
 
 ### 1. Comprehensive Dataset Generator (`generate_full_dataset.py`)
 
-Generates a complete fake dataset including projects, active tasks, and completed tasks with realistic patterns.
+Generates a complete dummy dataset including projects, active tasks, and completed tasks with realistic patterns.
 
 #### Features:
 - **Multiple projects** with varied names and colors
@@ -41,7 +41,7 @@ python generate_full_dataset.py [OPTIONS]
 | `--active-tasks` | 75 | Number of active tasks |
 | `--completed-tasks` | 1500 | Number of completed tasks |
 | `--months` | 12 | Months of history to generate |
-| `--output` | `../data/fake-dataset.json` | Output file path |
+| `--output` | `../data/dummy-dataset.json` | Output file path |
 
 #### Examples:
 
@@ -62,7 +62,7 @@ python generate_full_dataset.py --projects 3 --active-tasks 25 --completed-tasks
 
 #### Output:
 
-Generates `test/data/fake-dataset.json` with the following structure:
+Generates `test/data/dummy-dataset.json` with the following structure:
 
 ```json
 {
@@ -115,7 +115,7 @@ python generate_full_dataset.py --projects 6 --active-tasks 75 --completed-tasks
 
 Edit `pages/api/getTasks.ts`:
 ```typescript
-const USE_FAKE_DATA = true;  // Toggle this and adjust path to data!
+const USE_DUMMY_DATA = true;  // Toggle this and adjust path to data!
 ```
 
 ### Step 3: Start Development Server
@@ -124,19 +124,19 @@ const USE_FAKE_DATA = true;  // Toggle this and adjust path to data!
 npm run dev
 ```
 
-The dashboard will now use fake data instead of the Todoist API.
+The dashboard will now use dummy data instead of the Todoist API.
 
 ### Step 4: Switch Back to Real Data
 
 When you're ready to use real data again:
 
 ```typescript
-const USE_FAKE_DATA = false;
+const USE_DUMMY_DATA = false;
 ```
 
 ## What Gets Tested
 
-The fake data generator produces patterns that test all dashboard features:
+The dummy data generator produces patterns that test all dashboard features:
 
 ### ✅ Quick Stats
 - Active task counts
