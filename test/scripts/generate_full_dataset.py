@@ -151,6 +151,20 @@ TODOIST_COLORS = [
     "grey", "taupe"
 ]
 
+# Label templates
+LABEL_TEMPLATES = [
+    {"name": "urgent", "color": "red"},
+    {"name": "waiting", "color": "orange"},
+    {"name": "blocked", "color": "charcoal"},
+    {"name": "quick-win", "color": "lime_green"},
+    {"name": "deep-work", "color": "blue"},
+    {"name": "meeting", "color": "grape"},
+    {"name": "follow-up", "color": "teal"},
+    {"name": "research", "color": "violet"},
+    {"name": "review", "color": "sky_blue"},
+    {"name": "automation", "color": "mint_green"},
+]
+
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Generate comprehensive test data for Todoist Dashboard")
@@ -175,6 +189,31 @@ def generate_task_id() -> str:
 def generate_v2_id() -> str:
     """Generate v2 format ID"""
     return ''.join(random.choices('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', k=16))
+
+
+def generate_label_id() -> str:
+    """Generate unique label ID"""
+    return ''.join(random.choices('0123456789', k=10))
+
+
+def generate_labels(num_labels: int = None) -> List[Dict]:
+    """Generate label data matching Todoist API structure"""
+    if num_labels is None:
+        num_labels = len(LABEL_TEMPLATES)
+
+    labels = []
+    templates = LABEL_TEMPLATES[:min(num_labels, len(LABEL_TEMPLATES))]
+
+    for i, template in enumerate(templates):
+        labels.append({
+            "id": generate_label_id(),
+            "name": template["name"],
+            "color": template["color"],
+            "order": i + 1,
+            "isFavorite": i < 2  # First 2 labels are favorites
+        })
+
+    return labels
 
 
 def generate_projects(num_projects: int) -> List[Dict]:
@@ -307,10 +346,13 @@ def generate_completion_pattern(start_date: datetime, end_date: datetime, num_ta
     return completions
 
 
-def generate_active_tasks(num_tasks: int, projects: List[Dict]) -> List[Dict]:
-    """Generate active tasks with varied priorities, due dates, and ages"""
+def generate_active_tasks(num_tasks: int, projects: List[Dict], labels: List[Dict] = None) -> List[Dict]:
+    """Generate active tasks with varied priorities, due dates, ages, and labels"""
     tasks = []
     now = datetime.now()
+
+    # Get label names for assignment
+    label_names = [l["name"] for l in labels] if labels else []
 
     # Distribution of task characteristics
     num_overdue = int(num_tasks * 0.15)  # 15% overdue
@@ -344,7 +386,7 @@ def generate_active_tasks(num_tasks: int, projects: List[Dict]) -> List[Dict]:
             "duration": None,
             "id": task_id,
             "isCompleted": False,
-            "labels": [],
+            "labels": random.sample(label_names, k=random.randint(0, min(2, len(label_names)))) if label_names else [],
             "order": len(recurring_tasks) + 1,
             "parentId": None,
             "priority": random.randint(1, 4),
@@ -418,6 +460,11 @@ def generate_active_tasks(num_tasks: int, projects: List[Dict]) -> List[Dict]:
         task_content = random.choice(TASK_TEMPLATES.get(project["name"], TASK_TEMPLATES["Personal"]))
         task_id = generate_task_id()
 
+        # Randomly assign 0-2 labels to ~40% of tasks
+        task_labels = []
+        if label_names and random.random() < 0.4:
+            task_labels = random.sample(label_names, k=random.randint(1, min(2, len(label_names))))
+
         task = {
             "assigneeId": None,
             "assignerId": None,
@@ -429,7 +476,7 @@ def generate_active_tasks(num_tasks: int, projects: List[Dict]) -> List[Dict]:
             "duration": None,
             "id": task_id,
             "isCompleted": False,
-            "labels": [],
+            "labels": task_labels,
             "order": len(tasks) + 1,
             "parentId": None,
             "priority": config["priority"],
@@ -455,39 +502,18 @@ def generate_active_tasks(num_tasks: int, projects: List[Dict]) -> List[Dict]:
     return tasks
 
 
-def generate_completed_tasks(completions: List[Tuple[datetime, str, str]], projects: List[Dict]) -> Tuple[List[Dict], List[Dict]]:
+def generate_completed_tasks(completions: List[Tuple[datetime, str, str]], projects: List[Dict]) -> List[Dict]:
     """
     Generate completed tasks from completion pattern.
 
     Returns:
-        Tuple of (completed_tasks, active_tasks_for_matching)
-
-    To match real Todoist API behavior, we create active task entries for some completed tasks
-    so the lead time calculation can work by matching task_id between active and completed lists.
+        List of completed task dictionaries matching real Todoist API structure.
     """
     completed_tasks = []
-    matching_active_tasks = []
 
     for completion_datetime, project_id, project_name in completions:
         task_content = random.choice(TASK_TEMPLATES.get(project_name, TASK_TEMPLATES["Personal"]))
         task_id = generate_task_id()
-
-        # Generate realistic created_at (task was created before it was completed)
-        # Lead times: 0-90 days with weighted distribution
-        lead_time_days = random.choices(
-            [0, 1, 2, 3, 5, 7, 14, 21, 30, 60, 90],
-            weights=[15, 20, 15, 10, 10, 10, 8, 5, 4, 2, 1],
-            k=1
-        )[0]
-        created_at = completion_datetime - timedelta(days=lead_time_days, hours=random.randint(0, 23))
-
-        # Determine priority based on lead time (faster completion often = higher priority)
-        if lead_time_days == 0:
-            priority = random.choices([1, 2, 3, 4], weights=[0.1, 0.2, 0.3, 0.4], k=1)[0]
-        elif lead_time_days <= 3:
-            priority = random.choices([1, 2, 3, 4], weights=[0.15, 0.25, 0.35, 0.25], k=1)[0]
-        else:
-            priority = random.choices([1, 2, 3, 4], weights=[0.3, 0.3, 0.25, 0.15], k=1)[0]
 
         # Match real Todoist API: item_object is null
         completed_tasks.append({
@@ -507,17 +533,7 @@ def generate_completed_tasks(completions: List[Tuple[datetime, str, str]], proje
             "v2_task_id": generate_v2_id()
         })
 
-        # Create matching active task entry (simulates recurring task behavior)
-        # This allows lead time calculation to work via task_id matching
-        matching_active_tasks.append({
-            "id": task_id,  # This matches the task_id in completed task
-            "content": task_content,
-            "createdAt": created_at.strftime("%Y-%m-%dT%H:%M:%S.%fZ"),
-            "projectId": project_id,
-            "priority": priority,
-        })
-
-    return completed_tasks, matching_active_tasks
+    return completed_tasks
 
 
 def generate_user_stats(num_completed_tasks: int) -> Dict:
@@ -548,6 +564,11 @@ def main():
     print("Generating projects...")
     projects = generate_projects(args.projects)
 
+    # Generate labels
+    print("Generating labels...")
+    labels = generate_labels()
+    print(f"   - Generated {len(labels)} labels")
+
     # Generate completion pattern
     print("Generating realistic completion patterns...")
     end_date = datetime.now()
@@ -556,15 +577,11 @@ def main():
 
     # Generate tasks
     print("Generating completed tasks...")
-    completed_tasks, matching_active_tasks = generate_completed_tasks(completions, projects)
+    completed_tasks = generate_completed_tasks(completions, projects)
 
     print("Generating active tasks...")
-    regular_active_tasks = generate_active_tasks(args.active_tasks, projects)
-
-    # Merge regular active tasks with matching tasks (for lead time calculation)
-    active_tasks = regular_active_tasks + matching_active_tasks
-    print(f"   - Generated {len(regular_active_tasks)} regular active tasks")
-    print(f"   - Generated {len(matching_active_tasks)} matching active tasks (for lead time calculation)")
+    active_tasks = generate_active_tasks(args.active_tasks, projects, labels)
+    print(f"   - Generated {len(active_tasks)} active tasks")
 
     # Generate user stats
     print("Generating user stats...")
@@ -575,6 +592,7 @@ def main():
         "allCompletedTasks": completed_tasks,
         "projectData": projects,
         "activeTasks": active_tasks,
+        "labels": labels,
         "totalCompletedTasks": len(completed_tasks),
         "hasMoreTasks": False,  # All tasks loaded
         **user_stats
@@ -588,6 +606,7 @@ def main():
     print(f"\nSuccessfully generated test dataset!")
     print(f"\nSummary:")
     print(f"   - Projects: {len(projects)}")
+    print(f"   - Labels: {len(labels)}")
     print(f"   - Active tasks: {len(active_tasks)}")
     print(f"   - Completed tasks: {len(completed_tasks)}")
     print(f"   - Date range: {start_date.date()} to {end_date.date()}")

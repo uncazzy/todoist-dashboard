@@ -64,6 +64,7 @@ export interface DashboardData {
   dailyGoal: number;
   weeklyGoal: number;
   projectData: ProjectData[];
+  labels: Label[];
   totalCompletedTasks: number;
   loadError?: {
     message: string;
@@ -155,6 +156,15 @@ export type TodoistColor =
   | 'charcoal'
   | 'grey'
   | 'taupe';
+
+// Label/Tag type from Todoist API
+export interface Label {
+  id: string;
+  name: string;
+  color: string; // Todoist color name (e.g., 'berry_red', 'blue')
+  order: number;
+  isFavorite: boolean;
+}
 
 // Date Range Types for Dashboard Filtering
 export type DateRangePreset = 'all' | '7d' | '30d' | '90d' | '6m' | '1y' | 'custom';

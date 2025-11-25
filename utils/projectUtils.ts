@@ -65,9 +65,11 @@ export function getColorClass(color: TodoistColor | null): string {
   return colors[color].tailwind;
 }
 
-export function colorNameToHex(color: TodoistColor | null, opacity?: string): string | null {
+export function colorNameToHex(color: string | null, opacity?: string): string | null {
   if (!color) return null;
-  const hex = colors[color].hex;
+  const colorEntry = colors[color as TodoistColor];
+  if (!colorEntry) return null;
+  const hex = colorEntry.hex;
   if (!hex) return null;
   return opacity ? hex + opacity : hex;
 }

@@ -10,6 +10,7 @@ const CHANGELOG = [
     version: '0.10.0',
     date: 'November 2025',
     changes: [
+      'Added label/tag analytics showing task distribution across labels',
       'Added date range filter for completed tasks with presets and custom ranges',
       'Added week-over-week comparison to Completed Tasks stat',
       'Added animated count-up effect to QuickStats cards',

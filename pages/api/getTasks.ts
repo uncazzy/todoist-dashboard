@@ -17,7 +17,7 @@ import type {
 // Toggle fake data testing
 const USE_FAKE_DATA = false;
 // Import fake dataset testing
-import fakeDataset from '../../test/data/date-filter-test.json';
+import fakeDataset from '../../test/data/fake-dataset.json';
 
 interface ApiResponse extends Omit<DashboardData, 'projectData'> {
   projectData: ProjectData[];
@@ -194,10 +194,11 @@ export default async function handler(
     const userData = await userResponse.json() as TodoistUser;
 
     // Fetch other required data
-    const [totalCount, projects, tasks] = await Promise.all([
+    const [totalCount, projects, tasks, labels] = await Promise.all([
       getTotalTaskCount(accessToken),
       api.getProjects(),
-      api.getTasks()
+      api.getTasks(),
+      api.getLabels()
     ]);
 
     const initialTasks = await fetchCompletedTasksBatch(accessToken, 0, INITIAL_BATCH_SIZE);
@@ -212,6 +213,7 @@ export default async function handler(
       allCompletedTasks: initialTasks,
       projectData,
       activeTasks,
+      labels,
       totalCompletedTasks: totalCount,
       hasMoreTasks: initialTasks.length < Math.min(totalCount, MAX_TASKS),
       karma: userData.karma,

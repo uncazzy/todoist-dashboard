@@ -32,6 +32,7 @@ import ExportModal from './Export/ExportModal';
 import { useExportSection } from '../hooks/useExportManager';
 import { filterCompletedTasksByDateRange } from '../utils/filterByDateRange';
 import { startOfDay, endOfDay, subDays } from 'date-fns';
+import LabelDistribution from './LabelDistribution';
 
 export default function Dashboard(): JSX.Element {
   const { status } = useSession();
@@ -59,6 +60,7 @@ export default function Dashboard(): JSX.Element {
   const dailyStatsRef = useExportSection('daily-stats', 'Daily Streak & Activity Pattern');
   const taskLeadTimeRef = useExportSection('task-lead-time', 'Task Lead Time Analysis');
   const taskTopicsRef = useExportSection('task-topics', 'Task Topics');
+  const labelDistributionRef = useExportSection('label-distribution', 'Tasks by Label');
 
   // Compute filtered data (must be before early returns for hooks rules)
   const { projectData = [], allCompletedTasks = [], activeTasks = [] } = data || {};
@@ -380,6 +382,20 @@ export default function Dashboard(): JSX.Element {
                   loading={needsFullData}
                 />
               </div>
+            </div>
+
+            {/* Label Distribution */}
+            <div className="bg-warm-card border border-warm-border rounded-2xl p-6 sm:p-8" ref={labelDistributionRef}>
+              <h2 className="text-xl sm:text-2xl font-semibold text-white mb-6">
+                Tasks by Label
+                <QuestionMark content="Distribution of tasks across your Todoist labels. Shows both active and completed tasks for each label." />
+              </h2>
+              <LabelDistribution
+                activeTasks={filteredActiveTasks}
+                completedTasks={filteredCompletedTasks}
+                labels={data?.labels || []}
+                loading={needsFullData}
+              />
             </div>
 
             {/* Completion Heatmap */}
