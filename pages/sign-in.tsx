@@ -5,6 +5,7 @@ import type { NextPage, GetServerSideProps } from 'next';
 import { FaChartLine, FaRegClock, FaProjectDiagram, FaCheckCircle } from 'react-icons/fa';
 import { BiTrendingUp } from 'react-icons/bi';
 import Layout from "@/components/layout/Layout";
+import { trackNavigation } from "@/utils/analytics";
 
 export const metadata = {
   title: "Sign In | Todoist Dashboard",
@@ -58,6 +59,7 @@ const SignIn: NextPage = () => {
 
   const handleSignIn = async (): Promise<void> => {
     setIsLoading(true);
+    trackNavigation('sign_in');
     try {
       const result = await signIn("todoist", {
         redirect: false,

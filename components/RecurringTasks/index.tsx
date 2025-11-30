@@ -9,6 +9,7 @@ import { RecurringFrequency } from './types';
 import { RecurrencePattern } from './streaks/types';
 import { getTaskFrequency, calculateStats } from './utils';
 import { parsePattern } from './streaks/index';
+import { trackChartInteraction } from '@/utils/analytics';
 
 interface TaskItemProps {
   taskData: RecurringTaskData;
@@ -213,7 +214,10 @@ const RecurringTasksCard: React.FC<Props> = ({ activeTasks, allCompletedTasks, p
           {frequencies.map(({ freq, icon, label }) => (
             <button
               key={freq}
-              onClick={() => setSelectedFrequency(freq)}
+              onClick={() => {
+                setSelectedFrequency(freq);
+                trackChartInteraction('recurring_tasks', 'view_change', freq);
+              }}
               className={`flex items-center justify-center gap-2 px-4 py-3 rounded-xl transition-all font-medium
                 ${selectedFrequency === freq
                   ? 'bg-warm-peach text-white'

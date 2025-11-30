@@ -2,10 +2,17 @@ import React, { useState } from 'react';
 import { FaTimes } from 'react-icons/fa';
 
 // Current version number
-const APP_VERSION = '0.10.0';
+const APP_VERSION = '0.10.1';
 
 // Changelog entries - newest first
 const CHANGELOG = [
+  {
+    version: '0.10.1',
+    date: 'November 2025',
+    changes: [
+      'Added Umami event tracking for user interaction analytics',
+    ]
+  },
   {
     version: '0.10.0',
     date: 'November 2025',

@@ -4,6 +4,7 @@ import { HiOutlineChevronDown } from 'react-icons/hi';
 import { FaHashtag } from "react-icons/fa";
 import { motion, AnimatePresence } from 'framer-motion';
 import { getColorClass } from '../../utils/projectUtils';
+import { trackProjectFilter } from '@/utils/analytics';
 
 interface ProjectPickerProps {
   projects: ProjectData[];
@@ -36,10 +37,14 @@ const ProjectPicker: React.FC<ProjectPickerProps> = ({
   }, []);
 
   const toggleProject = (projectId: string) => {
-    const newSelection = selectedProjectIds.includes(projectId)
+    const isRemoving = selectedProjectIds.includes(projectId);
+    const newSelection = isRemoving
       ? selectedProjectIds.filter(id => id !== projectId)
       : [...selectedProjectIds, projectId];
     onProjectSelect(newSelection);
+
+    // Track the filter change
+    trackProjectFilter(newSelection.length, isRemoving ? 'remove' : 'add');
   };
 
   return (

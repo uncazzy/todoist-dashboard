@@ -7,6 +7,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { HiX } from 'react-icons/hi';
 import { useExportManager } from '../../hooks/useExportManager';
 import SectionCheckboxList from './SectionCheckboxList';
+import { trackCustomization } from '@/utils/analytics';
 
 interface VisibilityModalProps {
   isOpen: boolean;
@@ -51,18 +52,36 @@ export default function VisibilityModal({
     // If all selected, store empty array (means "all visible")
     const toSave = visibleIds.length === sections.length ? [] : visibleIds;
     onVisibleSectionsChange(toSave);
+    trackCustomization('save', { visibleCount: selectedForVisibility.size });
     onClose();
   }, [selectedForVisibility, sections.length, onVisibleSectionsChange, onClose]);
 
   // Toggle function
   const toggleVisibility = (id: string) => {
     const newSet = new Set(selectedForVisibility);
-    if (newSet.has(id)) {
+    const wasVisible = newSet.has(id);
+    if (wasVisible) {
       newSet.delete(id);
     } else {
       newSet.add(id);
     }
     setSelectedForVisibility(newSet);
+
+    // Track section toggle
+    const section = sections.find(s => s.id === id);
+    trackCustomization('toggle_section', { section: section?.label || id, visible: !wasVisible });
+  };
+
+  // Handle select all with tracking
+  const handleSelectAll = () => {
+    setSelectedForVisibility(new Set(sections.map((s) => s.id)));
+    trackCustomization('select_all');
+  };
+
+  // Handle deselect all with tracking
+  const handleDeselectAll = () => {
+    setSelectedForVisibility(new Set());
+    trackCustomization('deselect_all');
   };
 
   if (!isOpen) return null;
@@ -93,8 +112,8 @@ export default function VisibilityModal({
             sections={sections}
             selectedIds={selectedForVisibility}
             onToggle={toggleVisibility}
-            onSelectAll={() => setSelectedForVisibility(new Set(sections.map((s) => s.id)))}
-            onDeselectAll={() => setSelectedForVisibility(new Set())}
+            onSelectAll={handleSelectAll}
+            onDeselectAll={handleDeselectAll}
             emptyMessage="No sections found. Please wait for the dashboard to load."
           />
         </div>
