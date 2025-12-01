@@ -3,18 +3,19 @@ import ReactECharts from 'echarts-for-react';
 import * as echarts from 'echarts/core';
 import { CallbackDataParams } from 'echarts/types/dist/shared';
 import { EChartsOption } from 'echarts';
-import { 
-  format, 
-  endOfWeek, 
-  eachWeekOfInterval, 
-  subMonths, 
-  isWithinInterval, 
+import {
+  format,
+  endOfWeek,
+  eachWeekOfInterval,
+  subMonths,
+  isWithinInterval,
   eachDayOfInterval,
   eachMonthOfInterval,
   endOfMonth,
   startOfDay,
   endOfDay
 } from 'date-fns';
+import { trackChartInteraction } from '@/utils/analytics';
 
 interface Task {
   completed_at: string;
@@ -47,12 +48,19 @@ function CompletedTasksOverTime({ allData, loading }: CompletedTasksOverTimeProp
   // Update view type when time frame changes to ensure valid combinations
   const handleTimeFrameChange = (newTimeFrame: TimeFrame) => {
     setTimeFrame(newTimeFrame);
+    trackChartInteraction('completed_tasks_over_time', 'timeframe_change', newTimeFrame);
     // Adjust view type if current selection is invalid for new time frame
     if ((newTimeFrame === '1Y' || newTimeFrame === '6M') && viewType === 'daily') {
       setViewType('weekly');
     } else if (newTimeFrame === '1M' && viewType === 'monthly') {
       setViewType('daily');
     }
+  };
+
+  // Handle view type change with tracking
+  const handleViewTypeChange = (newViewType: ViewType) => {
+    setViewType(newViewType);
+    trackChartInteraction('completed_tasks_over_time', 'view_change', newViewType);
   };
 
   // Get available view types based on time frame
@@ -260,7 +268,7 @@ function CompletedTasksOverTime({ allData, loading }: CompletedTasksOverTimeProp
         <div className="flex space-x-2">
           <select
             value={viewType}
-            onChange={(e) => setViewType(e.target.value as ViewType)}
+            onChange={(e) => handleViewTypeChange(e.target.value as ViewType)}
             className="bg-warm-card text-white rounded-lg px-3 py-1 text-sm border border-warm-border focus:outline-none focus:ring-2 focus:ring-warm-peach"
           >
             {getViewTypeOptions().map(option => (

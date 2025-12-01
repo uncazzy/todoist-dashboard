@@ -5,6 +5,7 @@ import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import type { DateRange, DateRangePreset } from '@/types';
 import { getDateRangeFromPreset, getPresetLabel } from '@/utils/dateRangePresets';
+import { trackDateFilter } from '@/utils/analytics';
 import styles from './DateRangePicker.module.css';
 
 interface DateRangePickerProps {
@@ -115,6 +116,13 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
     setError(null);
     setIsOpen(false);
     triggerButtonRef.current?.focus();
+
+    // Track the filter change
+    if (preset === 'all') {
+      trackDateFilter('clear');
+    } else {
+      trackDateFilter('preset', { preset });
+    }
   };
 
   const handleApplyCustomRange = () => {
@@ -142,6 +150,10 @@ const DateRangePicker: React.FC<DateRangePickerProps> = ({
     });
     setIsOpen(false);
     triggerButtonRef.current?.focus();
+
+    // Track custom date range (calculate days between dates)
+    const daysRange = Math.ceil((customEnd.getTime() - customStart.getTime()) / (1000 * 60 * 60 * 24));
+    trackDateFilter('custom', { daysRange });
   };
 
   const isActiveFilter = dateRange.preset !== 'all';

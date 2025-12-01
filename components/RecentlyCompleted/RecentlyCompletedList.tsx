@@ -4,6 +4,7 @@ import Pagination from "./Pagination";
 import Tasks from "./Tasks";
 import { DashboardData, CompletedTask } from "../../types";
 import { parseISO, isToday, subDays } from "date-fns";
+import { trackTaskList } from "@/utils/analytics";
 
 interface TaskWithProject {
   task: CompletedTask;
@@ -93,6 +94,7 @@ export default function RecentlyCompletedList({ allData }: RecentlyCompletedList
   const handleFilterClick = (filter: 'today' | 'week' | 'month') => {
     setCurrentFilter(filter);
     setCurrentPage(1);
+    trackTaskList('recently_completed', 'timeframe_change', { timeframe: filter });
   };
 
   const getPageItems = () => {
@@ -102,11 +104,19 @@ export default function RecentlyCompletedList({ allData }: RecentlyCompletedList
   };
 
   const handlePrint = () => {
+    trackTaskList('recently_completed', 'print');
     setIsPrinting(true);
     setTimeout(() => {
       window.print();
       setIsPrinting(false);
     }, 100);
+  };
+
+  // Handle pagination with tracking
+  const handlePageChange = (newPage: number) => {
+    const direction = newPage > currentPage ? 'next' : 'prev';
+    setCurrentPage(newPage);
+    trackTaskList('recently_completed', 'paginate', { direction, page: newPage });
   };
 
   return (
@@ -176,7 +186,7 @@ export default function RecentlyCompletedList({ allData }: RecentlyCompletedList
               <Pagination
                 currentPage={currentPage}
                 totalPages={totalPages}
-                setCurrentPage={setCurrentPage}
+                setCurrentPage={handlePageChange}
               />
             </div>
           )}

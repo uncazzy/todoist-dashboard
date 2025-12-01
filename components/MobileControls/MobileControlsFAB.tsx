@@ -8,6 +8,7 @@
 import React from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { HiAdjustments } from 'react-icons/hi';
+import { trackMobile } from '@/utils/analytics';
 
 interface MobileControlsFABProps {
   onClick: () => void;
@@ -20,10 +21,15 @@ export default function MobileControlsFAB({
 }: MobileControlsFABProps) {
   const shouldReduceMotion = useReducedMotion();
 
+  const handleClick = () => {
+    trackMobile('fab_open');
+    onClick();
+  };
+
   return (
     <motion.button
       type="button"
-      onClick={onClick}
+      onClick={handleClick}
       aria-haspopup="dialog"
       className="fixed bottom-6 right-6 z-40 w-14 h-14 bg-warm-peach rounded-full shadow-lg flex items-center justify-center sm:hidden focus:outline-none focus:ring-2 focus:ring-warm-peach focus:ring-offset-2 focus:ring-offset-warm-black"
       initial={{ scale: 0, opacity: 0 }}

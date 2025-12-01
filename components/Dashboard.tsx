@@ -36,6 +36,7 @@ import { useExportSection } from '../hooks/useExportManager';
 import { filterCompletedTasksByDateRange } from '../utils/filterByDateRange';
 import { startOfDay, endOfDay, subDays } from 'date-fns';
 import LabelDistribution, { LabelViewMode } from './LabelDistribution';
+import { trackEvent, trackChartInteraction } from '@/utils/analytics';
 
 export default function Dashboard(): JSX.Element {
   const { status } = useSession();
@@ -230,7 +231,10 @@ export default function Dashboard(): JSX.Element {
                     <>
                       <div className="w-px h-6 bg-warm-border" />
                       <button
-                        onClick={clearPreferences}
+                        onClick={() => {
+                          trackEvent('filter_reset_all', {});
+                          clearPreferences();
+                        }}
                         className="flex items-center justify-center gap-1.5 px-3 py-2 text-sm font-medium text-white bg-warm-hover hover:bg-warm-peach hover:text-white border border-warm-border hover:border-warm-peach rounded-lg transition-all duration-200"
                         aria-label="Reset all filters"
                         data-tooltip-id="dashboard-tooltip"
@@ -452,7 +456,10 @@ export default function Dashboard(): JSX.Element {
                   </h2>
                   <div className="inline-flex items-center bg-warm-hover rounded-lg p-0.5 text-xs">
                     <button
-                      onClick={() => setLabelViewMode('all')}
+                      onClick={() => {
+                        setLabelViewMode('all');
+                        trackChartInteraction('label_distribution', 'view_change', 'all');
+                      }}
                       className={`px-2.5 py-1 rounded-md transition-all ${
                         labelViewMode === 'all'
                           ? 'bg-warm-card text-white'
@@ -462,7 +469,10 @@ export default function Dashboard(): JSX.Element {
                       All
                     </button>
                     <button
-                      onClick={() => setLabelViewMode('active')}
+                      onClick={() => {
+                        setLabelViewMode('active');
+                        trackChartInteraction('label_distribution', 'view_change', 'active');
+                      }}
                       className={`px-2.5 py-1 rounded-md transition-all ${
                         labelViewMode === 'active'
                           ? 'bg-warm-card text-white'
@@ -622,6 +632,7 @@ export default function Dashboard(): JSX.Element {
                 {(selectedProjectIds.length > 0 || dateRange.preset !== 'all') && (
                   <button
                     onClick={() => {
+                      trackEvent('filter_reset_all', {});
                       clearPreferences();
                       setIsMobileControlsOpen(false);
                     }}

@@ -5,6 +5,7 @@ import { IoIosCheckmarkCircle, IoMdTrendingUp } from 'react-icons/io';
 import { FaArrowRight } from 'react-icons/fa';
 import { ActiveTask } from '../../types';
 import { calculateStats } from './utils/index';
+import { trackNavigation } from '@/utils/analytics';
 
 interface RecurringTasksPreviewProps {
   activeTasks: ActiveTask[];
@@ -54,6 +55,7 @@ const RecurringTasksPreview: React.FC<RecurringTasksPreviewProps> = ({
 
         <Link
           href="/recurring"
+          onClick={() => trackNavigation('recurring')}
           className="group bg-warm-card/50 border border-warm-border p-4 rounded-2xl transition-all duration-200 no-underline hover:bg-warm-hover hover:-translate-y-0.5 hover:shadow-md"
         >
           <div className="flex items-center gap-2 text-warm-gray">

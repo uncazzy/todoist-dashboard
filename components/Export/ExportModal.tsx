@@ -6,6 +6,7 @@
 import React, { useState, useEffect } from 'react';
 import { HiX, HiDownload, HiCheckCircle, HiXCircle } from 'react-icons/hi';
 import { useExportManager } from '../../hooks/useExportManager';
+import { trackExport } from '@/utils/analytics';
 
 interface ExportModalProps {
   isOpen: boolean;
@@ -35,22 +36,29 @@ export default function ExportModal({ isOpen, onClose }: ExportModalProps) {
   // Toggle section selection
   const toggleSection = (sectionId: string) => {
     const newSelected = new Set(selectedSections);
-    if (newSelected.has(sectionId)) {
+    const wasSelected = newSelected.has(sectionId);
+    if (wasSelected) {
       newSelected.delete(sectionId);
     } else {
       newSelected.add(sectionId);
     }
     setSelectedSections(newSelected);
+
+    // Track section toggle
+    const section = sections.find(s => s.id === sectionId);
+    trackExport('toggle_section', { section: section?.label || sectionId, enabled: !wasSelected });
   };
 
   // Select all sections
   const selectAll = () => {
     setSelectedSections(new Set(sections.map((s) => s.id)));
+    trackExport('select_all');
   };
 
   // Deselect all sections
   const deselectAll = () => {
     setSelectedSections(new Set());
+    trackExport('deselect_all');
   };
 
   // Handle export
@@ -59,8 +67,16 @@ export default function ExportModal({ isOpen, onClose }: ExportModalProps) {
       return;
     }
 
+    trackExport('start', { sectionCount: selectedSections.size });
     await startExport(Array.from(selectedSections));
   };
+
+  // Track export completion
+  useEffect(() => {
+    if (exportProgress?.stage === 'complete') {
+      trackExport('complete', { sectionCount: selectedSections.size });
+    }
+  }, [exportProgress?.stage, selectedSections.size]);
 
   if (!isOpen) {
     return null;

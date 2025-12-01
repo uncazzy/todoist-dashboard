@@ -2,6 +2,7 @@ import React from 'react';
 import { MAX_TASKS } from '../../utils/constants';
 import { Tooltip } from 'react-tooltip';
 import { BsExclamationTriangle } from 'react-icons/bs';
+import { trackData } from '@/utils/analytics';
 
 interface LoadingIndicatorProps {
   loading: boolean;
@@ -30,6 +31,11 @@ const LoadingIndicator: React.FC<LoadingIndicatorProps> = ({
   const progressPercentage =
     (loadingProgress.loaded / Math.min(MAX_TASKS, loadingProgress.total)) * 100;
 
+  const handleRefresh = () => {
+    trackData('refresh');
+    onRefresh();
+  };
+
   // Calculate time since last update
   const lastUpdateTime = localStorage.getItem('todoist_dashboard_timestamp');
   const getTimeAgo = (timestamp: string | null): string => {
@@ -50,7 +56,7 @@ const LoadingIndicator: React.FC<LoadingIndicatorProps> = ({
           Last updated: {getTimeAgo(lastUpdateTime)}
         </div>
         <button
-          onClick={onRefresh}
+          onClick={handleRefresh}
           disabled={loading || loadingMore}
           className="flex items-center px-3 py-1 text-sm bg-warm-hover hover:bg-warm-border rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
           title={loading ? 'Loading in progress' : 'Refresh tasks from Todoist'}
