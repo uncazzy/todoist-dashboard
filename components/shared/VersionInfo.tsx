@@ -11,6 +11,7 @@ const CHANGELOG = [
     date: 'December 2025',
     changes: [
       'Security update: patched Next.js CVE-2025-55182',
+      'Added security headers (CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy)',
     ]
   },
   {
