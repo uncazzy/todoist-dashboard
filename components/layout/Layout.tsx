@@ -39,7 +39,7 @@ const Layout: React.FC<LayoutProps> = ({
         <meta name="msapplication-TileColor" content="#0D0D0D" />
       </Head>
       
-      <Script defer src="https://umami.azzy.cloud/cigla" data-website-id="ecce6f4d-ec1e-4e58-ac9a-2add9aa988b9" />
+      <Script defer src="https://umami.azzy.cloud/cigla" data-website-id="6ff90a46-6939-4991-8838-dbb953d94a60" />
 
       <div className="min-h-screen flex flex-col text-white">
         <Header user={session?.user || null} />
