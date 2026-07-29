@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactECharts from 'echarts-for-react';
-import { EChartsOption } from 'echarts';
+import type { EChartsOption } from 'echarts';
 import { CompletedTask } from '../types';
 import { calculateCompletionHeatmapData } from '../utils/calculateCompletionHeatmapData';
 import Spinner from './shared/Spinner';

@@ -1,6 +1,6 @@
 {
   "name": "todoist-dashboard",
-  "version": "0.13.0",
+  "version": "0.13.1",
   "private": false,
   "license": "MIT",
   "repository": {
@@ -18,12 +18,9 @@
     "@next-auth/prisma-adapter": "^1.0.7",
     "@types/d3": "^7.4.3",
     "@types/d3-cloud": "^1.2.9",
-    "@types/d3-scale-chromatic": "^3.1.0",
-    "@types/echarts": "^4.9.22",
     "@types/react-sparklines": "^1.7.5",
     "d3": "^7.9.0",
     "d3-cloud": "^1.2.7",
-    "d3-scale-chromatic": "^3.1.0",
     "date-fns": "^4.1.0",
     "dotenv": "^16.3.1",
     "echarts": "^5.5.1",

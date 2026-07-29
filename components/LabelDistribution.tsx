@@ -1,13 +1,8 @@
 import React, { useMemo } from 'react';
 import ReactECharts from 'echarts-for-react';
 import { colorNameToHex } from '@/utils/projectUtils';
-import * as echarts from 'echarts/core';
-import {
-  TooltipComponentOption,
-  GridComponentOption
-} from 'echarts/components';
-import { BarSeriesOption } from 'echarts/charts';
-import { CallbackDataParams } from 'echarts/types/dist/shared';
+import type { EChartsOption } from 'echarts';
+import type { CallbackDataParams } from '../types/echarts';
 import type { Label, ActiveTask, CompletedTask } from '../types';
 import { getLabelStats } from '@/utils/parseLabelsFromContent';
 import escapeHtml from '@/utils/escapeHtml';
@@ -18,10 +13,6 @@ import {
   CHART_TOOLTIP,
   AXIS_LINE,
 } from '../utils/chartTheme';
-
-type ECOption = echarts.ComposeOption<
-  TooltipComponentOption | GridComponentOption | BarSeriesOption
->;
 
 export type LabelViewMode = 'all' | 'active';
 
@@ -75,7 +66,7 @@ function LabelDistribution({ activeTasks, completedTasks, labels, loading, viewM
     );
   }
 
-  const option: ECOption = {
+  const option: EChartsOption = {
     tooltip: {
       trigger: 'axis',
       axisPointer: {

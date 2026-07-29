@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import ReactECharts from 'echarts-for-react';
-import { EChartsOption, BarSeriesOption } from 'echarts';
+import type { EChartsOption, BarSeriesOption } from 'echarts';
 import { format } from 'date-fns';
 import { CompletedTask, ProjectData, TodoistColor } from '../types';
 import { calculateProjectVelocity, VelocityData } from '../utils/calculateProjectVelocity';

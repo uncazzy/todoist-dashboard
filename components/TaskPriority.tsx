@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactECharts from 'echarts-for-react';
-import { EChartsOption } from 'echarts';
+import type { EChartsOption } from 'echarts';
 import { ActiveTask } from '../types';
 import Spinner from './shared/Spinner';
 import { CHART_TOOLTIP, WARM_GRAY, WARM_BLUE, WARM_PEACH, WARM_PEACH_DARK, WARM_BLACK, TEXT_PRIMARY } from '../utils/chartTheme';
