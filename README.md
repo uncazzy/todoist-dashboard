@@ -32,7 +32,7 @@ A powerful dashboard for Todoist users that provides deep insights into task man
 
 ### Prerequisites
 
-- Node.js 18.x or later
+- Node.js 20.9 or later
 - A Todoist account
 - Todoist OAuth integration credentials
 
@@ -135,6 +135,18 @@ Todoist Dashboard respects your privacy. It accesses your Todoist data only with
 ## Security
 
 If you discover any security vulnerabilities, please report them directly to [todoist-dashboard@azzy.cloud](mailto:todoist-dashboard@azzy.cloud). Your efforts in making the project more secure are greatly appreciated.
+
+### Dependency overrides
+
+`package.json` pins one transitive dependency via `overrides`:
+
+| Package | Pin | Reason | Remove when |
+|---------|-----|--------|-------------|
+| `sharp` | `^0.35.3` | [GHSA-f88m-g3jw-g9cj](https://github.com/lovell/sharp/security/advisories/GHSA-f88m-g3jw-g9cj) — libvips CVEs in the GIF/TIFF/VIPS decoders affect `sharp < 0.35.0`. Next.js pulls `sharp` in as an optional dependency but pins it below `0.35`, so `npm audit fix` cannot resolve this on its own. | A published Next.js release widens its own `sharp` range to `>=0.35`. |
+
+`sharp` is only ever loaded by the Next.js image optimizer, which this project disables outright (`images.unoptimized` in `next.config.js`) since it renders no `<Image>` components. The override is belt-and-braces: it keeps `npm audit` clean and protects against the optimizer being re-enabled later.
+
+Note that `sharp 0.35` requires Node.js >= 20.9, which sets the project's Node floor.
 
 ## Disclaimer
 

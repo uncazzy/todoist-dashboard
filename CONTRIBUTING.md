@@ -31,7 +31,7 @@ Have an idea to make Todoist Dashboard better? Create an issue with:
 
 #### Development Setup
 
-1. Make sure you have Node.js 16.x or later installed
+1. Make sure you have Node.js 20.9 or later installed
 2. Clone your fork of the repository
 3. Install dependencies with `npm install` or `yarn install`
 4. Create a `.env.local` file with the required environment variables
