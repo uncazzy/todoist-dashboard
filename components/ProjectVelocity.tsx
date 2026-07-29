@@ -147,6 +147,10 @@ function ProjectVelocity({
     },
     legend: {
       data: limitedProjectIds.map(id => projectNames[id] || 'Unknown'),
+      // Pinned explicitly: ECharts 6 moved the default legend position to the bottom
+      // of the canvas. This keeps the legend above the chart as designed.
+      top: 0,
+      left: 'center',
       textStyle: {
         color: WARM_GRAY
       },
