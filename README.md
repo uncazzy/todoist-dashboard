@@ -155,12 +155,11 @@ Note that `sharp 0.35` requires Node.js >= 20.9, which sets the project's Node f
 
 ### Accepted `npm audit` findings
 
-Two advisories are knowingly left unresolved. Both are inapplicable to this project, and both would cost more than they buy:
+One advisory is knowingly left unresolved:
 
 - **`brace-expansion` ([GHSA-mh99-v99m-4gvg](https://github.com/advisories/GHSA-mh99-v99m-4gvg), high)** — reached only through the ESLint and Tailwind build toolchains, so it is never shipped to users. The advisory is patched only in `brace-expansion@5.0.8`, whose CommonJS entry point exports an object rather than a callable, so forcing it makes `minimatch@3.x` throw `TypeError: expand is not a function`. `npm audit`'s suggested alternative is `eslint@4.0.0`, a four-major downgrade. Revisit when ESLint's dependency tree reaches a patched `brace-expansion` on its own.
-- **`echarts` ([GHSA-fgmj-fm8m-jvvx](https://github.com/advisories/GHSA-fgmj-fm8m-jvvx), moderate XSS)** — the vulnerable path is the *built-in* tooltip formatter of the `lines` series. This project uses no `lines` series (only `bar`, `line`, `pie` and `heatmap`), and every chart supplies its own `formatter`, so neither precondition holds. The fix requires `echarts@6`, which changes the default theme and legend placement and would visibly regress the dashboard's design for no security gain.
 
-Because `npm audit` counts every dependent of a vulnerable package separately, the ESLint chain alone accounts for most of the reported total. The distinct advisory count is two.
+Because `npm audit` counts every dependent of a vulnerable package separately, this single advisory accounts for the entire reported total.
 
 ## Disclaimer
 
