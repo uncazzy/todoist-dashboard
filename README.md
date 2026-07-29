@@ -138,15 +138,29 @@ If you discover any security vulnerabilities, please report them directly to [to
 
 ### Dependency overrides
 
-`package.json` pins one transitive dependency via `overrides`:
+`package.json` pins several transitive dependencies via `overrides`, each to pull a security patch that the direct dependency's own range would otherwise hold back:
 
 | Package | Pin | Reason | Remove when |
 |---------|-----|--------|-------------|
 | `sharp` | `^0.35.3` | [GHSA-f88m-g3jw-g9cj](https://github.com/lovell/sharp/security/advisories/GHSA-f88m-g3jw-g9cj) — libvips CVEs in the GIF/TIFF/VIPS decoders affect `sharp < 0.35.0`. Next.js pulls `sharp` in as an optional dependency but pins it below `0.35`, so `npm audit fix` cannot resolve this on its own. | A published Next.js release widens its own `sharp` range to `>=0.35`. |
+| `form-data` | `^4.0.6` | [GHSA-hmw2-7cc7-3qxx](https://github.com/advisories/GHSA-hmw2-7cc7-3qxx) — CRLF injection via unescaped multipart field names. Reached through `@doist/todoist-api-typescript`. | That package's own `form-data` dependency reaches `>=4.0.6`. |
+| `uuid` | `^11.1.1` | [GHSA-w5hq-g745-h8pq](https://github.com/advisories/GHSA-w5hq-g745-h8pq) — missing buffer bounds check in v3/v5/v6. Reached through `@doist/todoist-api-typescript`. | That package's own `uuid` dependency reaches `>=11.1.1`. |
+| `postcss` | `$postcss` | [GHSA-6g55-p6wh-862q](https://github.com/advisories/GHSA-6g55-p6wh-862q) (patched in `8.5.12`) and [GHSA-r28c-9q8g-f849](https://github.com/advisories/GHSA-r28c-9q8g-f849) (patched in `8.5.18`) — path traversal and arbitrary `.map` disclosure via `sourceMappingURL`. Next.js hard-pins `postcss` to an exact, patched-out version internally; `$postcss` forces its copy to the same version as our direct dependency. | Next.js bumps its internal `postcss` pin past `8.5.17`. |
 
-`sharp` is only ever loaded by the Next.js image optimizer, which this project disables outright (`images.unoptimized` in `next.config.js`) since it renders no `<Image>` components. The override is belt-and-braces: it keeps `npm audit` clean and protects against the optimizer being re-enabled later.
+`form-data` and `uuid` are pinned rather than fixed by upgrading `@doist/todoist-api-typescript` to `7.x`, because that release depends on `@doist/todoist-sdk >= 8`, which resolves to a major requiring Node.js `>= 24` and which itself ships an `undici` version still inside a known-vulnerable range. The overrides achieve the same patch level without either regression.
 
-Note that `sharp 0.35` requires Node.js >= 20.9, which sets the project's Node floor.
+`sharp` is only ever loaded by the Next.js image optimizer, which this project disables outright (`images.unoptimized` in `next.config.js`) since it renders no `<Image>` components. The override is belt-and-braces: it protects against the optimizer being re-enabled later.
+
+Note that `sharp 0.35` requires Node.js >= 20.9, which sets the project's Node floor (enforced by `engine-strict` in `.npmrc`).
+
+### Accepted `npm audit` findings
+
+Two advisories are knowingly left unresolved. Both are inapplicable to this project, and both would cost more than they buy:
+
+- **`brace-expansion` ([GHSA-mh99-v99m-4gvg](https://github.com/advisories/GHSA-mh99-v99m-4gvg), high)** — reached only through the ESLint and Tailwind build toolchains, so it is never shipped to users. The advisory is patched only in `brace-expansion@5.0.8`, whose CommonJS entry point exports an object rather than a callable, so forcing it makes `minimatch@3.x` throw `TypeError: expand is not a function`. `npm audit`'s suggested alternative is `eslint@4.0.0`, a four-major downgrade. Revisit when ESLint's dependency tree reaches a patched `brace-expansion` on its own.
+- **`echarts` ([GHSA-fgmj-fm8m-jvvx](https://github.com/advisories/GHSA-fgmj-fm8m-jvvx), moderate XSS)** — the vulnerable path is the *built-in* tooltip formatter of the `lines` series. This project uses no `lines` series (only `bar`, `line`, `pie` and `heatmap`), and every chart supplies its own `formatter`, so neither precondition holds. The fix requires `echarts@6`, which changes the default theme and legend placement and would visibly regress the dashboard's design for no security gain.
+
+Because `npm audit` counts every dependent of a vulnerable package separately, the ESLint chain alone accounts for most of the reported total. The distinct advisory count is two.
 
 ## Disclaimer
 

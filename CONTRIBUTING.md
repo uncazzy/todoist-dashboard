@@ -44,6 +44,10 @@ Have an idea to make Todoist Dashboard better? Create an issue with:
 - Add comments for complex logic
 - Update documentation when needed
 
+#### Dependencies
+
+Some transitive dependencies are pinned via `overrides` in `package.json`, and a couple of `npm audit` findings are knowingly accepted. Read the [Security section of the README](README.md#security) before reaching for `npm audit fix --force` — it records why each pin exists, when it can be removed, and which suggested "fixes" were tried and rejected.
+
 ## Questions?
 
 Feel free to reach out if you have any questions about contributing!
