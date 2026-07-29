@@ -4,7 +4,7 @@
  */
 
 import React, { createContext, useContext, useCallback, useState, useRef } from 'react';
-import { EChartsInstance } from 'echarts-for-react';
+import type { EChartsType } from 'echarts/core';
 import { ExportSection } from '../utils/exportHelpers';
 import { exportDashboard, ExportProgress } from '../utils/exportDashboard';
 
@@ -12,7 +12,7 @@ interface ExportManagerContextType {
   sections: ExportSection[];
   registerSection: (id: string, label: string, element: HTMLElement | null) => void;
   unregisterSection: (id: string) => void;
-  registerChart: (sectionId: string, chartInstance: EChartsInstance) => void;
+  registerChart: (sectionId: string, chartInstance: EChartsType) => void;
   startExport: (selectedSectionIds: string[]) => Promise<void>;
   exportProgress: ExportProgress | null;
   isExporting: boolean;
@@ -66,7 +66,7 @@ export function ExportProvider({ children }: { children: React.ReactNode }) {
   /**
    * Register a chart instance for a specific section
    */
-  const registerChart = useCallback((sectionId: string, chartInstance: EChartsInstance) => {
+  const registerChart = useCallback((sectionId: string, chartInstance: EChartsType) => {
     const section = sectionsRef.current.get(sectionId);
     if (section) {
       // Check if this chart is already registered to avoid duplicates

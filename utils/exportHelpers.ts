@@ -3,14 +3,13 @@
  * Robust chart capture and matching using unique IDs
  */
 
-import { EChartsInstance } from 'echarts-for-react';
 import * as echarts from 'echarts/core';
 
 export interface ExportSection {
   id: string;
   label: string;
   element: HTMLElement | null;
-  chartInstances: EChartsInstance[];
+  chartInstances: echarts.EChartsType[];
 }
 
 interface CapturedChart {
@@ -118,7 +117,7 @@ export async function collectAllStyles(): Promise<string> {
  * Robust ECharts capture with proper sizing
  */
 async function captureEChartsRobust(
-  instance: EChartsInstance,
+  instance: echarts.EChartsType,
   container: HTMLElement
 ): Promise<CapturedChart | null> {
   try {

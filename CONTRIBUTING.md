@@ -31,7 +31,7 @@ Have an idea to make Todoist Dashboard better? Create an issue with:
 
 #### Development Setup
 
-1. Make sure you have Node.js 16.x or later installed
+1. Make sure you have Node.js 20.9 or later installed
 2. Clone your fork of the repository
 3. Install dependencies with `npm install` or `yarn install`
 4. Create a `.env.local` file with the required environment variables
@@ -43,6 +43,10 @@ Have an idea to make Todoist Dashboard better? Create an issue with:
 - Write meaningful commit messages
 - Add comments for complex logic
 - Update documentation when needed
+
+#### Dependencies
+
+Some transitive dependencies are pinned via `overrides` in `package.json`, and a couple of `npm audit` findings are knowingly accepted. Read the [Security section of the README](README.md#security) before reaching for `npm audit fix --force` — it records why each pin exists, when it can be removed, and which suggested "fixes" were tried and rejected.
 
 ## Questions?
 

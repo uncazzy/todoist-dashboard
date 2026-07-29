@@ -1,6 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  // This app does no server-side image processing. Disabling the optimizer makes
+  // /_next/image return 404 outright, so sharp/libvips is never handed
+  // request-reachable bytes (GHSA-f88m-g3jw-g9cj). Global switch: it holds even if
+  // an <Image> is added later, which would then render unoptimized rather than break.
+  images: { unoptimized: true },
   async headers() {
     return [
       {
