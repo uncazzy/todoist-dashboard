@@ -2,10 +2,21 @@ import React, { useState } from 'react';
 import { FaTimes } from 'react-icons/fa';
 
 // Current version number
-const APP_VERSION = '0.12.0';
+const APP_VERSION = '0.13.0';
 
 // Changelog entries - newest first
 const CHANGELOG = [
+  {
+    version: '0.13.0',
+    date: 'July 2026',
+    changes: [
+      'Security: patched sharp libvips CVEs (GHSA-f88m-g3jw-g9cj) and disabled the unused Next.js image optimizer',
+      'Security: upgraded next-auth to 4.24.15, patching an OAuth cookie-binding vulnerability',
+      'Security: upgraded Next.js to 15.5.22, patching middleware bypass, cache poisoning, and SSRF issues',
+      'Security: patched form-data, uuid, postcss, and undici via dependency overrides',
+      'Requires Node.js 20.9 or later (previously 18.x); this is now enforced at install time',
+    ]
+  },
   {
     version: '0.12.0',
     date: 'March 2026',
