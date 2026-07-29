@@ -1,8 +1,8 @@
 import React from 'react';
 import ReactECharts from 'echarts-for-react';
 import { format } from 'date-fns';
-import { EChartsOption } from 'echarts';
-import { CallbackDataParams } from 'echarts/types/dist/shared';
+import type { EChartsOption } from 'echarts';
+import type { CallbackDataParams } from '../types/echarts';
 import { CompletedTask } from '../types';
 import escapeHtml from '@/utils/escapeHtml';
 import Spinner from './shared/Spinner';

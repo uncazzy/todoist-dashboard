@@ -1,3 +1,16 @@
 {
-  "extends": "next/core-web-vitals"
+  "extends": "next/core-web-vitals",
+  "rules": {
+    "no-restricted-imports": [
+      "error",
+      {
+        "patterns": [
+          {
+            "group": ["echarts/types/*", "echarts/types/**"],
+            "message": "Import echarts types from the public 'echarts' entry point instead. echarts/types/dist/* is internal and has no stability guarantee. Shared aliases live in types/echarts.ts."
+          }
+        ]
+      }
+    ]
+  }
 }

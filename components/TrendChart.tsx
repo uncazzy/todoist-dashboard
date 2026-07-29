@@ -2,13 +2,13 @@ import { useEffect, useRef } from 'react';
 import * as echarts from 'echarts/core';
 import {
   TooltipComponent,
-  TooltipComponentOption,
+  type TooltipComponentOption,
   GridComponent,
-  GridComponentOption
+  type GridComponentOption
 } from 'echarts/components';
-import { LineChart, LineSeriesOption } from 'echarts/charts';
+import { LineChart, type LineSeriesOption } from 'echarts/charts';
 import { CanvasRenderer } from 'echarts/renderers';
-import { CallbackDataParams } from 'echarts/types/dist/shared';
+import type { CallbackDataParams } from '../types/echarts';
 import {
   WARM_BLUE,
   WARM_GRAY,

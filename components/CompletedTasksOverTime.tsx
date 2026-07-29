@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import ReactECharts from 'echarts-for-react';
 import * as echarts from 'echarts/core';
-import { CallbackDataParams } from 'echarts/types/dist/shared';
-import { EChartsOption } from 'echarts';
+import type { EChartsOption } from 'echarts';
+import type { CallbackDataParams } from '../types/echarts';
 import {
   format,
   endOfWeek,

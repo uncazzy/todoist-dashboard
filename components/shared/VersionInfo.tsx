@@ -2,10 +2,17 @@ import React, { useState } from 'react';
 import { FaTimes } from 'react-icons/fa';
 
 // Current version number
-const APP_VERSION = '0.13.0';
+const APP_VERSION = '0.13.1';
 
 // Changelog entries - newest first
 const CHANGELOG = [
+  {
+    version: '0.13.1',
+    date: 'July 2026',
+    changes: [
+      'Internal: consolidated ECharts typings and removed three unused dependencies',
+    ]
+  },
   {
     version: '0.13.0',
     date: 'July 2026',

@@ -1,21 +1,12 @@
 import React from 'react';
 import ReactECharts from 'echarts-for-react';
 import { colorNameToHex } from "@/utils/projectUtils";
-import * as echarts from 'echarts/core';
-import {
-  TooltipComponentOption,
-  GridComponentOption
-} from 'echarts/components';
-import { BarSeriesOption } from 'echarts/charts';
-import { CallbackDataParams } from 'echarts/types/dist/shared';
+import type { EChartsOption } from 'echarts';
+import type { CallbackDataParams } from '../types/echarts';
 import { ProjectData, TodoistColor } from '../types';
 import escapeHtml from '@/utils/escapeHtml';
 import Spinner from './shared/Spinner';
 import { CHART_TOOLTIP, AXIS_LABEL, AXIS_LINE, SPLIT_LINE } from '../utils/chartTheme';
-
-type ECOption = echarts.ComposeOption<
-  TooltipComponentOption | GridComponentOption | BarSeriesOption
->;
 
 interface ProjectWithStats extends ProjectData {
   completedTasksCount: number;
@@ -35,7 +26,7 @@ function CompletedTasksByProject({ projectData, loading }: CompletedTasksByProje
     );
   }
 
-  const option: ECOption = {
+  const option: EChartsOption = {
     tooltip: {
       trigger: 'axis',
       ...CHART_TOOLTIP,
