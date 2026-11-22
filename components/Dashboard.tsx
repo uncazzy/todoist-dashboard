@@ -49,6 +49,7 @@ import { trackEvent, trackChartInteraction } from '@/utils/analytics';
 import { calculateComparisonPeriod } from '../utils/comparisonPeriod';
 import SectionGroupHeader from './shared/SectionGroupHeader';
 import Spinner from './shared/Spinner';
+import DumplingBanner from './DumplingBanner';
 
 export default function Dashboard(): JSX.Element {
   const { status } = useSession();
@@ -297,6 +298,8 @@ export default function Dashboard(): JSX.Element {
               </div>
             </div>
           </header>
+
+          <DumplingBanner />
 
           {/* Always show loading indicator */}
           <LoadingIndicator
