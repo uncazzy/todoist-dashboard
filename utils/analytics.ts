@@ -69,7 +69,10 @@ export type EventName =
   | 'mobile_controls_close'
   // Data events
   | 'data_refresh'
-  | 'data_load_complete';
+  | 'data_load_complete'
+  // Promotion events
+  | 'promo_dumpling_click'
+  | 'promo_dumpling_dismiss';
 
 // Type-safe event data based on event name
 interface EventDataMap {
@@ -119,6 +122,10 @@ interface EventDataMap {
   // Data events
   data_refresh: Record<string, never>;
   data_load_complete: { task_count: number };
+
+  // Promotion events
+  promo_dumpling_click: Record<string, never>;
+  promo_dumpling_dismiss: Record<string, never>;
 }
 
 /**
